@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTP Login System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: #fff;
+      width: 320px;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #4facfe;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #358efc;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>Login with OTP</h2>
+
+    <input
+      type="tel"
+      id="mobile"
+      placeholder="Enter mobile number"
+      maxlength="10"
+    >
+
+    <button onclick="sendOTP()">Send OTP</button>
+
+    <input
+      type="number"
+      id="otp"
+      placeholder="Enter OTP"
+      class="hidden"
+    >
+
+    <button
+      id="verifyBtn"
+      class="hidden"
+      onclick="verifyOTP()"
+    >
+      Verify OTP
+    </button>
+
+    <div id="message"></div>
+  </div>
+
+<script>
+  // 🔴 YOUR APPS SCRIPT WEB APP URL
+  const SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbw6ma35fE8FNLZPX1leq_ugINa2-IGyBU2vBzBsKsK_xXRb2DdKklCgxe4tvLuKdgWa/exec";
+
+  function sendOTP() {
+    const mobile = document.getElementById("mobile").value.trim();
+    const message = document.getElementById("message");
+
+    if (mobile.length !== 10) {
+      message.style.color = "red";
+      message.innerText = "Enter a valid 10-digit mobile number";
+      return;
+    }
+
+    message.style.color = "black";
+    message.innerText = "Sending OTP...";
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        action: "sendOTP",
+        mobile: mobile
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "OTP_SENT") {
+        message.style.color = "green";
+        message.innerText = "OTP sent (Demo OTP: " + data.otp + ")";
+        document.getElementById("otp").classList.remove("hidden");
+        document.getElementById("verifyBtn").classList.remove("hidden");
+      } else {
+        message.style.color = "red";
+        message.innerText = "Failed to send OTP";
+      }
+    })
+    .catch(err => {
+      message.style.color = "red";
+      message.innerText = "Network error. Check Script URL.";
+    });
+  }
+
+  function verifyOTP() {
+    const mobile = document.getElementById("mobile").value.trim();
+    const otp = document.getElementById("otp").value.trim();
+    const message = document.getElementById("message");
+
+    if (otp.length !== 6) {
+      message.style.color = "red";
+      message.innerText = "Enter valid 6-digit OTP";
+      return;
+    }
+
+    message.style.color = "black";
+    message.innerText = "Verifying OTP...";
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: new URLSearchParams({
+        action: "verifyOTP",
+        mobile: mobile,
+        otp: otp
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "VERIFIED") {
+        message.style.color = "green";
+        message.innerText = "✅ Login Successful";
+      } else {
+        message.style.color = "red";
+        message.innerText = "❌ Invalid OTP";
+      }
+    })
+    .catch(err => {
+      message.style.color = "red";
+      message.innerText = "Verification failed";
+    });
+  }
+</script>
+
+</body>
+</html>
