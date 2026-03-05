@@ -1,188 +1,1937 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>OTP Login System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dev Ayurveda ERP - Modular Pro Edition</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- SheetJS for Excel Import -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { emerald: { 50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' } },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
 
-    body {
-      margin: 0;
-      height: 100vh;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    <style>
+        body { background-color: #f8fafc; font-family: sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-mobile-active { color: #059669; }
+        .nav-desktop-active { background-color: #059669; color: white; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); }
+        input, select, button, textarea { touch-action: manipulation; }
+        
+        #pin-lock-screen.active { display: flex; backdrop-filter: blur(8px); }
+        .splash-exit { opacity: 0; pointer-events: none; transition: opacity 0.5s ease-out; }
 
-    .container {
-      background: #fff;
-      width: 320px;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #4facfe;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #358efc;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    #message {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-  </style>
+        /* Custom styles for password eye icon */
+        .password-toggle { cursor: pointer; color: #94a3b8; transition: color 0.2s; }
+        .password-toggle:hover { color: #059669; }
+    </style>
 </head>
+<body class="text-slate-900 font-sans overflow-hidden h-screen relative">
 
-<body>
+    <!-- Global Crash Handler -->
+    <div id="fatal-error" class="hidden fixed inset-0 z-[99999] bg-red-600 text-white p-8 flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+        <h1 class="text-3xl font-bold mb-2">System Error Intercepted</h1>
+        <p id="fatal-error-msg" class="text-red-100 font-mono text-sm max-w-xl mx-auto bg-red-900/50 p-4 rounded text-left overflow-x-auto whitespace-pre-wrap"></p>
+        <button onclick="window.location.reload()" class="mt-6 px-6 py-3 bg-white text-red-700 font-bold rounded-xl shadow-lg">Reload Application</button>
+    </div>
+    <script>
+        window.addEventListener('error', function(e) { const el = document.getElementById('fatal-error'); const msgEl = document.getElementById('fatal-error-msg'); if(el && msgEl) { el.style.display = 'flex'; msgEl.innerText = e.message + "\nLine: " + e.lineno; } });
+        window.addEventListener('unhandledrejection', function(e) { const el = document.getElementById('fatal-error'); const msgEl = document.getElementById('fatal-error-msg'); if(el && msgEl) { el.style.display = 'flex'; msgEl.innerText = "Async Error: " + (e.reason ? e.reason.message : 'Unknown rejection'); } });
+    </script>
 
-  <div class="container">
-    <h2>Login with OTP</h2>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none transition-all"></div>
 
-    <input
-      type="tel"
-      id="mobile"
-      placeholder="Enter mobile number"
-      maxlength="10"
-    >
+    <!-- 1. Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 z-[200] flex flex-col items-center justify-center transition-opacity duration-500" style="background-color: #065f46;">
+        <div class="animate-pulse-slow flex flex-col items-center">
+            <div class="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-2xl mb-6">
+                <i data-lucide="leaf" class="w-12 h-12 text-emerald-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-white tracking-wide mb-2">Dev Ayurveda</h1>
+            <p class="text-emerald-200 font-medium tracking-widest uppercase text-sm">Professional ERP System</p>
+        </div>
+        <div class="absolute bottom-12 flex flex-col items-center">
+            <i data-lucide="loader-2" class="w-6 h-6 text-emerald-300 animate-spin mb-2"></i>
+            <span class="text-emerald-400 text-xs">Initializing Secure Environment...</span>
+        </div>
+    </div>
 
-    <button onclick="sendOTP()">Send OTP</button>
+    <!-- 2. Authentication UI -->
+    <div id="auth-container" class="fixed inset-0 z-[150] bg-slate-50 overflow-y-auto" style="display: none;">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8 animate-fade-in-up">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-emerald-600">
+                        <i data-lucide="box" class="w-8 h-8"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800" id="auth-title">Welcome Back</h2>
+                    <p class="text-slate-500 text-sm mt-1" id="auth-subtitle">Sign in to access your dashboard.</p>
+                </div>
 
-    <input
-      type="number"
-      id="otp"
-      placeholder="Enter OTP"
-      class="hidden"
-    >
+                <!-- Login Form -->
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-slate-700 block mb-1">Email Address</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700 block mb-1">Password</label>
+                        <div class="relative">
+                            <input type="password" id="login-password" required class="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 focus:bg-white outline-none transition-all">
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 password-toggle" onclick="togglePasswordVisibility('login-password', this)">
+                                <i data-lucide="eye" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all flex justify-center items-center gap-2 mt-2" id="login-btn">Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                    <div class="text-center pt-4"><p class="text-sm text-slate-500">New to Dev Ayurveda? <button type="button" onclick="toggleAuthMode('signup')" class="text-emerald-600 font-bold hover:underline">Create an account</button></p></div>
+                </form>
 
-    <button
-      id="verifyBtn"
-      class="hidden"
-      onclick="verifyOTP()"
-    >
-      Verify OTP
-    </button>
+                <!-- Signup Form -->
+                <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4 hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="text-sm font-medium text-slate-700 block mb-1">Email Address *</label>
+                            <input type="email" id="signup-email" required class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-sm font-medium text-slate-700 block mb-1">Password *</label>
+                            <div class="relative">
+                                <input type="password" id="signup-password" required minlength="6" class="w-full px-4 py-2 pr-12 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none">
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 password-toggle" onclick="togglePasswordVisibility('signup-password', this)">
+                                    <i data-lucide="eye" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2 mt-2 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-emerald-600 uppercase tracking-wider block mb-3">Business Details</label></div>
+                        <div class="col-span-2"><label class="text-sm font-medium text-slate-700 block mb-1">Business Name *</label><input type="text" id="signup-biz-name" required class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none"></div>
+                        <div><label class="text-sm font-medium text-slate-700 block mb-1">Owner Name</label><input type="text" id="signup-owner" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none"></div>
+                        <div><label class="text-sm font-medium text-slate-700 block mb-1">Phone Number</label><input type="tel" id="signup-phone" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none"></div>
+                        <div class="col-span-2"><label class="text-sm font-medium text-slate-700 block mb-1">GSTIN (Optional)</label><input type="text" id="signup-gstin" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none"></div>
+                        <div class="col-span-2"><label class="text-sm font-medium text-slate-700 block mb-1">Address</label><input type="text" id="signup-address" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none"></div>
+                        <div class="col-span-2 mt-2 pt-2 border-t border-slate-100"><label class="text-xs font-bold text-emerald-600 uppercase tracking-wider block mb-3">Branding (Optional)</label></div>
+                        <div class="col-span-2 flex items-center gap-3"><div class="w-12 h-12 bg-slate-100 border border-slate-200 rounded flex items-center justify-center overflow-hidden shrink-0" id="signup-logo-preview"><i data-lucide="image" class="text-slate-400 w-5 h-5"></i></div><div class="flex-1"><label class="text-xs font-medium text-slate-700 block mb-1">Business Logo</label><input type="file" accept="image/*" onchange="handleSignupUpload(event, 'logo')" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700"></div></div>
+                        <div class="col-span-2 flex items-center gap-3"><div class="w-16 h-10 bg-slate-100 border border-slate-200 rounded flex items-center justify-center overflow-hidden shrink-0" id="signup-sig-preview"><i data-lucide="pen-tool" class="text-slate-400 w-4 h-4"></i></div><div class="flex-1"><label class="text-xs font-medium text-slate-700 block mb-1">Authorized Signature</label><input type="file" accept="image/*" onchange="handleSignupUpload(event, 'signature')" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-emerald-50 file:text-emerald-700"></div></div>
+                    </div>
+                    <button type="submit" class="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all flex justify-center items-center gap-2 mt-4" id="signup-btn">Create Account <i data-lucide="user-plus" class="w-4 h-4"></i></button>
+                    <div class="text-center pt-2 pb-4"><p class="text-sm text-slate-500">Already have an account? <button type="button" onclick="toggleAuthMode('login')" class="text-emerald-600 font-bold hover:underline">Sign In</button></p></div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-    <div id="message"></div>
-  </div>
+    <!-- 3. MAIN APP WRAPPER -->
+    <div id="app-container" class="w-full h-full flex-col md:flex-row" style="display: none;">
+        
+        <!-- Web Lock (PIN) Overlay -->
+        <div id="pin-lock-screen" class="fixed inset-0 z-[100] bg-slate-900/90 hidden flex-col items-center justify-center transition-all">
+            <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center border border-slate-100">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="lock" class="w-8 h-8"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">App Locked</h2>
+                <p class="text-slate-500 mb-6 text-sm">Enter your 4-digit PIN to access the ERP.</p>
+                
+                <div class="flex justify-center mb-6">
+                    <div class="relative inline-flex items-center">
+                        <input type="password" id="secure-pin-field" maxlength="4" placeholder="••••" autocomplete="one-time-code" class="w-40 text-center text-3xl tracking-[0.5em] pl-8 pr-12 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 bg-slate-50 outline-none transition-all">
+                        <div class="absolute right-4 password-toggle" onclick="togglePasswordVisibility('secure-pin-field', this)">
+                            <i data-lucide="eye" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="verifyPin()" class="w-full py-3.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all text-lg">Unlock App</button>
+                <p id="pin-error" class="text-red-500 text-sm mt-3 hidden font-medium">Incorrect PIN. Try again.</p>
+            </div>
+        </div>
 
-<script>
-  // 🔴 YOUR APPS SCRIPT WEB APP URL
-  const SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbw6ma35fE8FNLZPX1leq_ugINa2-IGyBU2vBzBsKsK_xXRb2DdKklCgxe4tvLuKdgWa/exec";
+        <!-- Desktop Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0 overflow-y-auto hide-scrollbar">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-10 text-emerald-800">
+                    <div class="bg-emerald-100 p-2 rounded-xl text-emerald-600"><i data-lucide="box" class="w-7 h-7"></i></div>
+                    <div><h1 class="text-xl font-bold leading-tight">Dev Ayurveda</h1><p class="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Modular Pro ERP</p></div>
+                </div>
+                <nav class="flex flex-col gap-2" id="desktop-nav"></nav>
+            </div>
+            <div class="p-6 border-t border-slate-100">
+                <div class="text-xs text-slate-400">Authenticated as</div>
+                <div class="text-xs font-medium text-slate-800 truncate mt-1" id="user-id-display">...</div>
+            </div>
+        </aside>
 
-  function sendOTP() {
-    const mobile = document.getElementById("mobile").value.trim();
-    const message = document.getElementById("message");
+        <!-- Main Content Area -->
+        <main class="flex-1 h-full overflow-y-auto relative pb-20 md:pb-0 scroll-smooth bg-slate-50">
+            <div class="max-w-7xl mx-auto p-4 md:p-8 w-full">
+                
+                <!-- Dashboard View -->
+                <div id="view-dashboard" class="tab-content w-full">
+                    <div class="mb-6">
+                        <div class="flex justify-between items-end flex-wrap gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-800">Accounting Dashboard</h2>
+                                <p class="text-slate-500">Real-time overview of your financial performance.</p>
+                            </div>
+                            <select id="dash-date-filter" onchange="window.updateDashboard()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium outline-none focus:border-emerald-500 shadow-sm">
+                                <option value="all">All Time</option>
+                                <option value="this_month">This Month</option>
+                                <option value="last_month">Last Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                        <div class="bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-2xl p-6 shadow-sm border-none col-span-2 flex flex-col justify-center">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="text-emerald-200 text-sm font-medium uppercase tracking-wider mb-1">Net Profit</div>
+                                    <div class="text-4xl md:text-5xl font-bold tracking-tight" id="dash-profit">₹0.00</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-emerald-200 text-xs uppercase tracking-wider">Gross Margin</div>
+                                    <div class="text-xl font-bold" id="dash-margin">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-center text-center relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-5"><i data-lucide="trending-up" class="w-24 h-24"></i></div>
+                            <div class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total Revenue</div>
+                            <div class="text-2xl font-bold text-slate-800" id="dash-revenue">₹0</div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-center text-center relative overflow-hidden wrap-expenses-stat">
+                            <div class="absolute -right-4 -bottom-4 opacity-5"><i data-lucide="trending-down" class="w-24 h-24 text-red-500"></i></div>
+                            <div class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total Expenses</div>
+                            <div class="text-2xl font-bold text-red-600" id="dash-expenses">₹0</div>
+                        </div>
+                    </div>
 
-    if (mobile.length !== 10) {
-      message.style.color = "red";
-      message.innerText = "Enter a valid 10-digit mobile number";
-      return;
-    }
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-3 text-center md:text-left">
+                            <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0"><i data-lucide="alert-circle" class="w-5 h-5"></i></div>
+                            <div><div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Outstanding Dues</div><div class="text-lg font-bold text-slate-800 leading-tight" id="dash-unpaid">₹0</div></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-3 text-center md:text-left">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0"><i data-lucide="landmark" class="w-5 h-5"></i></div>
+                            <div><div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Bank / UPI Ledger</div><div class="text-lg font-bold text-slate-800 leading-tight" id="dash-bank">₹0</div></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-3 text-center md:text-left">
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0"><i data-lucide="banknote" class="w-5 h-5"></i></div>
+                            <div><div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Cash Ledger</div><div class="text-lg font-bold text-slate-800 leading-tight" id="dash-cash">₹0</div></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-3 text-center md:text-left">
+                            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center shrink-0"><i data-lucide="calculator" class="w-5 h-5"></i></div>
+                            <div><div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Net GST Payable</div><div class="text-lg font-bold text-slate-800 leading-tight" id="dash-tax">₹0</div></div>
+                        </div>
+                    </div>
 
-    message.style.color = "black";
-    message.innerText = "Sending OTP...";
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 lg:col-span-2 min-h-[300px] flex flex-col">
+                            <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">Cashflow (Rev vs Exp)</h3>
+                            <div class="flex-1 relative w-full h-full min-h-[250px]"><canvas id="revenueChart"></canvas></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 min-h-[300px] flex flex-col">
+                            <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wider">A/R Aging Summary</h3>
+                            <div class="flex-1 flex flex-col justify-center space-y-4" id="dash-aging"></div>
+                        </div>
+                    </div>
 
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: new URLSearchParams({
-        action: "sendOTP",
-        mobile: mobile
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "OTP_SENT") {
-        message.style.color = "green";
-        message.innerText = "OTP sent (Demo OTP: " + data.otp + ")";
-        document.getElementById("otp").classList.remove("hidden");
-        document.getElementById("verifyBtn").classList.remove("hidden");
-      } else {
-        message.style.color = "red";
-        message.innerText = "Failed to send OTP";
-      }
-    })
-    .catch(err => {
-      message.style.color = "red";
-      message.innerText = "Network error. Check Script URL.";
-    });
-  }
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col max-h-[400px]">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 shrink-0"><i data-lucide="clock" class="text-blue-500 w-5 h-5"></i> Recent Activity</h3>
+                            <div id="dash-recent-activity" class="space-y-3 overflow-y-auto pr-2 hide-scrollbar flex-1"></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col max-h-[400px]">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 shrink-0"><i data-lucide="alert-triangle" class="text-red-500 w-5 h-5"></i> Low Stock Alerts</h3>
+                            <div id="dash-low-stock" class="space-y-2 overflow-y-auto pr-2 hide-scrollbar flex-1"></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col max-h-[400px]">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 shrink-0"><i data-lucide="trending-up" class="text-emerald-500 w-5 h-5"></i> Top Sellers</h3>
+                            <div id="dash-top-sellers" class="space-y-2 overflow-y-auto pr-2 hide-scrollbar flex-1"></div>
+                        </div>
+                    </div>
+                </div>
 
-  function verifyOTP() {
-    const mobile = document.getElementById("mobile").value.trim();
-    const otp = document.getElementById("otp").value.trim();
-    const message = document.getElementById("message");
+                <!-- Daybook / General Journal View -->
+                <div id="view-daybook" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Daybook & General Journal</h2>
+                            <p class="text-slate-500">Track daily cash inflow and outflow transactions.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="date" id="daybook-date" onchange="window.renderDaybook()" class="px-4 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500 shadow-sm bg-white">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                            <div class="text-xs font-bold text-emerald-600 uppercase mb-1">Total Inflow</div>
+                            <div class="text-2xl font-bold text-emerald-800" id="daybook-in">₹0</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                            <div class="text-xs font-bold text-red-600 uppercase mb-1">Total Outflow</div>
+                            <div class="text-2xl font-bold text-red-800" id="daybook-out">₹0</div>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <div class="text-xs font-bold text-blue-600 uppercase mb-1">Net Daily Balance</div>
+                            <div class="text-2xl font-bold text-blue-800" id="daybook-net">₹0</div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm min-w-[800px]">
+                                <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                                    <tr><th class="p-4 font-medium">Date</th><th class="p-4 font-medium">Type</th><th class="p-4 font-medium">Ref / Name</th><th class="p-4 font-medium text-emerald-600 text-right">Inflow (+)</th><th class="p-4 font-medium text-red-600 text-right">Outflow (-)</th></tr>
+                                </thead>
+                                <tbody id="daybook-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-    if (otp.length !== 6) {
-      message.style.color = "red";
-      message.innerText = "Enter valid 6-digit OTP";
-      return;
-    }
+                <!-- Smart Invoice Engine -->
+                <div id="view-invoice" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Advanced Billing Engine</h2>
+                            <p class="text-slate-500 text-sm">Generate Invoices, Quotations, and Proformas.</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="saveInvoice('draft')" class="flex-1 md:flex-none px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-100 transition-all"><i data-lucide="save" class="w-4 h-4"></i> Save Draft</button>
+                            <button onclick="saveInvoice('final')" class="flex-1 md:flex-none px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"><i data-lucide="check-circle" class="w-4 h-4"></i> Finalize</button>
+                        </div>
+                    </div>
 
-    message.style.color = "black";
-    message.innerText = "Verifying OTP...";
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-wrap gap-4 items-center justify-between" id="wrap-multidoc">
+                        <div class="flex gap-4 items-center">
+                            <div class="wrap-multidoc-inner">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Document Type</label>
+                                <select id="inv-doc-type" onchange="window.updateDraftField('docType', this.value)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium outline-none focus:border-emerald-500">
+                                    <option value="Tax Invoice">Tax Invoice</option>
+                                    <option value="Proforma Invoice">Proforma Invoice</option>
+                                    <option value="Quotation">Quotation / Estimate</option>
+                                </select>
+                            </div>
+                            <div id="wrap-currency">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Currency</label>
+                                <select id="inv-currency" onchange="window.updateDraftField('currency', this.value)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium outline-none focus:border-emerald-500">
+                                    <option value="INR">INR (₹)</option><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="wrap-shipping-toggle">
+                            <button onclick="document.getElementById('adv-billing-fields').classList.toggle('hidden')" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1"><i data-lucide="settings-2" class="w-4 h-4"></i> Toggle Advanced Fields (Shipping, PO, RCM)</button>
+                        </div>
+                    </div>
 
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: new URLSearchParams({
-        action: "verifyOTP",
-        mobile: mobile,
-        otp: otp
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "VERIFIED") {
-        message.style.color = "green";
-        message.innerText = "✅ Login Successful";
-      } else {
-        message.style.color = "red";
-        message.innerText = "❌ Invalid OTP";
-      }
-    })
-    .catch(err => {
-      message.style.color = "red";
-      message.innerText = "Verification failed";
-    });
-  }
-</script>
+                    <div id="adv-billing-fields" class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 mb-6 hidden grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div><label class="text-xs font-medium text-slate-700 block mb-1">PO Reference No.</label><input type="text" id="inv-po-no" class="w-full px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm" oninput="window.updateDraftField('poNo', this.value)"></div>
+                        <div><label class="text-xs font-medium text-slate-700 block mb-1">Vehicle / Transport No.</label><input type="text" id="inv-vehicle" class="w-full px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm" oninput="window.updateDraftField('vehicleNo', this.value)"></div>
+                        <div><label class="text-xs font-medium text-slate-700 block mb-1">E-Way Bill / LR No.</label><input type="text" id="inv-eway" class="w-full px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm" oninput="window.updateDraftField('ewayBill', this.value)"></div>
+                        <div class="flex items-center gap-2 pt-5" id="wrap-rcm">
+                            <input type="checkbox" id="inv-rcm" onchange="window.updateDraftField('isRcm', this.checked)" class="w-4 h-4 text-emerald-600 rounded border-slate-300">
+                            <label for="inv-rcm" class="text-sm font-medium text-slate-700">Reverse Charge Mechanism (RCM)</label>
+                        </div>
+                    </div>
 
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6">
+                                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="users" class="w-5 h-5"></i> Client Details</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
+                                    <div class="col-span-1 md:col-span-3 relative">
+                                        <label class="text-sm font-medium text-slate-700 mb-1 block">Client Name (Search or Enter New)</label>
+                                        <input type="text" id="inv-client-name" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all" autocomplete="off" oninput="handleClientSearch(this.value); window.updateDraftField('client', {...window.AppState.draft.client, name: this.value})" onfocus="handleClientSearch(this.value)">
+                                        <div id="client-suggestions" class="hidden absolute z-30 w-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 max-h-48 overflow-y-auto"></div>
+                                    </div>
+                                    <div><label class="text-sm font-medium text-slate-700 mb-1 block">Mobile Number</label><input type="tel" id="inv-client-mobile" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none" oninput="window.updateDraftField('client', {...window.AppState.draft.client, mobile: this.value})"></div>
+                                    <div><label class="text-sm font-medium text-slate-700 block mb-1">GSTIN (Optional)</label><input type="text" id="inv-client-gstin" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none" oninput="window.updateDraftField('client', {...window.AppState.draft.client, gstin: this.value})"></div>
+                                    <div id="wrap-duedate"><label class="text-sm font-medium text-slate-700 mb-1 block">Due Date</label><input type="date" id="inv-due-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none" oninput="window.updateDraftField('dueDate', this.value)"></div>
+                                    <div class="col-span-1 md:col-span-3"><label class="text-sm font-medium text-slate-700 mb-1 block">Address / Shipping Details</label><input type="text" id="inv-client-address" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none" oninput="window.updateDraftField('client', {...window.AppState.draft.client, address: this.value})"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6">
+                                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="box" class="w-5 h-5"></i> Product Line Items</h3>
+                                <div class="relative mb-6">
+                                    <div class="flex items-center relative">
+                                        <i data-lucide="search" class="w-5 h-5 absolute left-3 text-emerald-600 z-10"></i>
+                                        <input type="text" id="inv-product-search" class="w-full pl-10 pr-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 focus:bg-white focus:border-emerald-500 outline-none placeholder:text-emerald-700/50" placeholder="Search product to add..." autocomplete="off" oninput="handleProductSearch(this.value)" onfocus="handleProductSearch(this.value)">
+                                    </div>
+                                    <div id="product-suggestions" class="hidden absolute z-20 w-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 max-h-48 overflow-y-auto"></div>
+                                </div>
+                                <div class="overflow-x-auto bg-slate-50 rounded-xl border border-slate-100" id="invoice-items-wrapper"></div>
+                            </div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6">
+                                <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2"><i data-lucide="file-edit" class="w-5 h-5"></i> Notes & Terms</h3>
+                                <textarea id="inv-notes" oninput="window.updateDraftField('notes', this.value)" rows="2" placeholder="Add specific treatment notes, dosage instructions, or invoice terms here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 outline-none transition-all resize-none"></textarea>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-emerald-800 text-white rounded-2xl p-6 shadow-xl shadow-emerald-900/20">
+                                <h3 class="text-emerald-100 font-medium mb-4 flex justify-between items-center">Live Summary <span id="inv-id-display" class="text-xs opacity-70"></span></h3>
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex justify-between"><span class="text-emerald-200">Subtotal</span><span class="font-mono" id="summary-subtotal">0.00</span></div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-emerald-200">Discount</span>
+                                        <div class="flex items-center gap-1">
+                                            <select id="inv-discount-type" onchange="window.updateDraftField('discountType', this.value)" class="bg-emerald-900 border border-emerald-700 text-white rounded px-1 py-1 text-xs outline-none"><option value="fixed">Flat</option><option value="percent">%</option></select>
+                                            <div class="flex items-center w-16 border border-emerald-700 bg-emerald-900/50 rounded overflow-hidden px-1"><input type="number" id="inv-discount" value="0" min="0" oninput="window.updateDraftField('discount', this.value)" class="w-full bg-transparent text-right text-white py-1 outline-none text-sm appearance-none"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center pb-2 border-b border-emerald-700" id="wrap-tds">
+                                        <span class="text-emerald-200">TDS %</span>
+                                        <div class="flex items-center w-16 border border-emerald-700 bg-emerald-900/50 rounded overflow-hidden px-1"><input type="number" id="inv-tds" value="0" min="0" oninput="window.updateDraftField('tds', this.value)" class="w-full bg-transparent text-right text-white py-1 outline-none text-sm appearance-none"></div>
+                                    </div>
+                                    <div class="flex justify-between text-emerald-300 text-xs pt-1"><span class="">CGST</span><span class="font-mono" id="summary-cgst">0.00</span></div>
+                                    <div class="flex justify-between pb-3 border-b border-emerald-700 text-emerald-300 text-xs"><span class="">SGST</span><span class="font-mono" id="summary-sgst">0.00</span></div>
+                                    <div class="flex justify-between items-end pt-2"><span class="text-emerald-100 text-lg">Net Payable</span><span class="text-3xl font-bold tracking-tight" id="summary-grand">0.00</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="indian-rupee" class="w-5 h-5"></i> Payment Settlement</h3>
+                                <div class="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4" id="payment-mode-toggle">
+                                    <button onclick="setPaymentMode('upi')" id="btn-mode-upi" class="flex-1 py-2 rounded-lg text-sm font-medium bg-white shadow-sm text-emerald-700 transition-all">UPI / QR</button>
+                                    <button onclick="setPaymentMode('cash')" id="btn-mode-cash" class="flex-1 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-all">Cash</button>
+                                </div>
+                                <div id="qr-container" class="flex flex-col items-center justify-center p-4 bg-emerald-50 rounded-xl border border-emerald-100 transition-all">
+                                    <div class="text-xs font-medium text-emerald-600 mb-3 uppercase tracking-wider">Auto-Updating QR</div>
+                                    <div class="bg-white p-2 rounded-xl shadow-sm" id="qr-image-wrapper"></div>
+                                    <div class="text-xs text-slate-500 mt-3 text-center">Scan to pay exact amount.</div>
+                                </div>
+                                <div id="cash-container" class="hidden text-center p-6 bg-slate-50 rounded-xl transition-all">
+                                    <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-2"><i data-lucide="indian-rupee" class="w-5 h-5 text-slate-500"></i></div>
+                                    <p class="text-slate-600 font-medium text-sm">Cash Payment</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purchases & Expenses View -->
+                <div id="view-expenses" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div class="w-full md:w-auto">
+                            <h2 class="text-2xl font-bold text-slate-800">Purchases & Expenses</h2>
+                            <p class="text-slate-500">Track vendors, outward payments, and Input Tax Credit (ITC).</p>
+                        </div>
+                        <button onclick="toggleExpenseModal(true)" class="w-full md:w-auto px-4 py-2 bg-red-600 text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-red-700 shadow-lg shadow-red-200 transition-all"><i data-lucide="minus-circle" class="w-4 h-4"></i> Log Expense</button>
+                    </div>
+
+                    <div id="add-expense-form" class="hidden bg-red-50 border border-red-200 rounded-2xl p-4 md:p-6 mb-6 shadow-sm">
+                        <h3 class="font-bold mb-4 text-red-800 flex items-center gap-2"><i data-lucide="receipt" class="w-5 h-5"></i> Log New Purchase / Expense</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Date *</label><input type="date" id="exp-date" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 block mb-1">Category *</label>
+                                <select id="exp-category" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none"><option value="Inventory Purchase">Inventory Purchase</option><option value="Rent">Rent</option><option value="Salary">Salary</option><option value="Supplies">Medical Supplies</option><option value="Marketing">Marketing</option><option value="Utilities">Utilities</option><option value="Other">Other</option></select>
+                            </div>
+                            <div class="md:col-span-2"><label class="text-sm font-medium text-slate-700 block mb-1">Vendor Name / Description</label><input type="text" id="exp-desc" placeholder="Who did you pay?" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Total Amount (₹) *</label><input type="number" id="exp-amount" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">GST/ITC Included (₹)</label><input type="number" id="exp-gst" placeholder="For Input Tax" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            
+                            <div class="md:col-span-3 flex items-center gap-3 mt-2">
+                                <div class="w-12 h-12 bg-white border border-slate-200 rounded flex items-center justify-center overflow-hidden shrink-0" id="exp-receipt-preview"><i data-lucide="image" class="text-slate-400 w-5 h-5"></i></div>
+                                <div class="flex-1"><label class="text-xs font-medium text-slate-700 block mb-1">Attach Bill/Receipt</label><input type="file" accept="image/*,application/pdf" onchange="window.handleExpenseReceiptUpload(event)" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-red-100 file:text-red-700 w-full"></div>
+                            </div>
+
+                            <div class="flex gap-2 md:col-span-3 md:justify-end mt-2">
+                                <button onclick="toggleExpenseModal(false)" class="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium">Cancel</button>
+                                <button onclick="saveExpense()" class="px-6 py-2 bg-red-600 text-white rounded-xl font-medium">Save Record</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm min-w-[800px]">
+                                <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                                    <tr><th class="p-4 font-medium">Date</th><th class="p-4 font-medium">Category</th><th class="p-4 font-medium">Vendor/Desc</th><th class="p-4 font-medium text-right">Amount Paid</th><th class="p-4 font-medium text-right text-emerald-600">ITC Claimed</th><th class="p-4 font-medium text-center">Receipt</th><th class="p-4 font-medium text-center">Action</th></tr>
+                                </thead>
+                                <tbody id="expenses-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory View -->
+                <div id="view-inventory" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div class="w-full md:w-auto">
+                            <h2 class="text-2xl font-bold text-slate-800">Product Manager</h2>
+                            <p class="text-slate-500">Manage inventory, HSN codes, batches, and profitability.</p>
+                            <div class="mt-4 relative max-w-md"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i><input type="text" id="inventory-search" placeholder="Search products..." oninput="window.renderInventory()" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500"></div>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto flex-wrap">
+                            <!-- Feature: Hidden File Input for Excel Import -->
+                            <input type="file" id="excel-import-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="window.handleExcelImport(event)">
+                            <button onclick="document.getElementById('excel-import-input').click()" class="flex-1 md:flex-none px-4 py-2 bg-white text-emerald-700 border border-emerald-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-50 transition-all"><i data-lucide="upload" class="w-4 h-4"></i> Import Excel</button>
+                            <button onclick="window.exportInventoryCSV()" class="flex-1 md:flex-none px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-slate-50 transition-all"><i data-lucide="download" class="w-4 h-4"></i> Export CSV</button>
+                            <button onclick="toggleProductModal(true)" class="flex-1 md:flex-none px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"><i data-lucide="plus" class="w-4 h-4"></i> Add Product</button>
+                        </div>
+                    </div>
+                    <div id="add-product-form" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-4 md:p-6 mb-6">
+                        <h3 class="font-bold mb-4" id="add-product-form-title">Add New Item</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <div class="md:col-span-2"><label class="text-sm font-medium text-slate-700 block mb-1">Product Name</label><input type="text" id="new-prod-name" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 block mb-1">Category</label>
+                                <select id="new-prod-category" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none"><option value="Medicine">Medicine</option><option value="Consultation">Consultation</option><option value="Oils & Syrups">Oils & Syrups</option><option value="Kit/Combo">Kit/Combo</option><option value="Other">Other</option></select>
+                            </div>
+                            <div class="wrap-hsn"><label class="text-sm font-medium text-slate-700 block mb-1">HSN/SAC Code</label><input type="text" id="new-prod-hsn" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            
+                            <div class="wrap-margin"><label class="text-sm font-medium text-slate-700 block mb-1">Cost Price (₹)</label><input type="number" id="new-prod-cost" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none" placeholder="Purchase price"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Selling Rate (₹)</label><input type="number" id="new-prod-rate" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 block mb-1">GST %</label>
+                                <select id="new-prod-gst" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select>
+                            </div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Stock Qty</label><input type="number" id="new-prod-stock" value="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div class="wrap-batch"><label class="text-sm font-medium text-slate-700 block mb-1">Batch No.</label><input type="text" id="new-prod-batch" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div class="wrap-batch"><label class="text-sm font-medium text-slate-700 block mb-1">Expiry Date</label><input type="month" id="new-prod-expiry" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div class="flex gap-2 md:col-span-2 md:justify-end mt-2">
+                                <button onclick="toggleProductModal(false)" class="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium">Cancel</button>
+                                <button onclick="saveProduct()" class="px-6 py-2 bg-emerald-600 text-white rounded-xl font-medium">Save Product</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="inventory-list"></div>
+                </div>
+
+                <!-- Records View -->
+                <div id="view-records" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Sales Records & Credit Notes</h2>
+                            <p class="text-slate-500">Advanced filtering, FY sort, bulk exports, and returns.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                            <button onclick="setFinancialYear()" class="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-blue-100"><i data-lucide="calendar" class="w-4 h-4"></i> Current FY</button>
+                            <button onclick="exportCSV()" class="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-50"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV</button>
+                            <button onclick="bulkExportPDF()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200"><i data-lucide="download" class="w-4 h-4"></i> Bulk PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-800 text-white p-4 rounded-2xl mb-4 flex justify-between items-center shadow-lg">
+                        <div><div class="text-emerald-200 text-xs font-bold uppercase tracking-wider">Filtered Tax Collection</div><div class="text-sm">Total GST collected in view (Net of returns)</div></div>
+                        <div class="text-2xl font-bold" id="records-tax-summary">₹0.00</div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-medium text-slate-500 mb-1 block">Search</label>
+                            <div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i><input type="text" id="filter-search" placeholder="Invoice ID or Name..." oninput="window.renderRecords()" class="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-500"></div>
+                        </div>
+                        <div><label class="text-xs font-medium text-slate-500 mb-1 block">Start Date</label><input type="date" id="filter-start" onchange="window.renderRecords()" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-500"></div>
+                        <div><label class="text-xs font-medium text-slate-500 mb-1 block">End Date</label><input type="date" id="filter-end" onchange="window.renderRecords()" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-500"></div>
+                        <div>
+                            <label class="text-xs font-medium text-slate-500 mb-1 block">Payment Status</label>
+                            <select id="filter-payment" onchange="window.renderRecords()" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-500 bg-white"><option value="">All Statuses</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option><option value="refunded">Refunded / Credit</option></select>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm min-w-[1000px]">
+                                <thead class="bg-slate-50 text-slate-600 border-b border-slate-100">
+                                    <tr><th class="p-4 font-medium">Doc No.</th><th class="p-4 font-medium">Type</th><th class="p-4 font-medium">Date</th><th class="p-4 font-medium">Client Name</th><th class="p-4 font-medium text-right">Amount</th><th class="p-4 font-medium text-center">Payment</th><th class="p-4 font-medium text-center">Action</th></tr>
+                                </thead>
+                                <tbody id="records-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clients View -->
+                <div id="view-clients" class="tab-content w-full">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+                        <div class="w-full md:w-auto">
+                            <h2 class="text-2xl font-bold text-slate-800">Client CRM & Ledgers</h2>
+                            <p class="text-slate-500">Manage patient records, clinical notes, and generate Statement of Accounts.</p>
+                            <div class="mt-4 relative max-w-md"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i><input type="text" id="clients-search" placeholder="Search patients..." oninput="window.renderClients()" class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-500"></div>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto flex-wrap">
+                            <button onclick="window.exportClientsCSV()" class="flex-1 md:flex-none px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-slate-50 transition-all"><i data-lucide="download" class="w-4 h-4"></i> Export CSV</button>
+                            <button onclick="window.toggleClientModal(true, true)" class="flex-1 md:flex-none px-4 py-2 bg-emerald-600 text-white rounded-xl font-medium flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"><i data-lucide="user-plus" class="w-4 h-4"></i> Add Client</button>
+                        </div>
+                    </div>
+                    <div id="edit-client-form" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-6 mb-6 shadow-sm">
+                        <h3 class="font-bold mb-4" id="edit-client-title">Edit Patient Profile</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-4">
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Name</label><input type="text" id="edit-client-name" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Mobile</label><input type="text" id="edit-client-mobile" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">GSTIN</label><input type="text" id="edit-client-gstin" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Address</label><input type="text" id="edit-client-address" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div class="md:col-span-4"><label class="text-sm font-medium text-slate-700 block mb-1">General Notes</label><textarea id="edit-client-notes" rows="2" placeholder="Allergies, preferences..." class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none resize-none"></textarea></div>
+                        </div>
+                        
+                        <!-- Client Journal Section -->
+                        <div class="border-t border-slate-200 pt-4" id="client-journal-section">
+                            <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="book" class="w-4 h-4 text-emerald-600"></i> Client Journal & Clinical Notes</h4>
+                            <div class="flex flex-col md:flex-row gap-2 mb-4">
+                                <input type="date" id="journal-date" class="px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm w-full md:w-40">
+                                <input type="text" id="journal-entry" placeholder="Add a new dated journal entry..." class="flex-1 px-3 py-2 rounded-lg border border-slate-200 outline-none text-sm w-full">
+                                <button type="button" onclick="window.addClientJournalEntry()" class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition-colors w-full md:w-auto">Add Entry</button>
+                            </div>
+                            <div id="client-journal-list" class="space-y-2 max-h-48 overflow-y-auto pr-2"></div>
+                        </div>
+
+                        <div class="flex gap-2 mt-4 justify-end border-t border-slate-200 pt-4">
+                            <button onclick="toggleClientModal(false)" class="px-6 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl font-medium">Cancel</button>
+                            <button onclick="saveClientEdit()" class="px-6 py-2 bg-emerald-600 text-white rounded-xl font-medium">Save Changes</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="clients-list"></div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="view-settings" class="tab-content w-full">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">System Settings</h2>
+                            <p class="text-slate-500">Business profile, bank details, and module toggles.</p>
+                        </div>
+                        <button onclick="handleLogout()" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-xl font-bold flex items-center gap-2 transition-all"><i data-lucide="log-out" class="w-4 h-4"></i> Sign Out</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+                        
+                        <!-- Modular Toggles -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4 col-span-1 md:col-span-2">
+                            <h3 class="font-bold text-slate-800 border-b pb-2 flex items-center gap-2"><i data-lucide="toggle-right" class="w-5 h-5 text-emerald-600"></i> Module & Feature Toggles</h3>
+                            <p class="text-xs text-slate-500 mb-4">Enable or disable advanced ERP features to keep your interface clean and strictly tailored to your workflow.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm font-medium text-slate-700" id="feature-toggles-container">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-expenses" class="w-4 h-4 text-emerald-600 rounded"> Expense Tracking Module</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-multiDoc" class="w-4 h-4 text-emerald-600 rounded"> Proformas & Quotations</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-currency" class="w-4 h-4 text-emerald-600 rounded"> Multi-Currency Billing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-shipping" class="w-4 h-4 text-emerald-600 rounded"> Adv. Shipping & PO Fields</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-tds" class="w-4 h-4 text-emerald-600 rounded"> TDS Deduction %</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-rcm" class="w-4 h-4 text-emerald-600 rounded"> Reverse Charge (RCM)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-hsn" class="w-4 h-4 text-emerald-600 rounded"> HSN/SAC Codes</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-dueDate" class="w-4 h-4 text-emerald-600 rounded"> Invoice Due Dates</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-ledger" class="w-4 h-4 text-emerald-600 rounded"> Client Ledger / Statement</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-creditNote" class="w-4 h-4 text-emerald-600 rounded"> Credit Notes & Refunds</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-margin" class="w-4 h-4 text-emerald-600 rounded"> Profit Margin Calculator</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="feat-batch" class="w-4 h-4 text-emerald-600 rounded"> Batch & Expiry Tracking</label>
+                            </div>
+                        </div>
+
+                        <!-- Security -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4 col-span-1 md:col-span-2 flex flex-col md:flex-row gap-6">
+                            <div class="flex-1">
+                                <h3 class="font-bold text-slate-800 border-b pb-2 flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-emerald-600"></i> App Security & Web Lock</h3>
+                                <div class="flex items-center gap-3 mt-4">
+                                    <input type="checkbox" id="set-pin-enable" class="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" onchange="window.togglePinFields(this.checked)">
+                                    <label for="set-pin-enable" class="text-sm font-bold text-slate-700">Enable 4-Digit Web Lock (PIN on Startup)</label>
+                                </div>
+                                <div id="pin-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-slate-700 block mb-1">Current PIN <span class="text-xs text-slate-400 font-normal">(Leave blank if new)</span></label>
+                                        <div class="relative">
+                                            <input type="password" id="set-pin-current" maxlength="4" class="w-full pl-4 pr-12 py-2 rounded-xl border border-slate-200 outline-none tracking-widest text-center text-lg">
+                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 password-toggle" onclick="togglePasswordVisibility('set-pin-current', this)">
+                                                <i data-lucide="eye" class="w-5 h-5"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-slate-700 block mb-1">New 4-Digit PIN</label>
+                                        <div class="relative">
+                                            <input type="password" id="set-pin-new" maxlength="4" class="w-full pl-4 pr-12 py-2 rounded-xl border border-slate-200 outline-none tracking-widest text-center text-lg">
+                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 password-toggle" onclick="togglePasswordVisibility('set-pin-new', this)">
+                                                <i data-lucide="eye" class="w-5 h-5"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-slate-800 border-b pb-2 flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5 text-emerald-600"></i> Financial Year Data Lock</h3>
+                                <p class="text-xs text-slate-500 mt-2 mb-2">Prevent modifications to invoices & expenses logged before this date.</p>
+                                <div><label class="text-sm font-medium text-slate-700 block mb-1">Lock Data Before</label><input type="date" id="set-lock-date" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+                            <h3 class="font-bold text-slate-800 border-b pb-2 mb-4">Business Profile</h3>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Business Name</label><input type="text" id="set-biz-name" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Business GSTIN</label><input type="text" id="set-biz-gstin" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Registered Address</label><input type="text" id="set-biz-address" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Contact Phone</label><input type="text" id="set-biz-phone" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">UPI Payment ID (For True QR Code)</label><input type="text" id="set-biz-upi" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none" placeholder="example@upi"></div>
+                            <div><label class="text-sm font-medium text-slate-700 block mb-1">Global Invoice Footer / T&C</label><textarea id="set-biz-terms" rows="2" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none resize-none" placeholder="Thank you for your business..."></textarea></div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+                                <h3 class="font-bold text-slate-800 border-b pb-2 mb-4">Bank Details (Prints on Invoice)</h3>
+                                <div><label class="text-sm font-medium text-slate-700 block mb-1">Bank Name</label><input type="text" id="set-bank-name" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none" placeholder="e.g. State Bank of India"></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-sm font-medium text-slate-700 block mb-1">Account No.</label><input type="text" id="set-bank-acc" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                                    <div><label class="text-sm font-medium text-slate-700 block mb-1">IFSC Code</label><input type="text" id="set-bank-ifsc" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+                                <h3 class="font-bold text-slate-800 border-b pb-2 mb-4">Branding & Assets</h3>
+                                <div>
+                                    <label class="text-sm font-medium text-slate-700 block mb-1">Invoice Header Display Style</label>
+                                    <select id="set-biz-logo-display" class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none bg-white mb-4">
+                                        <option value="both">Show Both Logo & Business Name</option><option value="logo">Show Logo Only</option><option value="name">Show Business Name Only</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-16 h-16 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden" id="logo-preview"><i data-lucide="image" class="text-slate-300"></i></div>
+                                    <div class="flex-1"><label class="text-sm font-medium text-slate-700 block mb-1">Upload Logo</label><input type="file" accept="image/*" onchange="window.handleImageUpload(event, 'logo')" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"></div>
+                                </div>
+                                <div class="flex items-center gap-4 pt-2 border-t border-slate-100 mt-4">
+                                    <div class="w-24 h-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden" id="sig-preview"><i data-lucide="pen-tool" class="text-slate-300"></i></div>
+                                    <div class="flex-1"><label class="text-sm font-medium text-slate-700 block mb-1">Upload Signature</label><input type="file" accept="image/*" onchange="window.handleImageUpload(event, 'signature')" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"></div>
+                                </div>
+                                <div class="flex items-center gap-4 pt-2 border-t border-slate-100 mt-4">
+                                    <div class="w-16 h-16 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center overflow-hidden" id="seal-preview"><i data-lucide="award" class="text-slate-300"></i></div>
+                                    <div class="flex-1"><label class="text-sm font-medium text-slate-700 block mb-1">Round Company Seal</label><input type="file" accept="image/*" onchange="window.handleImageUpload(event, 'seal')" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+                                <h3 class="font-bold text-slate-800 border-b pb-2 mb-4">PDF Layout Template (8 Formats)</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <button onclick="window.setTemplate('modern')" id="tpl-modern" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm">Modern</div></button>
+                                    <button onclick="window.setTemplate('classic')" id="tpl-classic" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm">Classic</div></button>
+                                    <button onclick="window.setTemplate('minimal')" id="tpl-minimal" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm">Minimal</div></button>
+                                    <button onclick="window.setTemplate('compact')" id="tpl-compact" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm">Compact</div></button>
+                                    <button onclick="window.setTemplate('elegant')" id="tpl-elegant" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm font-serif">Elegant</div></button>
+                                    <button onclick="window.setTemplate('bold')" id="tpl-bold" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm uppercase">Bold</div></button>
+                                    <button onclick="window.setTemplate('nature')" id="tpl-nature" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm text-green-700">Nature</div></button>
+                                    <button onclick="window.setTemplate('corporate')" id="tpl-corporate" class="p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white"><div class="font-bold text-slate-800 text-sm text-blue-800">Corporate</div></button>
+                                </div>
+                            </div>
+                            <button onclick="window.saveSettings()" class="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"><i data-lucide="save" class="w-5 h-5"></i> Save All Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center pb-safe pt-2 px-2 z-30 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]" id="mobile-nav"></nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="invoice-modal" class="fixed inset-0 z-[500] bg-slate-900/60 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+        <div class="bg-slate-100 rounded-2xl shadow-2xl w-full max-w-4xl h-[95vh] flex flex-col overflow-hidden relative">
+            <div class="p-4 border-b border-slate-200 bg-white flex justify-between items-center z-10 shrink-0 shadow-sm">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2"><i data-lucide="file-text"></i> PDF Preview</h3>
+                <div class="flex gap-2">
+                    <button onclick="window.downloadPDF()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium flex gap-2 items-center hover:bg-emerald-700 transition-colors"><i data-lucide="download" class="w-4 h-4"></i> Download</button>
+                    <button onclick="window.closeInvoiceModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"><i data-lucide="x" class="w-4 h-4"></i> Close</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50">
+                <div id="invoice-render-area" class="bg-white shadow-xl w-[210mm] max-w-[210mm] min-h-[297mm] mx-auto px-10 py-12 relative text-slate-800 text-[13px] leading-relaxed overflow-hidden box-border"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ledger-modal" class="fixed inset-0 z-[500] bg-slate-900/60 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+        <div class="bg-slate-100 rounded-2xl shadow-2xl w-full max-w-4xl h-[95vh] flex flex-col overflow-hidden relative">
+            <div class="p-4 border-b border-slate-200 bg-white flex justify-between items-center z-10 shrink-0 shadow-sm">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2"><i data-lucide="book-open"></i> Statement of Accounts</h3>
+                <div class="flex gap-2">
+                    <button onclick="window.downloadLedgerPDF()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium flex gap-2 items-center hover:bg-blue-700 transition-colors"><i data-lucide="download" class="w-4 h-4"></i> Export Ledger</button>
+                    <button onclick="window.closeLedgerModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"><i data-lucide="x" class="w-4 h-4"></i> Close</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50">
+                <div id="ledger-render-area" class="bg-white shadow-xl w-[210mm] max-w-[210mm] min-h-[297mm] mx-auto px-10 py-12 relative text-slate-800 text-[13px] leading-relaxed overflow-hidden box-border"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 100% Reliable Invisible Area for Bulk PDF -->
+    <div id="bulk-render-container" class="absolute top-[-9999px] left-[-9999px] w-[210mm] bg-white pointer-events-none">
+        <div id="bulk-render-area" class="w-full bg-white text-slate-900"></div>
+    </div>
+
+    <div id="pdf-loading-overlay" class="fixed inset-0 z-[9999] bg-white hidden flex-col items-center justify-center">
+        <i data-lucide="loader-2" class="w-12 h-12 text-emerald-600 animate-spin mb-4"></i>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Generating High-Res PDF...</h2>
+        <p class="text-slate-500">Please do not close or scroll the application.</p>
+    </div>
+
+    <!-- Firebase SDK & Core Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const defaultAppId = 'dev-ayurveda-pro-auth';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
+        const fallbackConfig = { apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og", authDomain: "dev-ayurveda.firebaseapp.com", projectId: "dev-ayurveda", storageBucket: "dev-ayurveda.firebasestorage.app", messagingSenderId: "40760282698", appId: "1:40760282698:web:20e31100eed712631ca0b3" };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
+        
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig); 
+            auth = getAuth(app); 
+            db = getFirestore(app);
+        } catch(e) {
+            console.error("Firebase Init Error:", e);
+        }
+
+        const currencyMap = { 'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£' };
+        const defaultFeatures = { expenses: true, multiDoc: true, currency: true, shipping: true, tds: true, rcm: true, hsn: true, dueDate: true, ledger: true, creditNote: true, margin: true, batch: true };
+
+        // Centralized State Factory to prevent cross-account leaking
+        function getInitialState() {
+            return {
+                user: null, activeTab: 'dashboard', products: [], clients: [], invoices: [], expenses: [], revenueChartInst: null, paymentPieChartInst: null,
+                settings: { businessName: '', owner: '', gstin: '', address: '', phone: '', upi: '', logo: '', signature: '', seal: '', bankName: '', bankAcc: '', bankIfsc: '', template: 'modern', customTerms: '', logoDisplay: 'both', pinEnabled: false, pin: '', lockDate: '', features: {...defaultFeatures} },
+                editingProductId: null, editingClientId: null, editingExpenseId: null,
+                signupLogoBase64: '', signupSigBase64: '', newExpenseReceiptBase64: '',
+                draft: { id: '', docType: 'Tax Invoice', currency: 'INR', items: [], discount: 0, discountType: 'fixed', tds: 0, isRcm: false, poNo: '', vehicleNo: '', ewayBill: '', paymentMode: 'upi', paymentStatus: 'unpaid', notes: '', dueDate: '', client: { name: '', mobile: '', gstin: '', address: '' } }
+            };
+        }
+
+        window.AppState = getInitialState();
+
+        // Used to aggressively clear firestore listeners so they don't persist on logout
+        function clearFirestoreListeners() {
+            if (window.unsubProducts) { window.unsubProducts(); window.unsubProducts = null; }
+            if (window.unsubClients) { window.unsubClients(); window.unsubClients = null; }
+            if (window.unsubInvoices) { window.unsubInvoices(); window.unsubInvoices = null; }
+            if (window.unsubExpenses) { window.unsubExpenses(); window.unsubExpenses = null; }
+            if (window.unsubSettings) { window.unsubSettings(); window.unsubSettings = null; }
+        }
+
+        // Eye Icon Toggle Function
+        window.togglePasswordVisibility = function(inputId, trigger) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                trigger.innerHTML = '<i data-lucide="eye-off" class="w-5 h-5"></i>';
+            } else {
+                input.type = 'password';
+                trigger.innerHTML = '<i data-lucide="eye" class="w-5 h-5"></i>';
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        // Excel Import Function
+        window.handleExcelImport = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                try {
+                    const data = evt.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) return window.showToast("Excel sheet is empty.", "warning");
+
+                    const batch = writeBatch(db);
+                    const uid = window.AppState.user.uid;
+                    let count = 0;
+
+                    jsonData.forEach((row) => {
+                        // Intelligent mapping
+                        const name = row.Name || row.Product || row.Item || row['Product Name'];
+                        if (!name) return;
+
+                        const rate = Number(row.Rate || row.Price || row['Selling Price'] || 0);
+                        const cost = Number(row.Cost || row['Cost Price'] || row['Purchase Price'] || 0);
+                        const gst = Number(row.GST || row.Tax || 0);
+                        const stock = Number(row.Stock || row.Quantity || row.Qty || 0);
+                        const hsn = String(row.HSN || row.SAC || '');
+                        const category = row.Category || 'Medicine';
+                        const batchNo = String(row.Batch || row['Batch No'] || '');
+                        const expiry = String(row.Expiry || row['Expiry Date'] || '');
+
+                        const newProdRef = doc(collection(db, 'artifacts', appId, 'users', uid, 'products'));
+                        batch.set(newProdRef, {
+                            name, category, hsn, cost, rate, gst, stock, batch: batchNo, expiry,
+                            isHidden: false, createdAt: serverTimestamp()
+                        });
+                        count++;
+                    });
+
+                    if (count > 0) {
+                        await batch.commit();
+                        window.showToast(`Imported ${count} products successfully!`);
+                    } else {
+                        window.showToast("No valid product names found in Excel.", "warning");
+                    }
+                    e.target.value = ''; // Reset input
+                } catch (err) {
+                    window.showToast("Failed to parse Excel file.", "error");
+                    console.error(err);
+                }
+            };
+            reader.readAsBinaryString(file);
+        };
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-amber-500' : 'bg-emerald-600');
+            const icon = type === 'error' ? 'alert-circle' : (type === 'warning' ? 'alert-triangle' : 'check-circle');
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white font-medium transform transition-all duration-300 translate-y-[-20px] opacity-0 ${bgColor} pointer-events-auto`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+            if (typeof lucide !== 'undefined') lucide.createIcons({ root: toast });
+
+            requestAnimationFrame(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); });
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-20px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        const navItems = [
+            { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' }, 
+            { id: 'daybook', icon: 'book-open', label: 'Daybook' },
+            { id: 'invoice', icon: 'plus', label: 'Invoice' },
+            { id: 'records', icon: 'file-text', label: 'Records' }, 
+            { id: 'inventory', icon: 'box', label: 'Inventory' },
+            { id: 'expenses', icon: 'receipt', label: 'Expenses', class: 'feat-expenses' },
+            { id: 'clients', icon: 'users', label: 'Clients' }, 
+            { id: 'settings', icon: 'settings', label: 'Settings' }
+        ];
+
+        // Safe DOM Setters
+        const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+        const setHTML = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+
+        window.formatCurrency = (amt, currency = 'INR') => { const symbol = currencyMap[currency] || '₹'; return `${symbol}${Number(amt || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; };
+        const formatINR = (amt) => window.formatCurrency(amt, 'INR');
+        window.isFeatureEnabled = (key) => window.AppState.settings.features ? window.AppState.settings.features[key] !== false : true;
+        
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        let authResolved = false;
+
+        async function initAuth() {
+            try { 
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && auth) {
+                    await signInWithCustomToken(auth, __initial_auth_token); 
+                }
+            } catch (err) { console.error("Auth init failed:", err); }
+        }
+
+        if (auth) initAuth();
+
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                authResolved = true;
+                if (user) {
+                    window.AppState.user = user;
+                    const authC = document.getElementById('auth-container'); if(authC) authC.style.display = 'none';
+                    const appC = document.getElementById('app-container'); if(appC) appC.style.display = 'flex';
+                    setText('user-id-display', user.email || user.uid);
+                    
+                    const savedDraft = localStorage.getItem('ayur_draft_pro');
+                    if(savedDraft) { window.AppState.draft = JSON.parse(savedDraft); }
+
+                    setupFirestoreListeners();
+                    renderNavigation();
+                    switchTab(window.AppState.activeTab);
+                } else {
+                    // Critical Fix: Hard reset state and CLEAR listeners on logout to prevent any data/image leaking
+                    clearFirestoreListeners();
+                    window.AppState = getInitialState();
+                    const authC = document.getElementById('auth-container'); if(authC) authC.style.display = 'block';
+                    const appC = document.getElementById('app-container'); if(appC) appC.style.display = 'none';
+                    setHTML('signup-logo-preview', '<i data-lucide="image" class="text-slate-400 w-5 h-5"></i>');
+                    setHTML('signup-sig-preview', '<i data-lucide="pen-tool" class="text-slate-400 w-4 h-4"></i>');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            });
+        }
+
+        setTimeout(() => {
+            const checkAuthAndDismiss = setInterval(() => {
+                if (authResolved || !auth) {
+                    clearInterval(checkAuthAndDismiss);
+                    const splash = document.getElementById('splash-screen');
+                    if(splash) {
+                        splash.classList.add('splash-exit');
+                        setTimeout(() => splash.classList.add('hidden'), 500);
+                    }
+                }
+            }, 100);
+        }, 2000);
+
+        window.toggleAuthMode = function(mode) {
+            const lForm = document.getElementById('login-form'); if(lForm) lForm.classList.toggle('hidden', mode === 'signup');
+            const sForm = document.getElementById('signup-form'); if(sForm) sForm.classList.toggle('hidden', mode === 'login');
+            setText('auth-title', mode === 'login' ? 'Welcome Back' : 'Create Account');
+            setText('auth-subtitle', mode === 'login' ? 'Sign in to access your dashboard.' : 'Setup your professional Ayurvedic ERP.');
+        }
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn'); if(btn) btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons();
+            try { 
+                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); 
+            } catch (error) { 
+                // Platform/Domain Warning
+                let msg = error.message;
+                if(error.code === 'auth/unauthorized-domain') {
+                    msg = "Domain not authorized! You must add this URL to your Firebase Console > Authentication > Settings > Authorized Domains.";
+                }
+                window.showToast("Login failed: " + msg, "error"); 
+            }
+            finally { if(btn) btn.innerHTML = 'Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+        }
+
+        window.handleSignupUpload = function(e, type) {
+            const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
+            reader.onload = (ev) => {
+                if(type === 'logo') { window.AppState.signupLogoBase64 = ev.target.result; setHTML('signup-logo-preview', `<img src="${ev.target.result}" class="w-full h-full object-cover">`); }
+                if(type === 'signature') { window.AppState.signupSigBase64 = ev.target.result; setHTML('signup-sig-preview', `<img src="${ev.target.result}" class="w-full h-full object-cover">`); }
+            }; reader.readAsDataURL(file);
+        }
+
+        window.handleExpenseReceiptUpload = function(e) {
+            const file = e.target.files[0]; if(!file) return; const reader = new FileReader();
+            reader.onload = (ev) => { window.AppState.newExpenseReceiptBase64 = ev.target.result; setHTML('exp-receipt-preview', `<img src="${ev.target.result}" class="w-full h-full object-cover">`); }; reader.readAsDataURL(file);
+        }
+
+        window.handleImageUpload = function(e, type) {
+            const file = e.target.files[0]; 
+            if(!file) return; 
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const base64Image = ev.target.result;
+                window.AppState.settings[type] = base64Image;
+                setHTML(`${type}-preview`, `<img src="${base64Image}" class="w-full h-full object-contain">`);
+                window.showToast("Image uploaded. Remember to click 'Save All Settings'.");
+            }; 
+            reader.readAsDataURL(file);
+        }
+
+        window.handleSignup = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('signup-btn'); if(btn) btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons();
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, document.getElementById('signup-email').value, document.getElementById('signup-password').value);
+                // Explicitly define all fields so old state cannot leak
+                await setDoc(doc(db, 'artifacts', appId, 'users', cred.user.uid, 'config', 'settings'), {
+                    businessName: document.getElementById('signup-biz-name').value || '', 
+                    owner: document.getElementById('signup-owner').value || '', 
+                    phone: document.getElementById('signup-phone').value || '', 
+                    gstin: document.getElementById('signup-gstin').value || '', 
+                    address: document.getElementById('signup-address').value || '',
+                    logo: window.AppState.signupLogoBase64 || '', 
+                    signature: window.AppState.signupSigBase64 || '', 
+                    seal: '', bankName: '', bankAcc: '', bankIfsc: '',
+                    template: 'modern', logoDisplay: 'both', pinEnabled: false, pin: '', customTerms: '', features: {...defaultFeatures}
+                });
+                window.showToast("Account Created Successfully!");
+            } catch (error) { 
+                let msg = error.message;
+                if(error.code === 'auth/unauthorized-domain') {
+                    msg = "Domain not authorized! Add this domain to Firebase Console > Authentication > Settings > Authorized Domains.";
+                }
+                window.showToast("Signup failed: " + msg, "error"); 
+            }
+            finally { if(btn) btn.innerHTML = 'Create Account <i data-lucide="user-plus" class="w-4 h-4"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+        }
+
+        window.handleLogout = async function() {
+            try {
+                sessionStorage.removeItem('ayur_unlocked');
+                clearFirestoreListeners(); // Make doubly sure listeners are stopped before auth switches state
+                await signOut(auth);
+                window.showToast("Signed out successfully.");
+            } catch(e) { window.showToast("Error signing out", "error"); }
+        }
+
+        window.getNextInvoiceId = function() {
+            const monthStr = new Date().toLocaleString('default', { month: 'short' }).toUpperCase();
+            const prefix = `DEV${monthStr}`;
+            const existing = window.AppState.invoices.filter(i => i.id && i.id.startsWith(prefix));
+            let maxNum = 0;
+            existing.forEach(i => {
+                const num = parseInt(i.id.replace(prefix, ''), 10);
+                if (!isNaN(num) && num > maxNum) maxNum = num;
+            });
+            return `${prefix}${(maxNum + 1).toString().padStart(3, '0')}`;
+        }
+
+        function setupFirestoreListeners() {
+            const uid = window.AppState.user.uid;
+            
+            // Clear any lingering listeners from a previous session before starting new ones
+            clearFirestoreListeners();
+
+            // Added error handlers to each onSnapshot to catch permission issues silently rather than crashing
+            window.unsubProducts = onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'products'), (snap) => { 
+                window.AppState.products = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                if(window.AppState.activeTab === 'inventory' && window.renderInventory) window.renderInventory();
+                if(window.AppState.activeTab === 'dashboard') window.updateDashboard();
+            }, (err) => console.error("Products Listener Error:", err));
+
+            window.unsubClients = onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'clients'), (snap) => { 
+                window.AppState.clients = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                if(window.AppState.activeTab === 'clients') window.renderClients();
+            }, (err) => console.error("Clients Listener Error:", err));
+
+            window.unsubInvoices = onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'invoices'), (snap) => { 
+                window.AppState.invoices = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.createdAt - a.createdAt); 
+                if(!window.AppState.draft.id || window.AppState.draft.id.startsWith('INV-')) {
+                    window.AppState.draft.id = window.getNextInvoiceId();
+                    if(window.AppState.activeTab === 'invoice') window.updateInvoiceUI();
+                }
+                if(window.AppState.activeTab === 'records') window.renderRecords();
+                if(window.AppState.activeTab === 'dashboard') window.updateDashboard();
+                if(window.AppState.activeTab === 'daybook' && window.renderDaybook) window.renderDaybook();
+                if(window.AppState.activeTab === 'clients') window.renderClients();
+            }, (err) => console.error("Invoices Listener Error:", err));
+
+            window.unsubExpenses = onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'expenses'), (snap) => {
+                window.AppState.expenses = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(b.date) - new Date(a.date));
+                if(window.AppState.activeTab === 'expenses') window.renderExpenses();
+                if(window.AppState.activeTab === 'daybook' && window.renderDaybook) window.renderDaybook();
+                if(window.AppState.activeTab === 'dashboard') window.updateDashboard();
+            }, (err) => console.error("Expenses Listener Error:", err));
+
+            window.unsubSettings = onSnapshot(doc(db, 'artifacts', appId, 'users', uid, 'config', 'settings'), (docSnap) => {
+                if (docSnap.exists()) { 
+                    window.AppState.settings = { ...window.AppState.settings, ...docSnap.data() }; 
+                    if(window.AppState.activeTab === 'settings') window.populateSettingsUI(); 
+                    
+                    const lockScreen = document.getElementById('pin-lock-screen');
+                    if(window.AppState.settings.pinEnabled && !sessionStorage.getItem('ayur_unlocked') && lockScreen) {
+                        lockScreen.classList.add('active'); lockScreen.classList.remove('hidden');
+                    }
+                    window.applyFeatureVisibility();
+                    renderNavigation();
+                }
+            }, (err) => console.error("Settings Listener Error:", err));
+        }
+
+        window.verifyPin = function() {
+            const entered = document.getElementById('secure-pin-field') ? document.getElementById('secure-pin-field').value : '';
+            if (entered === window.AppState.settings.pin) {
+                sessionStorage.setItem('ayur_unlocked', 'true');
+                const lockScreen = document.getElementById('pin-lock-screen');
+                if(lockScreen) { lockScreen.classList.remove('active'); lockScreen.classList.add('hidden'); }
+                const errEl = document.getElementById('pin-error'); if(errEl) errEl.classList.add('hidden');
+            } else { 
+                const errEl = document.getElementById('pin-error'); if(errEl) errEl.classList.remove('hidden'); 
+                setVal('secure-pin-field', ''); 
+            }
+        }
+        window.togglePinFields = function(checked) { const el = document.getElementById('pin-fields'); if(el) el.classList.toggle('hidden', !checked); }
+        
+        window.generateLocalQR = function(text) {
+            if(!text) return '';
+            try { const qr = new QRious({ value: text, size: 300, level: 'H' }); return qr.toDataURL('image/png'); } 
+            catch(e) { return ''; }
+        }
+
+        window.applyFeatureVisibility = function() {
+            const check = (id, key) => { const el = document.getElementById(id); if(el) el.style.display = window.isFeatureEnabled(key) ? '' : 'none'; };
+            const checkClass = (cls, key) => { document.querySelectorAll('.'+cls).forEach(el => el.style.display = window.isFeatureEnabled(key) ? '' : 'none'); };
+            
+            check('wrap-multidoc', 'multiDoc'); check('wrap-currency', 'currency'); check('wrap-shipping-toggle', 'shipping');
+            check('wrap-rcm', 'rcm'); check('wrap-tds', 'tds'); check('wrap-duedate', 'dueDate');
+            checkClass('wrap-hsn', 'hsn'); checkClass('wrap-margin', 'margin'); checkClass('wrap-batch', 'batch');
+            checkClass('wrap-expenses-stat', 'expenses');
+        }
+
+        function renderNavigation() {
+            const desktopNav = document.getElementById('desktop-nav'); const mobileNav = document.getElementById('mobile-nav');
+            if(!desktopNav || !mobileNav) return;
+            desktopNav.innerHTML = ''; mobileNav.innerHTML = '';
+            
+            const lowStockCount = (window.AppState.products || []).filter(p => p.stock !== undefined && p.stock <= 10 && !p.isHidden).length;
+
+            navItems.forEach(item => {
+                if(item.class === 'feat-expenses' && !window.isFeatureEnabled('expenses')) return;
+
+                const isActive = window.AppState.activeTab === item.id;
+                let badge = '';
+                if(item.id === 'inventory' && lowStockCount > 0) {
+                    badge = `<span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">${lowStockCount}</span>`;
+                }
+
+                const dBtn = document.createElement('button');
+                dBtn.className = `flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all w-full text-left ${isActive ? 'nav-desktop-active' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}`;
+                dBtn.innerHTML = `<i data-lucide="${item.icon}" class="w-5 h-5"></i> ${item.label} ${badge}`;
+                dBtn.onclick = () => switchTab(item.id); desktopNav.appendChild(dBtn);
+
+                const mBtn = document.createElement('button');
+                mBtn.className = `flex flex-col items-center p-2 text-xs font-medium transition-colors w-full relative ${isActive ? 'nav-mobile-active' : 'text-slate-500'}`;
+                mBtn.innerHTML = `<i data-lucide="${item.icon}" class="w-6 h-6 mb-1 ${isActive ? 'fill-emerald-100' : ''}"></i> <span class="truncate w-full text-center">${item.label}</span> ${lowStockCount > 0 && item.id === 'inventory' ? `<div class="absolute top-1 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>` : ''}`;
+                mBtn.onclick = () => switchTab(item.id); mobileNav.appendChild(mBtn);
+            });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.switchTab = function(tabId) {
+            window.AppState.activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const view = document.getElementById(`view-${tabId}`);
+            if(view) view.classList.add('active');
+            
+            renderNavigation(); window.applyFeatureVisibility();
+            
+            if(tabId === 'dashboard') window.updateDashboard();
+            if(tabId === 'daybook' && window.renderDaybook) window.renderDaybook();
+            if(tabId === 'invoice') { window.restoreDraftToUI(); window.updateInvoiceUI(); }
+            if(tabId === 'inventory' && window.renderInventory) window.renderInventory();
+            if(tabId === 'expenses' && window.renderExpenses) window.renderExpenses();
+            if(tabId === 'records') { window.populateClientFilter(); window.renderRecords(); }
+            if(tabId === 'clients') window.renderClients();
+            if(tabId === 'settings') window.populateSettingsUI();
+            
+            window.scrollTo(0,0);
+        }
+
+        window.updateDashboard = function() {
+            let invoices = window.AppState.invoices || []; 
+            let expenses = window.AppState.expenses || [];
+            const products = window.AppState.products || []; 
+            
+            const filterEl = document.getElementById('dash-date-filter');
+            const filter = filterEl ? filterEl.value : 'all';
+            if (filter !== 'all') {
+                const now = new Date();
+                let filterMonth = now.getMonth();
+                let filterYear = now.getFullYear();
+                if (filter === 'last_month') {
+                    filterMonth -= 1;
+                    if (filterMonth < 0) { filterMonth = 11; filterYear -= 1; }
+                }
+                const filterPrefix = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}`;
+                invoices = invoices.filter(i => i.date && i.date.startsWith(filterPrefix));
+                expenses = expenses.filter(e => e.date && e.date.startsWith(filterPrefix));
+            }
+
+            const finalized = invoices.filter(i => i.status === 'final' && i.status !== 'void' && i.docType !== 'Quotation' && i.docType !== 'Proforma Invoice');
+            
+            const totalRev = finalized.reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0);
+            const totalExp = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            const netProfit = totalRev - totalExp;
+            const grossMargin = totalRev > 0 ? ((netProfit / totalRev) * 100).toFixed(1) : 0;
+
+            setText('dash-profit', formatINR(netProfit));
+            setText('dash-margin', `${grossMargin}%`);
+            setText('dash-revenue', formatINR(totalRev));
+            setText('dash-expenses', formatINR(totalExp));
+            
+            const outputTax = finalized.reduce((sum, i) => sum + (Number(i.totalTax) || 0), 0);
+            const inputTax = expenses.reduce((sum, e) => sum + (Number(e.gstAmount) || 0), 0);
+            const netTax = outputTax - inputTax;
+            
+            const unpaidDues = finalized.filter(i => i.paymentStatus !== 'paid').reduce((sum, i) => sum + (Number(i.grandTotal) || 0), 0);
+            let cashL = 0, bankL = 0;
+            finalized.filter(i => i.paymentStatus === 'paid').forEach(i => { if(i.paymentMode === 'cash') cashL += Number(i.grandTotal); else bankL += Number(i.grandTotal); });
+
+            setText('dash-tax', formatINR(netTax));
+            setText('dash-unpaid', formatINR(unpaidDues));
+            setText('dash-cash', formatINR(cashL));
+            setText('dash-bank', formatINR(bankL));
+
+            const ctxRevEl = document.getElementById('revenueChart');
+            if (ctxRevEl) {
+                const ctxRev = ctxRevEl.getContext('2d');
+                const last7Days = Array.from({length: 7}, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return d.toISOString().split('T')[0]; }).reverse();
+                const revData = last7Days.map(date => finalized.filter(inv => inv.date === date).reduce((sum, inv) => sum + Number(inv.grandTotal), 0));
+                const expData = last7Days.map(date => expenses.filter(e => e.date === date).reduce((sum, e) => sum + Number(e.amount), 0));
+
+                if (window.AppState.revenueChartInst) window.AppState.revenueChartInst.destroy();
+                window.AppState.revenueChartInst = new Chart(ctxRev, { 
+                    type: 'bar', 
+                    data: { labels: last7Days.map(d => d.slice(5)), datasets: [
+                        { label: 'Revenue (₹)', data: revData, backgroundColor: '#059669', borderRadius: 4 },
+                        { label: 'Expenses (₹)', data: expData, backgroundColor: '#ef4444', borderRadius: 4 }
+                    ] }, 
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }, plugins: { legend: { position: 'bottom' } } } 
+                });
+            }
+
+            const ctxPieEl = document.getElementById('paymentPieChart');
+            if (ctxPieEl) {
+                const ctxPie = ctxPieEl.getContext('2d'); let upiCount = 0, cashCount = 0;
+                finalized.forEach(inv => { if(inv.paymentMode === 'upi') upiCount++; else cashCount++; });
+                if (window.AppState.paymentPieChartInst) window.AppState.paymentPieChartInst.destroy();
+                window.AppState.paymentPieChartInst = new Chart(ctxPie, {
+                    type: 'doughnut', data: { labels: ['UPI/Bank', 'Cash'], datasets: [{ data: [upiCount, cashCount], backgroundColor: ['#3b82f6', '#22c55e'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            const today = new Date(); let d0_30 = 0, d31_60 = 0, d60plus = 0;
+            finalized.filter(i => i.paymentStatus !== 'paid').forEach(inv => {
+                const ageDays = (today - new Date(inv.date)) / (1000 * 60 * 60 * 24);
+                if(ageDays <= 30) d0_30 += Number(inv.grandTotal); else if(ageDays <= 60) d31_60 += Number(inv.grandTotal); else d60plus += Number(inv.grandTotal);
+            });
+            setHTML('dash-aging', `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg"><span class="text-sm font-medium text-slate-600">0 - 30 Days</span><span class="font-bold text-slate-800">${formatINR(d0_30)}</span></div><div class="flex justify-between items-center bg-amber-50 p-3 rounded-lg"><span class="text-sm font-medium text-amber-700">31 - 60 Days</span><span class="font-bold text-amber-800">${formatINR(d31_60)}</span></div><div class="flex justify-between items-center bg-red-50 p-3 rounded-lg"><span class="text-sm font-medium text-red-700">60+ Days (Overdue)</span><span class="font-bold text-red-800">${formatINR(d60plus)}</span></div>`);
+
+            setHTML('dash-recent-activity', invoices.slice(0, 8).map(inv => `<div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl mb-2 ${inv.status==='void'?'opacity-50':''}"><div class="truncate pr-2"><div class="font-medium text-slate-800 text-sm truncate">${inv.client.name || 'Unknown'}</div><div class="text-xs text-slate-400">${inv.id}</div></div><div class="text-right shrink-0"><div class="font-bold text-emerald-700 text-sm ${inv.status==='void'?'line-through text-slate-400':''}">${window.formatCurrency(inv.grandTotal, inv.currency)}</div><span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${inv.status === 'final' ? 'bg-emerald-100 text-emerald-700' : (inv.status === 'void' ? 'bg-slate-200 text-slate-600' : 'bg-amber-100 text-amber-700')}">${inv.status}</span></div></div>`).join('') || '<div class="text-sm text-slate-400 p-4 text-center">No recent activity.</div>');
+
+            const lowStockItems = products.filter(p => p.stock !== undefined && p.stock <= 10 && !p.isHidden);
+            setHTML('dash-low-stock', lowStockItems.map(p => `<div class="flex justify-between items-center p-3 bg-red-50 rounded-xl mb-2"><div class="text-sm font-medium text-red-800">${p.name}</div><div class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">Stock: ${p.stock}</div></div>`).join('') || '<div class="text-sm text-slate-400 p-4 text-center">Stock levels look good!</div>');
+
+            const salesMap = {}; finalized.forEach(inv => inv.items.forEach(item => salesMap[item.name] = (salesMap[item.name] || 0) + Number(item.qty)));
+            const topSellers = Object.entries(salesMap).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            setHTML('dash-top-sellers', topSellers.map(ts => `<div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl mb-2"><div class="text-sm font-medium text-emerald-800">${ts[0]}</div><div class="text-xs font-bold text-emerald-700">${ts[1]} sold</div></div>`).join('') || '<div class="text-sm text-slate-400 p-4 text-center">No sales data yet.</div>');
+        }
+
+        window.renderDaybook = function() {
+            const dateEl = document.getElementById('daybook-date');
+            if(!dateEl) return;
+            if(!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+            const filterDate = dateEl.value;
+
+            const invs = (window.AppState.invoices || []).filter(i => i.date === filterDate && i.status === 'final' && i.status !== 'void' && i.docType !== 'Quotation' && i.docType !== 'Proforma Invoice');
+            const exps = (window.AppState.expenses || []).filter(e => e.date === filterDate);
+
+            let inflow = 0; let outflow = 0;
+            let rows = [];
+
+            invs.forEach(i => {
+                inflow += Number(i.grandTotal);
+                rows.push({ date: i.date, type: i.docType || 'Invoice', name: i.client?.name || 'Unknown', in: i.grandTotal, out: 0, raw: i });
+            });
+            exps.forEach(e => {
+                outflow += Number(e.amount);
+                rows.push({ date: e.date, type: 'Expense', name: e.category + (e.desc ? ` - ${e.desc}` : ''), in: 0, out: e.amount, raw: e });
+            });
+
+            rows.sort((a,b) => new Date(b.raw.createdAt || 0) - new Date(a.raw.createdAt || 0));
+
+            setText('daybook-in', formatINR(inflow));
+            setText('daybook-out', formatINR(outflow));
+            setText('daybook-net', formatINR(inflow - outflow));
+
+            setHTML('daybook-list', rows.map(r => `
+                <tr class="border-b border-slate-50 bg-white hover:bg-slate-50">
+                    <td class="p-4 text-slate-600 text-sm whitespace-nowrap">${r.date}</td>
+                    <td class="p-4 text-xs font-bold text-slate-500 uppercase">${r.type}</td>
+                    <td class="p-4 text-sm font-medium text-slate-800">${r.name}</td>
+                    <td class="p-4 text-right font-bold text-emerald-600">${r.in > 0 ? formatINR(r.in) : '-'}</td>
+                    <td class="p-4 text-right font-bold text-red-600">${r.out > 0 ? formatINR(r.out) : '-'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400">No journal entries found for this date.</td></tr>');
+        }
+
+        window.toggleExpenseModal = function(show) {
+            const frm = document.getElementById('add-expense-form'); if(frm) frm.classList.toggle('hidden', !show);
+            if(!show) {
+                setVal('exp-date', new Date().toISOString().split('T')[0]); setVal('exp-amount', ''); setVal('exp-desc', ''); setVal('exp-gst', '');
+                window.AppState.newExpenseReceiptBase64 = '';
+                setHTML('exp-receipt-preview', `<i data-lucide="image" class="text-slate-400 w-5 h-5"></i>`);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+        window.saveExpense = async function() {
+            const date = document.getElementById('exp-date') ? document.getElementById('exp-date').value : '';
+            const category = document.getElementById('exp-category') ? document.getElementById('exp-category').value : '';
+            const amount = document.getElementById('exp-amount') ? document.getElementById('exp-amount').value : '';
+            const desc = document.getElementById('exp-desc') ? document.getElementById('exp-desc').value.trim() : '';
+            const gstAmount = document.getElementById('exp-gst') ? document.getElementById('exp-gst').value : 0;
+
+            if(!date || !amount) return window.showToast("Date and Amount required.", "error");
+
+            const lockDate = window.AppState.settings.lockDate;
+            if(lockDate && new Date(date) < new Date(lockDate)) return window.showToast(`Cannot modify data before FY Lock Date: ${lockDate}`, "error");
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'expenses'), { date, category, amount: Number(amount), gstAmount: Number(gstAmount), desc, receipt: window.AppState.newExpenseReceiptBase64, createdAt: serverTimestamp() });
+                window.toggleExpenseModal(false); window.showToast("Expense logged!");
+            } catch(e) { window.showToast("Failed to log expense", "error"); }
+        }
+        window.deleteExpense = async function(id) {
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'expenses', id)); window.showToast("Expense removed"); } 
+            catch(e) { window.showToast("Failed to remove expense", "error"); }
+        }
+        window.renderExpenses = function() {
+            setHTML('expenses-list', window.AppState.expenses.map(e => `
+                <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors bg-white">
+                    <td class="p-4 text-slate-600 text-sm whitespace-nowrap">${e.date}</td>
+                    <td class="p-4 text-sm font-medium text-slate-800"><span class="bg-slate-100 px-2 py-1 rounded text-xs">${e.category}</span></td>
+                    <td class="p-4 text-sm text-slate-600 truncate max-w-[200px]">${e.desc || '-'}</td>
+                    <td class="p-4 text-right font-bold text-red-600">${formatINR(e.amount)}</td>
+                    <td class="p-4 text-right font-medium text-emerald-600">${e.gstAmount ? formatINR(e.gstAmount) : '-'}</td>
+                    <td class="p-4 text-center">${e.receipt ? `<a href="${e.receipt}" target="_blank" class="text-blue-500 hover:underline text-xs">View</a>` : '-'}</td>
+                    <td class="p-4 text-center"><button onclick="window.deleteExpense('${e.id}')" class="text-slate-400 hover:text-red-600 transition-colors p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-400">No expenses logged yet.</td></tr>');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.handleClientSearch = function(val) {
+            const suggDiv = document.getElementById('client-suggestions'); if(!suggDiv) return;
+            if(!val) { suggDiv.classList.add('hidden'); return; }
+            const matches = window.AppState.clients.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+            if(matches.length === 0) { suggDiv.classList.add('hidden'); return; }
+            suggDiv.innerHTML = matches.map(c => `<div class="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50" onclick='window.selectClient(${JSON.stringify(c).replace(/'/g, "&#39;")})'><div class="font-medium text-slate-800">${c.name}</div><div class="text-xs text-slate-500">Mob: ${c.mobile || 'N/A'}</div></div>`).join('');
+            suggDiv.classList.remove('hidden');
+        }
+        window.selectClient = function(c) { window.AppState.draft.client = c; window.restoreDraftToUI(); const sugg = document.getElementById('client-suggestions'); if(sugg) sugg.classList.add('hidden'); window.updateInvoiceUI(); }
+
+        window.handleProductSearch = function(val) {
+            const suggDiv = document.getElementById('product-suggestions'); if(!suggDiv) return;
+            if(!val) { suggDiv.classList.add('hidden'); return; }
+            const matches = window.AppState.products.filter(p => !p.isHidden && p.name.toLowerCase().includes(val.toLowerCase()));
+            if(matches.length === 0) { suggDiv.classList.add('hidden'); return; }
+            suggDiv.innerHTML = matches.map(p => `<div class="px-4 py-3 hover:bg-emerald-50 cursor-pointer border-b border-slate-50 flex justify-between items-center" onclick='window.addDraftItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'><div><div class="font-medium text-slate-800">${p.name}</div><div class="text-[10px] text-slate-400">Stock: ${p.stock || 0}</div></div><div class="text-right"><div class="font-bold text-emerald-700">₹${p.rate}</div></div></div>`).join('');
+            suggDiv.classList.remove('hidden');
+        }
+        window.addDraftItem = function(p) { window.AppState.draft.items.push({ id: Date.now().toString(), productId: p.id, name: p.name, rate: Number(p.rate), qty: 1, gst: Number(p.gst), hsn: p.hsn || '', batch: p.batch || '', expiry: p.expiry || '' }); setVal('inv-product-search', ''); const sugg = document.getElementById('product-suggestions'); if(sugg) sugg.classList.add('hidden'); window.updateInvoiceUI(); }
+        window.updateDraftField = function(field, val) { window.AppState.draft[field] = val; window.updateInvoiceUI(); }
+        window.updateDraftItem = function(id, field, val) { const item = window.AppState.draft.items.find(i => i.id === id); if(item) { item[field] = field === 'qty' || field === 'rate' ? Number(val) : val; window.updateInvoiceUI(); } }
+        window.removeDraftItem = function(id) { window.AppState.draft.items = window.AppState.draft.items.filter(i => i.id !== id); window.updateInvoiceUI(); }
+        window.setPaymentMode = function(mode) { window.AppState.draft.paymentMode = mode; window.updateInvoiceUI(); }
+
+        window.calculateInvoiceTotals = function() {
+            let subtotal = 0, totalTax = 0; window.AppState.draft.items.forEach(item => { const lineTotal = Number(item.qty) * Number(item.rate); totalTax += lineTotal * (Number(item.gst) / 100); subtotal += lineTotal; });
+            let discountInput = Number(window.AppState.draft.discount) || 0; let discountAmt = window.AppState.draft.discountType === 'percent' ? (subtotal * (discountInput / 100)) : discountInput;
+            let tdsAmt = Number(window.AppState.draft.tds) > 0 ? (subtotal * (Number(window.AppState.draft.tds) / 100)) : 0;
+            const grandTotal = Math.max(0, subtotal + totalTax - discountAmt - tdsAmt);
+
+            const curr = window.AppState.draft.currency || 'INR';
+            setText('summary-subtotal', window.formatCurrency(subtotal, curr)); 
+            setText('summary-tax', window.formatCurrency(totalTax, curr)); 
+            setText('summary-grand', window.formatCurrency(grandTotal, curr));
+            
+            setText('summary-cgst', window.formatCurrency(totalTax / 2, curr));
+            setText('summary-sgst', window.formatCurrency(totalTax / 2, curr));
+
+            const qrWrapper = document.getElementById('qr-image-wrapper');
+            if(qrWrapper) {
+                if(grandTotal > 0 && window.AppState.draft.paymentMode === 'upi' && curr === 'INR') {
+                    const upiStr = `upi://pay?pa=${window.AppState.settings.upi || 'business@upi'}&pn=${encodeURIComponent(window.AppState.settings.businessName)}&am=${grandTotal.toFixed(2)}&cu=INR`;
+                    qrWrapper.innerHTML = `<img src="${window.generateLocalQR(upiStr)}" class="w-[140px] h-[140px] block mx-auto rounded">`;
+                } else { qrWrapper.innerHTML = `<div class="w-[140px] h-[140px] bg-slate-100 flex items-center justify-center text-slate-400 text-xs text-center">Add items<br>to generate QR</div>`; }
+            }
+            return { subtotal, totalTax, grandTotal, discountAmountCalculated: discountAmt, tdsCalculated: tdsAmt };
+        }
+
+        window.restoreDraftToUI = function() {
+            const d = window.AppState.draft;
+            setVal('inv-client-name', d.client.name || ''); setVal('inv-client-mobile', d.client.mobile || ''); setVal('inv-client-gstin', d.client.gstin || ''); setVal('inv-client-address', d.client.address || '');
+            setVal('inv-due-date', d.dueDate || ''); setVal('inv-discount', d.discount || 0); setVal('inv-discount-type', d.discountType || 'fixed'); setVal('inv-notes', d.notes || '');
+            setVal('inv-doc-type', d.docType || 'Tax Invoice'); setVal('inv-currency', d.currency || 'INR'); setVal('inv-tds', d.tds || 0);
+            setVal('inv-po-no', d.poNo || ''); setVal('inv-vehicle', d.vehicleNo || ''); setVal('inv-eway', d.ewayBill || ''); 
+            const rcmEl = document.getElementById('inv-rcm'); if(rcmEl) rcmEl.checked = d.isRcm || false;
+        }
+
+        window.updateInvoiceUI = function() {
+            localStorage.setItem('ayur_draft_pro', JSON.stringify(window.AppState.draft));
+            const items = window.AppState.draft.items; const curr = window.AppState.draft.currency || 'INR';
+            
+            let tbodyHtml = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">No items added yet.</td></tr>`;
+            if(items.length > 0) {
+                tbodyHtml = items.map(item => `<tr class="border-b border-slate-100 last:border-0 bg-white"><td class="p-3 font-medium text-slate-800 min-w-[120px]">${item.name} ${(window.isFeatureEnabled('batch') && (item.batch || item.expiry)) ? `<br><span class="text-[9px] text-slate-400">B:${item.batch||'-'} E:${item.expiry||'-'}</span>` : ''}</td>${window.isFeatureEnabled('hsn') ? `<td class="p-3"><input type="text" class="w-16 p-1 border border-slate-200 rounded outline-none text-xs" value="${item.hsn || ''}" onchange="window.updateDraftItem('${item.id}', 'hsn', this.value)" placeholder="HSN"></td>` : ''}<td class="p-3"><input type="number" min="1" class="w-16 p-1 border border-slate-200 rounded outline-none" value="${item.qty}" onchange="window.updateDraftItem('${item.id}', 'qty', this.value)"></td><td class="p-3"><input type="number" class="w-20 p-1 border border-slate-200 rounded outline-none" value="${item.rate}" onchange="window.updateDraftItem('${item.id}', 'rate', this.value)"></td><td class="p-3 text-slate-600">${item.gst}%</td><td class="p-3 text-right font-medium text-emerald-700">${window.formatCurrency(Number(item.qty) * Number(item.rate), curr)}</td><td class="p-3 text-center"><button onclick="window.removeDraftItem('${item.id}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            }
+            
+            const theadHtml = `<tr><th class="p-3">Item Name</th>${window.isFeatureEnabled('hsn') ? '<th class="p-3 w-16">HSN</th>' : ''}<th class="p-3 w-16">Qty</th><th class="p-3 w-24">Rate</th><th class="p-3 w-16">GST</th><th class="p-3 w-24 text-right">Total</th><th class="p-3 w-10"></th></tr>`;
+            setHTML('invoice-items-wrapper', `<table class="w-full text-left text-sm min-w-[650px]"><thead class="bg-slate-100 text-slate-600 font-medium">${theadHtml}</thead><tbody id="invoice-items-body">${tbodyHtml}</tbody></table>`);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            const m = window.AppState.draft.paymentMode;
+            const btnUpi = document.getElementById('btn-mode-upi'); if(btnUpi) btnUpi.className = `flex-1 py-2 rounded-lg text-sm font-medium transition-all ${m === 'upi' ? 'bg-white shadow-sm text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`;
+            const btnCash = document.getElementById('btn-mode-cash'); if(btnCash) btnCash.className = `flex-1 py-2 rounded-lg text-sm font-medium transition-all ${m === 'cash' ? 'bg-white shadow-sm text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`;
+            const qrC = document.getElementById('qr-container'); const cashC = document.getElementById('cash-container');
+            if(qrC && cashC) { if(m==='upi') { qrC.classList.remove('hidden'); cashC.classList.add('hidden'); } else { qrC.classList.add('hidden'); cashC.classList.remove('hidden'); } }
+            
+            setText('inv-id-display', window.AppState.draft.id);
+            window.calculateInvoiceTotals();
+        }
+
+        window.resumeDraft = function(id) { const inv = window.AppState.invoices.find(i => i.id === id); if(!inv) return; window.AppState.draft = JSON.parse(JSON.stringify(inv)); window.switchTab('invoice'); }
+        window.issueCreditNote = function(id) { 
+            if(!window.isFeatureEnabled('creditNote')) return;
+            const inv = window.AppState.invoices.find(i => i.id === id); if(!inv) return; 
+            const cnDraft = JSON.parse(JSON.stringify(inv));
+            cnDraft.id = window.getNextInvoiceId(); cnDraft.docType = 'Credit Note'; cnDraft.status = 'draft';
+            cnDraft.items = cnDraft.items.map(item => ({...item, qty: -Math.abs(item.qty)}));
+            window.AppState.draft = cnDraft; window.switchTab('invoice'); window.showToast("Credit Note Generated as Draft");
+        }
+
+        window.saveInvoice = async function(status) {
+            const nameEl = document.getElementById('inv-client-name');
+            const name = nameEl ? nameEl.value.trim() : ''; 
+            if(!name) return window.showToast("Please specify a client name.", "error");
+            if(window.AppState.draft.items.length === 0) return window.showToast("Add at least one product.", "error");
+            
+            const lockDate = window.AppState.settings.lockDate;
+            const invDate = new Date().toISOString().split('T')[0];
+            if(lockDate && new Date(invDate) < new Date(lockDate)) return window.showToast(`Cannot generate before FY Lock Date: ${lockDate}`, "error");
+
+            const totals = window.calculateInvoiceTotals();
+            const clientData = { 
+                name: name, 
+                mobile: document.getElementById('inv-client-mobile') ? document.getElementById('inv-client-mobile').value : '', 
+                gstin: document.getElementById('inv-client-gstin') ? document.getElementById('inv-client-gstin').value : '', 
+                address: document.getElementById('inv-client-address') ? document.getElementById('inv-client-address').value : '' 
+            };
+            const invoiceDoc = { ...window.AppState.draft, client: clientData, status: status, subtotal: totals.subtotal, totalTax: totals.totalTax, grandTotal: totals.grandTotal, tdsAmount: totals.tdsCalculated, date: invDate, createdAt: Date.now() };
+
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'invoices', invoiceDoc.id), invoiceDoc);
+                const existingClient = window.AppState.clients.find(c => c.name.toLowerCase() === name.toLowerCase());
+                if(existingClient) { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'clients', existingClient.id), clientData); } 
+                else { await addDoc(collection(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'clients'), { ...clientData, journal: [], createdAt: serverTimestamp() }); }
+
+                if(status === 'final' && window.AppState.draft.docType !== 'Quotation' && window.AppState.draft.docType !== 'Proforma Invoice') {
+                    for (const item of window.AppState.draft.items) {
+                        const prod = window.AppState.products.find(p => p.id === item.productId);
+                        if (prod && typeof prod.stock === 'number') { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'products', prod.id), { stock: Math.max(0, prod.stock - item.qty) }); }
+                    }
+                }
+                window.showToast(`${window.AppState.draft.docType} ${status === 'final' ? 'Finalized' : 'Draft Saved'} successfully!`);
+                if(status === 'final') {
+                    window.AppState.draft = { id: window.getNextInvoiceId(), docType: 'Tax Invoice', currency: 'INR', items: [], discount: 0, discountType: 'fixed', tds: 0, isRcm: false, poNo: '', vehicleNo: '', ewayBill: '', paymentMode: 'upi', paymentStatus: 'unpaid', notes: '', dueDate: '', client: { name: '', mobile: '', gstin: '', address: '' } };
+                    localStorage.removeItem('ayur_draft_pro'); window.restoreDraftToUI(); window.updateInvoiceUI();
+                }
+            } catch (err) { window.showToast("Error saving document.", "error"); }
+        }
+
+        window.toggleProductModal = function(show) { 
+            const frm = document.getElementById('add-product-form'); if(frm) frm.classList.toggle('hidden', !show); 
+            if(!show) { 
+                window.AppState.editingProductId = null; setText('add-product-form-title', "Add New Item"); 
+                ['name','hsn','cost','rate','stock','batch','expiry'].forEach(id => { setVal(`new-prod-${id}`, (id==='stock'?'0':'')); }); 
+            } 
+        }
+        window.editProduct = function(id) { 
+            const p = window.AppState.products.find(x => x.id === id); if(!p) return; 
+            window.AppState.editingProductId = id; 
+            setVal('new-prod-name', p.name); setVal('new-prod-category', p.category || 'Medicine'); setVal('new-prod-hsn', p.hsn || ''); 
+            setVal('new-prod-cost', p.cost || ''); setVal('new-prod-rate', p.rate); setVal('new-prod-gst', p.gst); 
+            setVal('new-prod-stock', p.stock || 0); setVal('new-prod-batch', p.batch || ''); setVal('new-prod-expiry', p.expiry || ''); 
+            setText('add-product-form-title', "Edit Item"); window.toggleProductModal(true); window.scrollTo(0,0); 
+        }
+        window.saveProduct = async function() {
+            const nameEl = document.getElementById('new-prod-name'); const rateEl = document.getElementById('new-prod-rate');
+            if(!nameEl || !rateEl) return;
+            const name = nameEl.value.trim(); const rate = rateEl.value;
+            if(!name || !rate) return window.showToast("Name and Rate required.", "error");
+            
+            const payload = { 
+                name, 
+                category: document.getElementById('new-prod-category') ? document.getElementById('new-prod-category').value : 'Medicine', 
+                hsn: document.getElementById('new-prod-hsn') ? document.getElementById('new-prod-hsn').value : '', 
+                cost: document.getElementById('new-prod-cost') ? Number(document.getElementById('new-prod-cost').value) : 0, 
+                rate: Number(rate), 
+                gst: document.getElementById('new-prod-gst') ? Number(document.getElementById('new-prod-gst').value) : 0, 
+                stock: document.getElementById('new-prod-stock') ? Number(document.getElementById('new-prod-stock').value) : 0, 
+                batch: document.getElementById('new-prod-batch') ? document.getElementById('new-prod-batch').value : '', 
+                expiry: document.getElementById('new-prod-expiry') ? document.getElementById('new-prod-expiry').value : '' 
+            };
+            try {
+                if (window.AppState.editingProductId) { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'products', window.AppState.editingProductId), payload); } 
+                else { await addDoc(collection(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'products'), { ...payload, isHidden: false, createdAt: serverTimestamp() }); }
+                window.toggleProductModal(false); window.showToast("Product saved!");
+            } catch(e) { window.showToast("Failed to save product", "error"); }
+        }
+        window.toggleHideProduct = async function(id, current) { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'products', id), { isHidden: !current }); }
+        
+        window.renderInventory = function() {
+            const searchEl = document.getElementById('inventory-search');
+            const query = (searchEl ? searchEl.value : '').toLowerCase(); 
+            const filtered = window.AppState.products.filter(p => p.name.toLowerCase().includes(query));
+            setHTML('inventory-list', filtered.map(p => {
+                const margin = (p.cost && p.rate && window.isFeatureEnabled('margin')) ? (((p.rate - p.cost) / p.cost) * 100).toFixed(0) : null;
+                const batchExpStr = window.isFeatureEnabled('batch') && (p.batch || p.expiry) ? `Batch: ${p.batch||'N/A'} • Exp: ${p.expiry||'N/A'}` : '';
+                const hsnStr = window.isFeatureEnabled('hsn') && p.hsn ? `HSN: ${p.hsn} ` : '';
+                return `<div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between ${p.isHidden ? 'opacity-60 bg-slate-50' : ''}"><div><div class="flex justify-between items-start mb-2"><h4 class="font-bold text-slate-800 truncate pr-2">${p.name}</h4><span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded">GST ${p.gst}%</span></div><div class="text-2xl font-bold text-slate-700 mb-2">₹${p.rate} <span class="text-xs font-normal text-slate-400">/ ${p.category||'Medicine'}</span></div>${margin ? `<div class="text-xs font-bold text-emerald-600 mb-1">Margin: ${margin}%</div>` : ''}${(batchExpStr || hsnStr) ? `<div class="text-[10px] text-slate-500 mt-1 border-t border-slate-100 pt-2">${hsnStr ? hsnStr + '• ' : ''}${batchExpStr}</div>` : ''}</div><div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center"><span class="text-xs ${p.stock <= 10 ? 'text-red-600 font-bold' : 'text-slate-500'}">Stock: ${p.stock || 0}</span><div><button onclick="window.editProduct('${p.id}')" class="text-xs text-blue-500 hover:text-blue-700 border border-slate-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors mr-1">Edit</button><button onclick="window.toggleHideProduct('${p.id}', ${p.isHidden})" class="text-xs text-slate-500 hover:text-emerald-600 border border-slate-200 px-3 py-1 rounded hover:bg-emerald-50 transition-colors">${p.isHidden ? 'Unhide' : 'Archive'}</button></div></div></div>`;
+            }).join('') || '<div class="col-span-full p-8 text-center text-slate-400">No products found.</div>');
+        }
+
+        window.exportInventoryCSV = function() {
+            const products = window.AppState.products; if(products.length === 0) return window.showToast("No products to export", "warning");
+            const headers = "Name,Category,HSN,Cost,Rate,GST,Stock,Batch,Expiry\n";
+            const rows = products.map(p => `"${p.name}","${p.category||''}","${p.hsn||''}",${p.cost||0},${p.rate},${p.gst||0},${p.stock||0},"${p.batch||''}","${p.expiry||''}"`).join("\n");
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })); link.download = `Inventory.csv`; link.click();
+        }
+
+        window.populateClientFilter = function() { 
+            const select = document.getElementById('filter-client'); if(!select) return; const currentVal = select.value; 
+            select.innerHTML = '<option value="">All Clients</option>' + window.AppState.clients.map(c => `<option value="${c.name}">${c.name}</option>`).join(''); select.value = currentVal; 
+        }
+        
+        window.setFinancialYear = function() {
+            const today = new Date(); const m = today.getMonth(); const y = today.getFullYear();
+            const startYear = m >= 3 ? y : y - 1; const endYear = startYear + 1;
+            setVal('filter-start', `${startYear}-04-01`); setVal('filter-end', `${endYear}-03-31`);
+            window.renderRecords(); window.showToast(`Showing FY ${startYear}-${endYear}`);
+        }
+
+        window.togglePaymentStatus = async function(id, current) { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'invoices', id), { paymentStatus: current === 'paid' ? 'unpaid' : 'paid' }); }
+        
+        window.renderRecords = function() {
+            const searchEl = document.getElementById('filter-search'); const query = searchEl ? searchEl.value.toLowerCase() : ''; 
+            const startEl = document.getElementById('filter-start'); const start = startEl ? startEl.value : ''; 
+            const endEl = document.getElementById('filter-end'); const end = endEl ? endEl.value : ''; 
+            const payEl = document.getElementById('filter-payment'); const payStatus = payEl ? payEl.value : '';
+            
+            const filtered = window.AppState.invoices.filter(i => { return (i.id.toLowerCase().includes(query) || (i.client.name && i.client.name.toLowerCase().includes(query))) && (start === "" || i.date >= start) && (end === "" || i.date <= end) && (payStatus === "" || (i.paymentStatus || 'unpaid') === payStatus); });
+            
+            const collectedTax = filtered.filter(i => i.status === 'final' && i.docType === 'Tax Invoice' && i.status !== 'void').reduce((sum, i) => sum + (Number(i.totalTax) || 0), 0);
+            setText('records-tax-summary', formatINR(collectedTax));
+
+            setHTML('records-list', filtered.map(inv => `<tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors bg-white ${inv.status==='void'?'opacity-50':''}"><td class="p-4 font-mono text-emerald-700 text-sm ${inv.status==='void'?'line-through':''}">${inv.id}</td><td class="p-4 text-xs font-bold text-slate-500 uppercase">${inv.docType || 'Tax Invoice'}</td><td class="p-4 text-slate-600 text-sm whitespace-nowrap">${inv.date}</td><td class="p-4 font-medium text-slate-800 text-sm truncate max-w-[150px]">${inv.client.name}</td><td class="p-4 text-right font-bold ${inv.docType === 'Credit Note' ? 'text-red-600' : 'text-slate-800'} ${inv.status==='void'?'line-through text-slate-400':''}">${window.formatCurrency(inv.grandTotal, inv.currency)}</td><td class="p-4 text-center">${inv.status === 'draft' || inv.docType === 'Credit Note' || inv.status === 'void' ? `<span class="text-[10px] text-slate-400 font-bold uppercase">${inv.status==='void'?'VOID':'N/A'}</span>` : `<button onclick="window.togglePaymentStatus('${inv.id}', '${inv.paymentStatus || 'unpaid'}')" class="text-[10px] uppercase font-bold px-3 py-1.5 rounded-full transition-colors ${inv.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 shadow-sm' : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}">${inv.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}</button>`}</td><td class="p-4 text-center">${inv.status === 'draft' ? `<button onclick="window.resumeDraft('${inv.id}')" class="px-2 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded text-xs font-bold transition-colors">Resume</button>` : `<div class="flex items-center gap-1 justify-center"><button onclick="window.viewInvoice('${inv.id}')" class="px-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded text-xs font-bold transition-colors">View</button><button onclick="window.duplicateInvoice('${inv.id}')" title="Duplicate" class="p-1.5 text-slate-400 hover:text-blue-500"><i data-lucide="copy" class="w-4 h-4"></i></button><button onclick="window.shareWhatsApp('${inv.id}')" title="WhatsApp" class="p-1.5 text-slate-400 hover:text-green-500"><i data-lucide="message-circle" class="w-4 h-4"></i></button><button onclick="window.voidInvoice('${inv.id}')" title="Void" class="p-1.5 text-slate-400 hover:text-red-500"><i data-lucide="ban" class="w-4 h-4"></i></button>${window.isFeatureEnabled('creditNote') ? `<button onclick="window.issueCreditNote('${inv.id}')" title="Credit Note" class="p-1.5 text-slate-400 hover:text-purple-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path></svg></button>`:''}</div>`}</td></tr>`).join('') || '<tr><td colspan="7" class="p-8 text-center text-slate-400">No records found matching filters.</td></tr>');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        window.shareWhatsApp = function(id) {
+            const inv = window.AppState.invoices.find(i => i.id === id); if(!inv) return;
+            const mobile = inv.client.mobile ? inv.client.mobile.replace(/\D/g, '') : '';
+            const text = `Hello ${inv.client.name},\n\nHere is your ${inv.docType || 'Invoice'} (${inv.id}) for amount ${window.formatCurrency(inv.grandTotal, inv.currency)}.\n\nThank you,\n${window.AppState.settings.businessName}`;
+            window.open(`https://wa.me/${mobile ? (mobile.length===10 ? '91'+mobile : mobile) : ''}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        window.duplicateInvoice = function(id) {
+            const inv = window.AppState.invoices.find(i => i.id === id); if(!inv) return;
+            const duplicate = JSON.parse(JSON.stringify(inv));
+            duplicate.id = window.getNextInvoiceId();
+            duplicate.status = 'draft';
+            duplicate.date = new Date().toISOString().split('T')[0];
+            window.AppState.draft = duplicate;
+            window.switchTab('invoice');
+            window.showToast("Invoice Duplicated as Draft");
+        }
+
+        window.voidInvoice = async function(id) {
+            if(!confirm("Are you sure you want to void this document? It will be excluded from all revenue calculations.")) return;
+            try { await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'invoices', id), { status: 'void' }); window.showToast("Document Voided successfully."); } catch(e) { window.showToast("Error voiding document", "error"); }
+        }
+
+        window.bulkExportPDF = async function() {
+            const searchEl = document.getElementById('filter-search'); const query = searchEl ? searchEl.value.toLowerCase() : ''; 
+            const startEl = document.getElementById('filter-start'); const start = startEl ? startEl.value : ''; 
+            const endEl = document.getElementById('filter-end'); const end = endEl ? endEl.value : ''; 
+            const payEl = document.getElementById('filter-payment'); const payStatus = payEl ? payEl.value : '';
+
+            const filtered = window.AppState.invoices.filter(i => { return (i.id.toLowerCase().includes(query) || (i.client.name && i.client.name.toLowerCase().includes(query))) && (start === "" || i.date >= start) && (end === "" || i.date <= end) && (payStatus === "" || (i.paymentStatus || 'unpaid') === payStatus) && i.status === 'final'; });
+            if(filtered.length === 0) return window.showToast("No finalized invoices found in current filter.", "warning"); 
+            
+            const overlay = document.getElementById('pdf-loading-overlay');
+            if(overlay) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); }
+            
+            const renderContainer = document.getElementById('bulk-render-container'); 
+            const bulkArea = document.getElementById('bulk-render-area'); 
+            
+            if(renderContainer && bulkArea) {
+                renderContainer.style.visibility = 'visible'; bulkArea.innerHTML = '';
+                
+                filtered.forEach(inv => { const wrapper = document.createElement('div'); wrapper.innerHTML = window.generateInvoiceHTML(inv); wrapper.style.pageBreakAfter = 'always'; wrapper.className = 'px-10 py-12'; bulkArea.appendChild(wrapper); });
+                
+                setTimeout(async () => {
+                    try {
+                        const originalScroll = window.scrollY; window.scrollTo(0,0);
+                        await html2pdf().set({ margin: 0, filename: `Bulk_Invoices_${Date.now()}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(bulkArea).save();
+                        window.scrollTo(0, originalScroll);
+                        window.showToast("Bulk PDF Downloaded Successfully!");
+                    } catch(e) { window.showToast("Error generating PDF", "error"); } 
+                    finally {
+                        bulkArea.innerHTML = ''; renderContainer.style.visibility = 'hidden'; 
+                        if(overlay) { overlay.classList.add('hidden'); overlay.classList.remove('flex'); }
+                    }
+                }, 1500); 
+            }
+        }
+
+        window.exportCSV = function() {
+            const invoices = window.AppState.invoices; if(invoices.length === 0) return window.showToast("No data to export", "error");
+            const headers = "Invoice ID,Doc Type,Date,Client Name,Phone,Subtotal,Tax,Discount,TDS,Grand Total,Status,Payment Status\n";
+            const rows = invoices.map(i => `${i.id},${i.docType||'Tax Invoice'},${i.date},"${i.client.name || ''}",${i.client.mobile || ''},${i.subtotal},${i.totalTax},${i.discount},${i.tdsAmount||0},${i.grandTotal},${i.status},${i.paymentStatus||'unpaid'}`).join("\n");
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })); link.download = `DevAyurveda_Sales.csv`; link.click();
+        }
+
+        window.exportClientsCSV = function() {
+            const clients = window.AppState.clients; if(clients.length === 0) return window.showToast("No clients to export", "warning");
+            const headers = "Name,Mobile,GSTIN,Address,General Notes\n";
+            const rows = clients.map(c => `"${c.name||''}","${c.mobile||''}","${c.gstin||''}","${c.address||''}","${c.notes||''}"`).join("\n");
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' })); link.download = `Clients.csv`; link.click();
+        }
+
+        window.toggleClientModal = function(show, isNew = false) { 
+            const frm = document.getElementById('edit-client-form'); if(frm) frm.classList.toggle('hidden', !show); 
+            if(!show) window.AppState.editingClientId = null; 
+            
+            if(isNew) {
+                window.AppState.editingClientId = null;
+                setText('edit-client-title', 'Create New Client');
+                setVal('edit-client-name', ''); setVal('edit-client-mobile', ''); setVal('edit-client-gstin', ''); setVal('edit-client-address', ''); setVal('edit-client-notes', '');
+                document.getElementById('client-journal-section').style.display = 'none';
+            } else if (show) {
+                setText('edit-client-title', 'Edit Patient Profile');
+                document.getElementById('client-journal-section').style.display = 'block';
+                setVal('journal-date', new Date().toISOString().split('T')[0]);
+                setVal('journal-entry', '');
+            }
+        }
+        
+        window.editClient = function(id) { 
+            const c = window.AppState.clients.find(x => x.id === id); if(!c) return; window.AppState.editingClientId = id; 
+            setVal('edit-client-name', c.name || ''); setVal('edit-client-mobile', c.mobile || ''); setVal('edit-client-gstin', c.gstin || ''); setVal('edit-client-address', c.address || ''); setVal('edit-client-notes', c.notes || ''); 
+            window.toggleClientModal(true, false); 
+            window.renderClientJournal(c.journal || []);
+            window.scrollTo(0,0); 
+        }
+
+        window.renderClientJournal = function(journalArr) {
+            const sorted = [...journalArr].sort((a,b) => new Date(b.date) - new Date(a.date));
+            setHTML('client-journal-list', sorted.map(j => `<div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm"><div class="text-xs font-bold text-emerald-600 mb-1">${j.date}</div><div class="text-sm text-slate-700">${j.text}</div></div>`).join('') || '<div class="text-xs text-slate-400 italic mt-2">No journal entries yet.</div>');
+        }
+
+        window.addClientJournalEntry = async function() {
+            if(!window.AppState.editingClientId) return;
+            const date = document.getElementById('journal-date').value;
+            const text = document.getElementById('journal-entry').value.trim();
+            if(!date || !text) return window.showToast("Date and entry text are required", "error");
+
+            const c = window.AppState.clients.find(x => x.id === window.AppState.editingClientId);
+            const journal = c.journal || [];
+            journal.push({ id: Date.now().toString(), date, text });
+
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'clients', window.AppState.editingClientId), { journal });
+                setVal('journal-entry', '');
+                window.renderClientJournal(journal);
+                window.showToast("Journal Entry Added!");
+            } catch(e) { window.showToast("Failed to save entry.", "error"); }
+        }
+
+        window.saveClientEdit = async function() {
+            const nameEl = document.getElementById('edit-client-name'); const name = nameEl ? nameEl.value.trim() : ''; 
+            if(!name) return window.showToast("Name is required", "error");
+            const clientData = { name, mobile: document.getElementById('edit-client-mobile') ? document.getElementById('edit-client-mobile').value : '', gstin: document.getElementById('edit-client-gstin') ? document.getElementById('edit-client-gstin').value : '', address: document.getElementById('edit-client-address') ? document.getElementById('edit-client-address').value : '', notes: document.getElementById('edit-client-notes') ? document.getElementById('edit-client-notes').value : '' };
+            
+            try { 
+                if (window.AppState.editingClientId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'clients', window.AppState.editingClientId), clientData); 
+                    window.showToast("Profile Updated");
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'clients'), { ...clientData, journal: [], createdAt: serverTimestamp() });
+                    window.showToast("New Client Created");
+                }
+                window.toggleClientModal(false); 
+            } catch(e) { window.showToast("Failed to save client.", "error"); }
+        }
+
+        window.renderClients = function() {
+            const searchEl = document.getElementById('clients-search'); const query = (searchEl ? searchEl.value : '').toLowerCase(); const invoices = window.AppState.invoices || [];
+            const filteredClients = window.AppState.clients.filter(c => c.name.toLowerCase().includes(query) || (c.mobile && c.mobile.includes(query)));
+            setHTML('clients-list', filteredClients.map(c => {
+                const cInvoices = invoices.filter(i => i.client.name === c.name && i.status === 'final' && i.status !== 'void'); const clv = cInvoices.reduce((sum, i) => sum + Number(i.grandTotal), 0);
+                return `<div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between"><div class="flex items-center gap-4 mb-4"><div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg uppercase shrink-0">${c.name.charAt(0)}</div><div class="flex-1 min-w-0"><h4 class="font-bold text-slate-800 truncate">${c.name}</h4><div class="text-xs text-slate-500 mt-1 truncate">📞 ${c.mobile || 'No Mobile'}</div></div><div class="text-right shrink-0"><div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Lifetime</div><div class="font-bold text-emerald-600 text-sm">${formatINR(clv)}</div><div class="text-[10px] text-slate-400 mt-0.5">${cInvoices.length} orders</div></div></div>${c.notes ? `<div class="text-xs text-slate-600 bg-slate-50 p-2 rounded mb-3 border border-slate-100 line-clamp-2 italic"><strong>Notes:</strong> ${c.notes}</div>` : ''}<div class="flex gap-2"><button onclick="window.editClient('${c.id}')" class="flex-1 text-[10px] px-3 py-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 font-bold uppercase tracking-wider">Edit Profile</button>${window.isFeatureEnabled('ledger') ? `<button onclick="window.generateClientLedger('${c.name}')" class="flex-1 text-[10px] px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded hover:bg-blue-100 font-bold uppercase tracking-wider">Ledger PDF</button>`:''}</div></div>`
+            }).join('') || '<div class="col-span-full p-8 text-center text-slate-400">No clients found.</div>');
+        }
+
+        window.generateClientLedger = function(clientName) {
+            const clientInvs = window.AppState.invoices.filter(i => i.client.name === clientName && i.status === 'final' && i.status !== 'void').sort((a,b) => new Date(a.date) - new Date(b.date));
+            if(clientInvs.length === 0) return window.showToast("No finalized invoices for this client.", "warning");
+            
+            let runningBal = 0;
+            const rows = clientInvs.map(inv => {
+                const amount = Number(inv.grandTotal); const isPaid = inv.paymentStatus === 'paid';
+                if(!isPaid) runningBal += amount;
+                return `<tr class="border-b border-slate-200"><td class="py-2">${inv.date}</td><td class="py-2">${inv.id}</td><td class="py-2 text-right">₹${amount.toFixed(2)}</td><td class="py-2 text-center text-xs ${isPaid ? 'text-green-600 font-bold' : 'text-red-500'}">${isPaid ? 'Paid' : 'Unpaid'}</td><td class="py-2 text-right font-bold">₹${runningBal.toFixed(2)}</td></tr>`;
+            }).join('');
+
+            const html = `
+            <div class="font-sans bg-white relative p-8">
+                <h1 class="text-3xl font-bold text-slate-800 mb-2">${window.AppState.settings.businessName || 'Dev Ayurveda'}</h1>
+                <h2 class="text-xl text-slate-500 mb-8 border-b pb-4">Statement of Accounts: ${clientName}</h2>
+                <table class="w-full text-left text-sm mb-8"><thead class="bg-slate-100"><tr><th class="py-2 px-2">Date</th><th class="py-2 px-2">Invoice No.</th><th class="py-2 px-2 text-right">Invoice Amount</th><th class="py-2 px-2 text-center">Status</th><th class="py-2 px-2 text-right">Running Due Balance</th></tr></thead><tbody>${rows}</tbody></table>
+                <div class="text-right text-lg font-bold text-slate-800">Total Outstanding Balance: <span class="text-red-600">₹${runningBal.toFixed(2)}</span></div>
+            </div>`;
+            setHTML('ledger-render-area', html); const lMod = document.getElementById('ledger-modal'); if(lMod) lMod.style.display = 'flex';
+        }
+        window.closeLedgerModal = function() { const lMod = document.getElementById('ledger-modal'); if(lMod) lMod.style.display = 'none'; }
+        window.downloadLedgerPDF = function() { window.showToast("Downloading Ledger..."); html2pdf().set({ margin: 10, filename: `Ledger_${Date.now()}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(document.getElementById('ledger-render-area')).save(); }
+
+        window.populateSettingsUI = function() {
+            const s = window.AppState.settings;
+            setVal('set-biz-name', s.businessName || ''); setVal('set-biz-gstin', s.gstin || ''); setVal('set-biz-address', s.address || ''); 
+            setVal('set-biz-phone', s.phone || ''); setVal('set-biz-upi', s.upi || ''); setVal('set-biz-terms', s.customTerms || ''); 
+            setVal('set-biz-logo-display', s.logoDisplay || 'both'); setVal('set-lock-date', s.lockDate || ''); 
+            setVal('set-bank-name', s.bankName || ''); setVal('set-bank-acc', s.bankAcc || ''); setVal('set-bank-ifsc', s.bankIfsc || '');
+            
+            const pinEl = document.getElementById('set-pin-enable'); if(pinEl) { pinEl.checked = s.pinEnabled || false; window.togglePinFields(s.pinEnabled || false); }
+            
+            if(s.logo) setHTML('logo-preview', `<img src="${s.logo}" class="w-full h-full object-contain">`);
+            if(s.signature) setHTML('sig-preview', `<img src="${s.signature}" class="w-full h-full object-contain">`);
+            if(s.seal) setHTML('seal-preview', `<img src="${s.seal}" class="w-full h-full object-contain">`);
+            window.setTemplate(s.template || 'modern');
+
+            const f = s.features || defaultFeatures;
+            const toggles = ['expenses', 'multiDoc', 'currency', 'shipping', 'tds', 'rcm', 'hsn', 'dueDate', 'ledger', 'creditNote', 'margin', 'batch'];
+            toggles.forEach(t => { const el = document.getElementById(`feat-${t}`); if(el) el.checked = f[t] !== false; });
+        }
+
+        window.setTemplate = function(tpl) { 
+            window.AppState.settings.template = tpl; 
+            ['modern', 'classic', 'minimal', 'compact', 'elegant', 'bold', 'nature', 'corporate'].forEach(t => { 
+                const btn = document.getElementById(`tpl-${t}`);
+                if(btn) btn.className = t === tpl ? `p-2 border rounded-xl text-center border-emerald-500 bg-emerald-50 shadow-sm` : `p-2 border rounded-xl text-center border-slate-200 hover:border-emerald-300 bg-white opacity-60`; 
+            }); 
+        }
+        
+        window.saveSettings = async function() {
+            try {
+                const s = window.AppState.settings; 
+                s.businessName = document.getElementById('set-biz-name') ? document.getElementById('set-biz-name').value : ''; 
+                s.gstin = document.getElementById('set-biz-gstin') ? document.getElementById('set-biz-gstin').value : ''; 
+                s.address = document.getElementById('set-biz-address') ? document.getElementById('set-biz-address').value : ''; 
+                s.phone = document.getElementById('set-biz-phone') ? document.getElementById('set-biz-phone').value : ''; 
+                s.upi = document.getElementById('set-biz-upi') ? document.getElementById('set-biz-upi').value : ''; 
+                s.customTerms = document.getElementById('set-biz-terms') ? document.getElementById('set-biz-terms').value : ''; 
+                s.logoDisplay = document.getElementById('set-biz-logo-display') ? document.getElementById('set-biz-logo-display').value : 'both';
+                s.lockDate = document.getElementById('set-lock-date') ? document.getElementById('set-lock-date').value : ''; 
+                s.bankName = document.getElementById('set-bank-name') ? document.getElementById('set-bank-name').value : ''; 
+                s.bankAcc = document.getElementById('set-bank-acc') ? document.getElementById('set-bank-acc').value : ''; 
+                s.bankIfsc = document.getElementById('set-bank-ifsc') ? document.getElementById('set-bank-ifsc').value : '';
+                
+                s.features = {}; const toggles = ['expenses', 'multiDoc', 'currency', 'shipping', 'tds', 'rcm', 'hsn', 'dueDate', 'ledger', 'creditNote', 'margin', 'batch'];
+                toggles.forEach(t => { const el = document.getElementById(`feat-${t}`); if(el) s.features[t] = el.checked; });
+
+                const wantPinEl = document.getElementById('set-pin-enable'); const wantPin = wantPinEl ? wantPinEl.checked : false; 
+                const curPinInp = document.getElementById('set-pin-current') ? document.getElementById('set-pin-current').value : ''; 
+                const newPinInp = document.getElementById('set-pin-new') ? document.getElementById('set-pin-new').value : '';
+                
+                if (wantPin && !s.pinEnabled) { if(newPinInp.length !== 4) return window.showToast("New PIN must be exactly 4 digits.", "error"); s.pinEnabled = true; s.pin = newPinInp; } 
+                else if (wantPin && s.pinEnabled && newPinInp.length === 4) { if(curPinInp !== s.pin) return window.showToast("Current PIN is incorrect.", "error"); s.pin = newPinInp; } 
+                else if (!wantPin) { s.pinEnabled = false; s.pin = ''; }
+                await setDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'config', 'settings'), s); 
+                window.showToast("Settings saved securely!");
+                setVal('set-pin-current', ''); setVal('set-pin-new', '');
+                
+                window.applyFeatureVisibility(); window.renderNavigation();
+            } catch(e) { window.showToast("Failed to save settings.", "error"); }
+        }
+
+        window.viewInvoice = function(id) { const inv = window.AppState.invoices.find(i => i.id === id); if(!inv) return; setHTML('invoice-render-area', window.generateInvoiceHTML(inv)); const mod = document.getElementById('invoice-modal'); if(mod) mod.style.display = 'flex'; }
+        window.closeInvoiceModal = function() { const mod = document.getElementById('invoice-modal'); if(mod) mod.style.display = 'none'; }
+        window.downloadPDF = function() { window.showToast("Downloading PDF..."); const element = document.getElementById('invoice-render-area'); const invId = element.querySelector('.inv-id-tracker').dataset.id; html2pdf().set({ margin: 0, filename: `${invId}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 3, useCORS: true, scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(element).save(); }
+
+        window.generateInvoiceHTML = function(inv) {
+            const s = window.AppState.settings; const tpl = s.template || 'modern'; const curr = inv.currency || 'INR';
+            let paymentQR = ''; if(Number(inv.grandTotal) > 0 && s.upi && curr === 'INR') { const upiStr = `upi://pay?pa=${s.upi}&pn=${encodeURIComponent(s.businessName)}&am=${Number(inv.grandTotal).toFixed(2)}&cu=INR`; paymentQR = `<img src="${window.generateLocalQR(upiStr)}" class="w-20 h-20 border border-slate-200 p-1 rounded bg-white shadow-sm">`; }
+            const digitalURL = `https://dev-ayurveda.web.app/verify/${inv.id}`; const digitalQR = `<img src="${window.generateLocalQR(digitalURL)}" class="w-20 h-20 border border-slate-200 p-1 rounded bg-white shadow-sm">`;
+
+            let logoHtml = ''; const dispStyle = s.logoDisplay || 'both';
+            if (dispStyle === 'logo' && s.logo) logoHtml = `<img src="${s.logo}" class="h-20 object-contain max-w-[250px]">`;
+            else if (dispStyle === 'name') logoHtml = `<h1 class="text-3xl font-bold tracking-tight ${tpl === 'nature' ? 'text-green-800' : tpl==='corporate' ? 'text-blue-900' : 'text-emerald-800'}">${s.businessName}</h1>`;
+            else logoHtml = `<div class="flex items-center gap-4">${s.logo ? `<img src="${s.logo}" class="h-16 object-contain max-w-[200px]">` : ''}<h1 class="text-3xl font-bold tracking-tight ${tpl === 'nature' ? 'text-green-800' : tpl==='corporate' ? 'text-blue-900' : 'text-emerald-800'}">${s.businessName}</h1></div>`;
+
+            const sigHtml = s.signature ? `<img src="${s.signature}" class="h-10 object-contain mx-auto mb-1 relative z-10">` : `<div class="h-10 border-b-2 border-slate-200 mb-1 mx-4 w-40"></div>`;
+            const sealHtml = s.seal ? `<img src="${s.seal}" class="w-16 h-16 object-contain absolute opacity-50 -left-6 -top-2 mix-blend-multiply">` : '';
+
+            const thHsn = window.isFeatureEnabled('hsn') ? '<th class="py-2 px-2 text-center w-16">HSN</th>' : '';
+            const itemsHtml = inv.items.map((item, idx) => {
+                const tdHsn = window.isFeatureEnabled('hsn') ? `<td class="py-2 text-center align-top text-[11px]">${item.hsn || '-'}</td>` : '';
+                return `<tr class="border-b ${tpl === 'bold' ? 'border-black' : 'border-slate-200'}"><td class="py-2 text-center align-top">${idx + 1}</td><td class="py-2 align-top"><div class="font-bold text-slate-800">${item.name}</div>${(window.isFeatureEnabled('batch') && (item.batch || item.expiry)) ? `<div class="text-[10px] text-slate-500 mt-1 font-medium">Batch: ${item.batch||'-'} | Exp: ${item.expiry||'-'}</div>` : ''}</td>${tdHsn}<td class="py-2 text-center align-top font-medium">${item.qty}</td><td class="py-2 text-right align-top text-slate-600">${window.formatCurrency(item.rate, curr)}</td><td class="py-2 text-center align-top text-slate-600">${item.gst}%</td><td class="py-2 text-right font-bold align-top text-slate-800">${window.formatCurrency(item.qty * item.rate, curr)}</td></tr>`;
+            }).join('');
+
+            let headerStyles = ''; let tableHeadStyles = ''; let totalStyles = ''; let fontClass = 'font-sans';
+            if(tpl === 'modern') { headerStyles = '<div class="absolute -top-12 -left-10 w-[210mm] h-4 bg-emerald-600"></div>'; tableHeadStyles = 'bg-slate-800 text-white'; totalStyles = 'text-emerald-700'; }
+            if(tpl === 'classic') { tableHeadStyles = 'border-b-2 border-slate-800 text-slate-800'; totalStyles = 'text-slate-900'; }
+            if(tpl === 'minimal') { tableHeadStyles = 'border-b border-slate-300 text-slate-500 uppercase text-xs'; totalStyles = 'text-slate-800 font-light'; }
+            if(tpl === 'compact') { tableHeadStyles = 'bg-slate-100 text-slate-700 text-xs'; totalStyles = 'text-slate-900'; }
+            if(tpl === 'elegant') { fontClass = 'font-serif'; headerStyles = '<div class="w-full text-center border-b border-slate-300 pb-4 mb-8"></div>'; tableHeadStyles = 'border-b border-slate-400 text-slate-800 italic'; totalStyles = 'text-slate-800'; logoHtml = `<div class="flex flex-col items-center mx-auto">${s.logo ? `<img src="${s.logo}" class="h-20 object-contain max-w-[200px] mb-2">` : ''}<h1 class="text-4xl text-slate-900 tracking-widest">${s.businessName}</h1></div>`; }
+            if(tpl === 'bold') { headerStyles = '<div class="absolute -top-12 -left-10 w-[210mm] h-6 bg-black"></div>'; tableHeadStyles = 'bg-black text-white uppercase tracking-widest'; totalStyles = 'text-black'; }
+            if(tpl === 'nature') { headerStyles = '<div class="absolute -top-12 -left-10 w-[210mm] h-4 bg-gradient-to-r from-green-500 to-emerald-700"></div>'; tableHeadStyles = 'bg-green-800 text-green-50'; totalStyles = 'text-green-800'; }
+            if(tpl === 'corporate') { headerStyles = '<div class="absolute -top-12 -left-10 w-[210mm] h-4 bg-blue-900"></div>'; tableHeadStyles = 'bg-blue-900 text-white'; totalStyles = 'text-blue-900'; }
+
+            const taxAmt = Number(inv.totalTax) || 0; const cgst = taxAmt / 2; const sgst = taxAmt / 2;
+
+            return `
+            <div class="inv-id-tracker ${fontClass} relative w-full h-full flex flex-col justify-between bg-white ${inv.status==='void'?'opacity-50 grayscale':''}" data-id="${inv.id}">
+                ${headerStyles}
+                ${inv.status === 'void' ? `<div class="absolute inset-0 flex items-center justify-center pointer-events-none z-50"><div class="text-6xl font-black text-red-600 border-8 border-red-600 p-4 rounded-xl transform -rotate-12 opacity-50 tracking-widest">VOID</div></div>` : ''}
+                <div>
+                    <div class="flex justify-between items-start mb-8 ${tpl === 'elegant' ? 'flex-col items-center text-center' : ''}">
+                        <div class="${tpl === 'elegant' ? 'w-full' : 'max-w-[55%]'}">
+                            ${logoHtml}
+                            <div class="mt-4 text-[12px] text-slate-500 leading-relaxed ${tpl === 'elegant' ? 'mx-auto' : ''}">
+                                ${s.address ? `<div>${s.address}</div>` : ''}${s.phone ? `<div class="mt-1">📞 ${s.phone}</div>` : ''}${s.gstin ? `<div class="font-bold mt-1 text-slate-700">GSTIN: ${s.gstin}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="${tpl === 'elegant' ? 'text-center mt-6 w-full border-t border-slate-200 pt-4 flex justify-between' : 'text-right'}">
+                            ${tpl !== 'elegant' ? `<h2 class="text-4xl font-light text-slate-300 uppercase tracking-widest mb-3 ${tpl==='bold' ? 'text-black font-black' : ''}">${inv.docType || 'Tax Invoice'}</h2>` : `<h2 class="text-2xl font-bold uppercase tracking-widest">${inv.docType || 'Tax Invoice'}</h2>`}
+                            <div><div class="font-bold text-slate-800 text-lg tracking-wide">${inv.id}</div><div class="text-slate-500 font-medium text-xs mt-1">Date: ${inv.date}</div>${(window.isFeatureEnabled('dueDate') && inv.dueDate) ? `<div class="text-red-500 font-bold mt-1 text-xs">Due: ${inv.dueDate}</div>` : ''}</div>
+                            ${(window.isFeatureEnabled('rcm') && inv.isRcm) ? `<div class="inline-block mt-2 px-2 py-0.5 bg-slate-800 text-white text-[9px] font-bold uppercase tracking-wider rounded">RCM Applied</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="mb-8 ${tpl === 'bold' ? 'border-l-8 border-black' : tpl === 'nature' ? 'border-l-4 border-green-600 bg-green-50' : tpl === 'corporate' ? 'border-l-4 border-blue-900 bg-slate-50' : tpl === 'elegant' ? 'text-center border-y border-slate-200 py-4' : 'border-l-4 border-emerald-500 bg-emerald-50/50'} p-4 rounded-r-xl grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Billed To:</div><h3 class="text-lg font-bold text-slate-800">${inv.client.name}</h3><div class="text-[12px] text-slate-600 mt-1">${inv.client.mobile ? `<div>📞 ${inv.client.mobile}</div>` : ''}${inv.client.gstin ? `<div class="font-bold text-slate-800">🏢 GSTIN: ${inv.client.gstin}</div>` : ''}${inv.client.address ? `<div class="mt-1">📍 ${inv.client.address}</div>` : ''}</div>
+                        </div>
+                        ${(window.isFeatureEnabled('shipping') && (inv.poNo || inv.vehicleNo || inv.ewayBill)) ? `<div class="text-right text-[11px] text-slate-600 space-y-1">${inv.poNo ? `<div><span class="font-bold">PO Ref:</span> ${inv.poNo}</div>` : ''}${inv.vehicleNo ? `<div><span class="font-bold">Vehicle No:</span> ${inv.vehicleNo}</div>` : ''}${inv.ewayBill ? `<div><span class="font-bold">E-Way Bill:</span> ${inv.ewayBill}</div>` : ''}</div>` : ''}
+                    </div>
+                    <table class="w-full text-left mb-6"><thead class="${tableHeadStyles}"><tr><th class="py-2 px-2 text-center w-12 rounded-tl-lg">#</th><th class="py-2 px-2">Description</th>${thHsn}<th class="py-2 px-2 text-center w-16">Qty</th><th class="py-2 px-2 text-right w-24">Rate</th><th class="py-2 px-2 text-center w-16">GST</th><th class="py-2 px-2 text-right w-32 rounded-tr-lg">Amount</th></tr></thead><tbody class="text-slate-700">${itemsHtml}</tbody></table>
+                    <div class="flex justify-end mb-8"><div class="w-72 space-y-2 text-[12px]"><div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500 font-medium">Subtotal:</span><span class="font-bold text-slate-800">${window.formatCurrency(inv.subtotal, curr)}</span></div>
+                    <div class="flex justify-between text-slate-400 text-[11px]"><span class="">CGST / IGST</span><span class="">${window.formatCurrency(cgst, curr)}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2 text-slate-400 text-[11px]"><span class="">SGST</span><span class="">${window.formatCurrency(sgst, curr)}</span></div>
+                    ${inv.discount > 0 ? `<div class="flex justify-between border-b border-slate-100 pb-2 text-emerald-600 font-medium"><span>Discount (${inv.discountType === 'percent' ? inv.discount+'%' : 'Flat'}):</span><span>- ${window.formatCurrency((Number(inv.subtotal) + Number(inv.totalTax) + Number(inv.tdsAmount||0) - Number(inv.grandTotal)), curr)}</span></div>` : ''}
+                    ${(window.isFeatureEnabled('tds') && inv.tdsAmount > 0) ? `<div class="flex justify-between border-b border-slate-100 pb-2 text-red-600 font-medium"><span>TDS Deducted:</span><span>- ${window.formatCurrency(inv.tdsAmount, curr)}</span></div>` : ''}
+                    <div class="flex justify-between items-end pt-2"><span class="text-lg font-bold text-slate-800">Net Payable:</span><span class="text-2xl font-black ${totalStyles}">${window.formatCurrency(inv.grandTotal, curr)}</span></div></div></div>
+                    ${inv.notes ? `<div class="mb-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-[12px]"><div class="font-bold text-slate-800 mb-1 flex items-center gap-2">Notes / Special Instructions:</div><div class="text-slate-600 whitespace-pre-wrap leading-relaxed">${inv.notes}</div></div>` : ''}
+                </div>
+                <div class="mt-auto">
+                    <div class="flex justify-between items-end pt-6 border-t border-slate-200">
+                        <div class="flex gap-4">
+                            ${(s.bankName && s.bankAcc) ? `<div class="text-[10px] text-slate-600 mr-4"><div class="font-bold text-slate-800 mb-1 uppercase tracking-wider">Bank Details</div><div>Bank: ${s.bankName}</div><div>A/C: ${s.bankAcc}</div><div>IFSC: ${s.bankIfsc}</div></div>` : ''}
+                            ${paymentQR ? `<div class="text-center">${paymentQR}<div class="text-[9px] font-bold text-emerald-700 mt-1 uppercase tracking-widest">Scan to Pay</div></div>` : ''}
+                            <div class="text-center">${digitalQR}<div class="text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-widest">Digital Copy</div></div>
+                        </div>
+                        <div class="text-center relative">
+                            ${sealHtml}
+                            ${sigHtml}
+                            <div class="text-[12px] font-bold text-slate-800 relative z-10">Authorized Signatory</div>
+                            <div class="text-[10px] text-slate-500 font-medium tracking-wide relative z-10">${s.businessName}</div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-6 text-[11px] font-medium text-slate-400 italic whitespace-pre-wrap px-8 leading-relaxed">${s.customTerms ? s.customTerms : `Thank you for your trust and business! For any queries regarding this document, please contact us at ${s.phone || 'our registered numbers'}.`}</div>
+                </div>
+            </div>`;
+        }
+    </script>
 </body>
 </html>
