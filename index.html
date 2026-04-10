@@ -17,10 +17,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{height:100%;height:100dvh;overflow:hidden;max-width:100vw}
@@ -4645,7 +4641,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if(renderContainer && bulkArea) {
                 renderContainer.style.visibility = 'visible'; bulkArea.innerHTML = '';
                 
-                filtered.forEach(inv => { const wrapper = document.createElement('div'); wrapper.innerHTML = window.generateInvoiceHTML(inv); wrapper.style.pageBreakAfter = 'always'; wrapper.className = 'px-10 py-12'; bulkArea.appendChild(wrapper); });
+                filtered.forEach((inv, idx) => { const wrapper = document.createElement('div'); wrapper.innerHTML = window.generateInvoiceHTML(inv); wrapper.style.cssText = 'page-break-after:always;width:210mm;max-width:210mm;padding:0;margin:0;box-sizing:border-box;overflow:hidden;'; bulkArea.appendChild(wrapper); });
                 
                 setTimeout(async () => {
                     try {
@@ -5011,6 +5007,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const bizName = s.businessName || 'Dev Ayurveda';
             const sidebarName = document.getElementById('sidebar-biz-name'); if(sidebarName) sidebarName.textContent = bizName;
             const topbarTitle = document.getElementById('topbar-biz-name'); if(topbarTitle) topbarTitle.textContent = bizName;
+            // Update settings header card
+            const settingsBizEl = document.getElementById('settings-biz-display'); if(settingsBizEl) settingsBizEl.textContent = bizName;
+            const settingsEmailEl = document.getElementById('settings-email-display'); if(settingsEmailEl) settingsEmailEl.textContent = window.AppState.user&&window.AppState.user.email||'';
+            // Update settings logo preview
+            if(s.logo) { const slp = document.getElementById('settings-logo-preview'); if(slp) slp.innerHTML = '<img src="'+s.logo+'" class="w-full h-full object-contain">'; }
             setVal('set-biz-name', s.businessName || ''); setVal('set-biz-gstin', s.gstin || ''); setVal('set-biz-address', s.address || ''); 
             setVal('set-biz-phone', s.phone || ''); setVal('set-biz-upi', s.upi || ''); setVal('set-biz-terms', s.customTerms || ''); 
             setVal('set-biz-logo-display', s.logoDisplay || 'both'); setVal('set-lock-date', s.lockDate || ''); 
@@ -9719,15 +9720,39 @@ window.getSavedAccounts = function() {
 };
 window.saveAccountToList = function(acc) {
     var list = window.getSavedAccounts();
+    // If bizName is an email, try to get real business name
+    if(!acc.bizName || acc.bizName.includes('@')) {
+        acc.bizName = acc.name || acc.email;
+    }
     var existing = list.findIndex(function(a){ return a.email===acc.email && a.type===acc.type; });
-    if(existing >= 0) list[existing] = acc;
-    else list.push(acc);
+    if(existing >= 0) {
+        // Update but preserve non-email bizName
+        var oldBiz = list[existing].bizName;
+        list[existing] = acc;
+        if(oldBiz && !oldBiz.includes('@') && acc.bizName.includes('@')) {
+            list[existing].bizName = oldBiz; // keep old good name
+        }
+    } else { list.push(acc); }
     localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(list));
     window.renderSavedAccounts();
 };
 
 window.renderSavedAccounts = function() {
-    var list = window.getSavedAccounts();
+    var rawList = window.getSavedAccounts();
+    // Deduplicate: same email+type = keep entry with real bizName (not email)
+    var seen = {};
+    var list = [];
+    rawList.forEach(function(acc) {
+        var key = acc.email + '|' + acc.type;
+        if(!seen[key]) { seen[key] = acc; list.push(acc); }
+        else {
+            // Prefer entry where bizName is NOT an email address
+            var isEmail = function(s){ return s && s.includes('@'); };
+            if(isEmail(seen[key].bizName) && !isEmail(acc.bizName)) {
+                seen[key].bizName = acc.bizName; // update in-place
+            }
+        }
+    });
     var section = document.getElementById('sidebar-accounts-section');
     var container = document.getElementById('sidebar-saved-accounts');
     if(!container) return;
@@ -9736,10 +9761,11 @@ window.renderSavedAccounts = function() {
     var currentEmail = window.AppState && window.AppState.user && window.AppState.user.email;
     container.innerHTML = list.map(function(acc) {
         var isCurrent = acc.email === currentEmail;
+        var displayName = acc.bizName && !acc.bizName.includes('@') ? acc.bizName : (acc.name || acc.email);
         return '<button onclick="window.switchToAccount(\''+acc.email+'\',\''+acc.type+'\',\''+acc.bizUid+'\')" class="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all text-left '+(isCurrent?'bg-white/10':'') +'">'
-            +'<div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 '+(acc.type==='owner'?'bg-emerald-500/30 text-emerald-400':'bg-blue-500/30 text-blue-400')+'">'+(acc.name||acc.email).charAt(0).toUpperCase()+'</div>'
+            +'<div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 '+(acc.type==='owner'?'bg-emerald-500/30 text-emerald-400':'bg-blue-500/30 text-blue-400')+'">'+displayName.charAt(0).toUpperCase()+'</div>'
             +'<div class="flex-1 min-w-0">'
-            +'<div class="text-[10px] font-semibold text-slate-300 truncate">'+(acc.bizName||acc.name||acc.email)+'</div>'
+            +'<div class="text-[10px] font-semibold text-slate-300 truncate">'+displayName+'</div>'
             +'<div class="text-[9px] text-slate-500 capitalize">'+acc.type+(isCurrent?' · Active':'')+'</div>'
             +'</div>'
             +(isCurrent?'<i data-lucide="check" class="w-3 h-3 text-emerald-400 flex-shrink-0"></i>':'')
@@ -11849,22 +11875,258 @@ ${unpaidAmt > totalRev*0.3 ? '<div style="background:#fef3c7;border:1px solid #f
     }
 };
 
-// Add Export PDF button to GST module
+// ── Add missing CSS fixes ──────────────────────────────────────
+(function(){
+    var style = document.createElement('style');
+    style.textContent = [
+        '#gst-content-area table{min-width:500px;}',
+        '#gst-content-area .card>table,#gst-content-area .card>div>table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}',
+        '#view-gst .card{overflow:hidden;}',
+        '#view-gst .val,[id*="gst"] .font-black{font-size:clamp(11px,2.5vw,16px);word-break:break-all;}',
+        '#bulk-render-container{width:210mm!important;}',
+        '#bulk-render-area>div{width:210mm!important;max-width:210mm!important;overflow:hidden;box-sizing:border-box!important;padding:0!important;margin:0!important;}',
+    ].join('\n');
+    document.head.appendChild(style);
+})();
 (function(){
     var addPDFBtn = setInterval(function(){
-        var gstHeader = document.querySelector('#view-gst .flex.items-center.justify-between .flex.gap-2');
-        if(!gstHeader || document.getElementById('gst-pdf-export-btn')) return;
+        var gstView = document.getElementById('view-gst');
+        if(!gstView || document.getElementById('gst-pdf-export-btn')) return;
+        // Find the button row in GST header
+        var btnRow = gstView.querySelector('.flex.gap-2.flex-wrap, .flex.gap-2');
+        if(!btnRow) return;
         clearInterval(addPDFBtn);
         var btn = document.createElement('button');
         btn.id = 'gst-pdf-export-btn';
         btn.className = 'btn btn-sm';
         btn.style.cssText = 'background:#dc2626;color:white;border:none;';
         btn.innerHTML = '<i data-lucide="file-text" class="w-3.5 h-3.5"></i> Financial Report';
-        btn.onclick = function(){ window.exportFinancialReport && exportFinancialReport(); };
-        gstHeader.appendChild(btn);
+        btn.onclick = function(){ window.exportFinancialPDF && window.exportFinancialPDF(); };
+        btnRow.insertBefore(btn, btnRow.firstChild);
         if(typeof lucide !== 'undefined') lucide.createIcons({node:btn});
-    }, 1000);
+    }, 800);
 })();
 </script>
 </body>
 </html>
+<script type="module">
+// ================================================================
+// SUBSCRIPTION SYSTEM + ANALYTICS TRACKING
+// ================================================================
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+const FIREBASE_CONFIG = {
+    apiKey:"AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
+    authDomain:"dev-ayurveda.firebaseapp.com",
+    projectId:"dev-ayurveda",
+    storageBucket:"dev-ayurveda.firebasestorage.app",
+    messagingSenderId:"40760282698",
+    appId:"1:40760282698:web:20e31100eed712631ca0b3"
+};
+const fbApp = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG, 'sub-app');
+const subDB  = getFirestore(fbApp);
+const subAuth = getAuth(fbApp);
+
+// ── Subscription config ───────────────────────────────────────
+const PLANS = {
+    monthly:   { price:149, days:30,  label:'Monthly' },
+    quarterly: { price:349, days:90,  label:'Quarterly' },
+    free:      { price:0,   days:0,   label:'Free' }
+};
+
+// Free features — available without subscription
+const FREE_FEATURES = ['dashboard','invoice','records'];
+// Locked behind subscription
+const PRO_FEATURES  = ['gst','ai-report','employees','clients','expenses'];
+
+let _subChecked = false;
+
+// ── Load user subscription from Firestore ─────────────────────
+async function loadSubscription(uid) {
+    try {
+        const userRef = doc(subDB, 'users', uid);
+        const snap = await getDoc(userRef);
+        if(!snap.exists()) {
+            // New user — create free tier record
+            await setDoc(userRef, {
+                uid, email: window.AppState?.user?.email||'',
+                businessName: window.AppState?.settings?.businessName||'',
+                subscriptionStatus: 'free', plan: 'free',
+                isRelative: false, invoiceCount: 0,
+                createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+            }, { merge:true });
+            window._userSub = { subscriptionStatus:'free', isRelative:false };
+        } else {
+            window._userSub = snap.data();
+        }
+        applySubscriptionGating();
+        _subChecked = true;
+    } catch(e) {
+        // Firestore error — don't block the user
+        console.warn('Subscription check failed (offline?):', e.message);
+        window._userSub = { subscriptionStatus:'active', isRelative:true }; // fallback: full access
+        _subChecked = true;
+    }
+}
+
+// ── Apply subscription gating ─────────────────────────────────
+window.applySubscriptionGating = function() {
+    var sub = window._userSub || {};
+    var hasAccess = sub.isRelative || sub.subscriptionStatus === 'active';
+    window._hasProAccess = hasAccess;
+
+    if(hasAccess) {
+        // Remove any paywall banners
+        var pw = document.getElementById('sub-paywall-banner');
+        if(pw) pw.remove();
+        return;
+    }
+
+    // Show subtle upgrade banner (non-blocking)
+    if(!document.getElementById('sub-paywall-banner')) {
+        var banner = document.createElement('div');
+        banner.id = 'sub-paywall-banner';
+        banner.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#064e3b,#065f46);color:white;padding:10px 20px;border-radius:14px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.3);font-size:13px;max-width:90vw;';
+        banner.innerHTML = '<span>🚀 Upgrade to unlock GST, AI Report & more</span>'
+            + '<button onclick="window.showUpgradeModal()" style="background:white;color:#064e3b;border:none;padding:6px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit;">Upgrade ₹149/mo</button>'
+            + '<button onclick="this.parentElement.style.display=\'none\'" style="background:transparent;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:18px;padding:0 4px;">×</button>';
+        document.body.appendChild(banner);
+    }
+};
+
+// ── Upgrade Modal ─────────────────────────────────────────────
+window.showUpgradeModal = function() {
+    var s = window.AppState?.settings || {};
+    var user = window.AppState?.user || {};
+    var existing = document.getElementById('upgrade-modal-overlay');
+    if(existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'upgrade-modal-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+    var vpa = s.upi || 'pay@upi';
+    var biz = encodeURIComponent(s.businessName || 'Business');
+    var uid = encodeURIComponent(user.uid || '');
+    var upiMo  = 'upi://pay?pa='+vpa+'&pn=My+Business+ERP&am=149&tn='+uid+'_'+biz+'_monthly&cu=INR';
+    var upiQtr = 'upi://pay?pa='+vpa+'&pn=My+Business+ERP&am=349&tn='+uid+'_'+biz+'_quarterly&cu=INR';
+
+    // Generate QR codes if QRious available
+    var qrMoSrc='', qrQtrSrc='';
+    if(typeof QRious !== 'undefined') {
+        qrMoSrc  = new QRious({value:upiMo,  size:160, level:'M'}).toDataURL();
+        qrQtrSrc = new QRious({value:upiQtr, size:160, level:'M'}).toDataURL();
+    }
+
+    overlay.innerHTML = `
+    <div style="background:linear-gradient(160deg,#0f1923,#0d2b1f);border:1px solid rgba(16,185,129,.2);border-radius:20px;padding:28px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:28px;margin-bottom:8px;">🚀</div>
+        <div style="font-size:20px;font-weight:800;color:white;">Upgrade My Business ERP</div>
+        <div style="font-size:13px;color:#64748b;margin-top:4px;">Unlock unlimited invoices, GST filing, AI reports & more</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:16px;text-align:center;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">MONTHLY</div>
+          <div style="font-size:26px;font-weight:800;color:#10b981;">₹149</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:12px;">per month</div>
+          ${qrMoSrc ? '<img src="'+qrMoSrc+'" style="width:120px;height:120px;border:3px solid white;border-radius:8px;display:block;margin:0 auto 8px;">' : ''}
+          <a href="${upiMo}" style="display:block;background:#10b981;color:white;padding:8px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Pay ₹149</a>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.3);border-radius:12px;padding:16px;text-align:center;position:relative;">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#8b5cf6;color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;">BEST VALUE</div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:4px;">QUARTERLY</div>
+          <div style="font-size:26px;font-weight:800;color:#8b5cf6;">₹349</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:12px;">Save ₹98</div>
+          ${qrQtrSrc ? '<img src="'+qrQtrSrc+'" style="width:120px;height:120px;border:3px solid white;border-radius:8px;display:block;margin:0 auto 8px;">' : ''}
+          <a href="${upiQtr}" style="display:block;background:#8b5cf6;color:white;padding:8px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Pay ₹349</a>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;font-size:11px;color:#64748b;text-align:center;margin-bottom:16px;">
+        After payment, send screenshot to WhatsApp. Your account will be activated within 2 hours.<br>
+        <strong style="color:#94a3b8;">UID: ${user.uid||'—'}</strong>
+      </div>
+      <button onclick="document.getElementById('upgrade-modal-overlay').remove()" style="width:100%;padding:11px;background:rgba(255,255,255,.06);border:none;border-radius:10px;color:#94a3b8;font-family:inherit;font-size:13px;cursor:pointer;">Maybe Later</button>
+    </div>`;
+    document.body.appendChild(overlay);
+};
+
+// ── Analytics: track section visits ──────────────────────────
+var _analyticsUid = null;
+var _lastTrackedTab = null;
+
+window.trackTabVisit = async function(tabId) {
+    if(!_analyticsUid || tabId === _lastTrackedTab) return;
+    _lastTrackedTab = tabId;
+    try {
+        await setDoc(doc(subDB, 'analytics', 'section_hits'), { [tabId]: increment(1) }, { merge:true });
+        // Track peak time
+        var hour = new Date().getHours();
+        var slot = hour + 'h';
+        await setDoc(doc(subDB, 'analytics', 'peak_times'), { [slot]: increment(1) }, { merge:true });
+    } catch(e) { /* non-critical, ignore */ }
+};
+
+// ── Analytics: track invoice generation ──────────────────────
+window.trackInvoiceGenerated = async function(inv) {
+    if(!_analyticsUid || !inv) return;
+    try {
+        await setDoc(doc(subDB, 'invoice_meta', inv.id), {
+            uid: _analyticsUid,
+            amount: inv.grandTotal || 0,
+            date: inv.date || new Date().toISOString().split('T')[0],
+            client: inv.client?.name || '',
+            status: inv.status || 'final'
+        }, { merge:true });
+        // Increment user invoice count
+        await updateDoc(doc(subDB, 'users', _analyticsUid), { invoiceCount: increment(1) });
+    } catch(e) { /* non-critical */ }
+};
+
+// ── Hook into app events ──────────────────────────────────────
+(function() {
+    var hookInterval = setInterval(function() {
+        if(!window.AppState?.user?.uid) return;
+        clearInterval(hookInterval);
+        _analyticsUid = window.AppState.user.uid;
+        loadSubscription(_analyticsUid);
+
+        // Patch switchTab to track analytics
+        var origSwitch = window.switchTab;
+        if(origSwitch && !origSwitch._analyticsPatch) {
+            window.switchTab = function(tabId) {
+                origSwitch.apply(this, arguments);
+                setTimeout(function(){ window.trackTabVisit && window.trackTabVisit(tabId); }, 500);
+            };
+            window.switchTab._analyticsPatch = true;
+        }
+
+        // Patch saveInvoice to track invoice events
+        var origSave = window.saveInvoice;
+        if(origSave && !origSave._analyticsPatch) {
+            window.saveInvoice = async function(status) {
+                await origSave.apply(this, arguments);
+                if(status === 'final' && window.AppState?.draft) {
+                    setTimeout(function(){
+                        var saved = (window.AppState.invoices||[]).find(i => i.id === window.AppState.draft.id);
+                        if(saved) window.trackInvoiceGenerated(saved);
+                    }, 1000);
+                }
+            };
+            window.saveInvoice._analyticsPatch = true;
+        }
+
+    }, 1000);
+})();
+</script>
+
+<style>
+/* ── Upgrade modal responsive ── */
+#upgrade-modal-overlay { font-family: 'Plus Jakarta Sans', sans-serif; }
+@media(max-width:400px) {
+    #upgrade-modal-overlay > div > div:nth-child(3) { grid-template-columns:1fr !important; }
+}
+</style>
