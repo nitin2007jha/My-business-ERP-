@@ -4,23 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>My Business ERP</title>
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#059669">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="My Business">
-<meta name="application-name" content="My Business ERP">
-<meta name="description" content="Professional Business ERP — Invoicing, Inventory & More">
-
-<!-- Icons -->
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <script>window.tailwind=window.tailwind||{};tailwind.config={theme:{extend:{colors:{e:{50:'#ecfdf5',100:'#d1fae5',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b'}}}}};</script>
@@ -30,7 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-<!-- Google OAuth loaded on-demand when Drive/Sheets features are used -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║          DEV AYURVEDA ERP — DEVELOPER CONFIG                     ║
@@ -43,6 +30,18 @@ window.ERP_CONFIG = {
     // featureFlags: { sheetsSync: true, driveBackup: true },
 };
 </script>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#059669">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Business">
+<meta name="application-name" content="My Business ERP">
+<meta name="description" content="Professional Business ERP — Invoicing, Inventory & More">
+	
+	
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{height:100%;height:100dvh;overflow:hidden;max-width:100vw}
@@ -3564,30 +3563,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var _tokenClient = null;  // GIS token client instance
             var _pendingCallback = null;
 
-            // Lazy-load the GSI script only when needed (not on page load)
-            function _loadGSIScript(cb) {
-                if (window.google && window.google.accounts) { cb(); return; }
-                if (document.querySelector('script[src*="accounts.google.com/gsi"]')) {
-                    // Already loading — poll until ready
-                    var t = setInterval(function() {
-                        if (window.google && window.google.accounts) { clearInterval(t); cb(); }
-                    }, 100);
-                    return;
-                }
-                var s = document.createElement('script');
-                s.src = 'https://accounts.google.com/gsi/client';
-                s.async = true;
-                s.defer = true;
-                s.onload = cb;
-                document.head.appendChild(s);
-            }
-
             // Initialise / re-initialise the GIS token client
             window._initGDriveClient = function() {
                 var cid = window.ERP_CONFIG.googleClientId;
-                if (!cid) return;
-                _loadGSIScript(function() {
-                if (!window.google || !window.google.accounts) return;
+                if (!cid || !window.google || !window.google.accounts) return;
                 try {
                     _tokenClient = window.google.accounts.oauth2.initTokenClient({
                         client_id: cid,
@@ -3605,7 +3584,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     _updateGDriveUI();
                 } catch(e) { console.warn('GDrive init:', e); }
-                }); // end _loadGSIScript
             };
 
             // Request token (shows popup if not already signed in) — SHARED
@@ -4836,7 +4814,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Push browser history for back button
-            try { if(!window._historyNav && window.history && window.history.pushState) history.pushState({tab:tabId},'',''); } catch(e){}
+            try { if(window.history && window.history.pushState) history.pushState({tab:tabId},'',''); } catch(e){}
 
             // Update page title
             if(window._tabTitles) {
@@ -4851,121 +4829,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Auto-close sidebar on mobile after tab switch
             if(window.innerWidth < 768) { typeof closeSidebar === 'function' && closeSidebar(); }
         }
-
-        // ── PWA BACK BUTTON — handles Android hardware back + browser back ──────
-        (function() {
-            // Seed initial history entry so first back press has something to pop
-            try { history.replaceState({tab: 'dashboard'}, '', ''); } catch(e){}
-
-            window.addEventListener('popstate', function(e) {
-                // 1. Close any open modal first
-                var openModal = document.querySelector('.modal.open');
-                if(openModal) {
-                    openModal.classList.remove('open');
-                    history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard'}, '', '');
-                    return;
-                }
-
-                // 2. Close any open drawer
-                var openDrawer = document.querySelector('.drawer.open');
-                if(openDrawer) {
-                    var closeBtn = openDrawer.querySelector('[onclick*="close"], [onclick*="Close"]');
-                    if(closeBtn) closeBtn.click();
-                    else openDrawer.classList.remove('open');
-                    var bg = document.querySelector('.drawer-bg.open');
-                    if(bg) bg.classList.remove('open');
-                    history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard'}, '', '');
-                    return;
-                }
-
-                // 3. Close PO drawer if open
-                var poDrawer = document.getElementById('po-drawer');
-                if(poDrawer && poDrawer.classList.contains('open')) {
-                    window.closePODrawer && window.closePODrawer();
-                    history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard'}, '', '');
-                    return;
-                }
-
-                // 4. Close PDF preview overlays
-                var pdfOverlay = document.getElementById('po-pdf-preview-modal') || document.getElementById('pdf-preview-modal');
-                if(pdfOverlay) {
-                    pdfOverlay.remove();
-                    history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard'}, '', '');
-                    return;
-                }
-
-                // 5. Close sidebar on mobile
-                var sidebar = document.getElementById('sidebar');
-                if(sidebar && sidebar.classList.contains('open') && window.innerWidth < 768) {
-                    typeof closeSidebar === 'function' && closeSidebar();
-                    history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard'}, '', '');
-                    return;
-                }
-
-                // 6. Navigate to previous tab from history state, or fall back to dashboard
-                var targetTab = (e.state && e.state.tab) ? e.state.tab : 'dashboard';
-                var currentTab = window.AppState && window.AppState.activeTab;
-                if(targetTab && targetTab !== currentTab) {
-                    window._historyNav = true; // flag so switchTab doesn't push another entry
-                    window.switchTab(targetTab);
-                    window._historyNav = false;
-                } else if(currentTab !== 'dashboard') {
-                    window._historyNav = true;
-                    window.switchTab('dashboard');
-                    window._historyNav = false;
-                }
-                // If already on dashboard, do nothing (allow PWA to stay open)
-                // — Android will minimize app naturally on next back press
-                else {
-                    history.pushState({tab: 'dashboard'}, '', '');
-                }
-            });
-        })();
-        // ── END PWA BACK BUTTON ───────────────────────────────────────────────
-
-        // ── AUTO-PUSH HISTORY when any modal/drawer opens (enables back-to-close) ─
-        (function() {
-            var _overlayOpen = false;
-            var _observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(m) {
-                    if(m.type !== 'attributes' || m.attributeName !== 'class') return;
-                    var el = m.target;
-                    var isOverlay = el.classList.contains('modal') || el.classList.contains('drawer') || el.classList.contains('drawer-bg');
-                    if(!isOverlay) return;
-                    var justOpened = el.classList.contains('open') && !m.oldValue.includes('open');
-                    var justClosed = !el.classList.contains('open') && m.oldValue.includes('open');
-                    if(justOpened && !_overlayOpen) {
-                        _overlayOpen = true;
-                        try { history.pushState({tab: window.AppState && window.AppState.activeTab || 'dashboard', overlay: true}, '', ''); } catch(e){}
-                    }
-                    if(justClosed) {
-                        // Check if any overlay is still open
-                        _overlayOpen = !!document.querySelector('.modal.open, .drawer.open');
-                    }
-                });
-            });
-            // Start observing once DOM is ready
-            document.addEventListener('DOMContentLoaded', function() {
-                document.querySelectorAll('.modal, .drawer, .drawer-bg').forEach(function(el) {
-                    _observer.observe(el, { attributes: true, attributeOldValue: true });
-                });
-                // Also observe body for dynamically added overlays
-                new MutationObserver(function(muts) {
-                    muts.forEach(function(m) {
-                        m.addedNodes.forEach(function(node) {
-                            if(node.nodeType !== 1) return;
-                            if(node.classList && (node.classList.contains('modal') || node.classList.contains('drawer'))) {
-                                _observer.observe(node, { attributes: true, attributeOldValue: true });
-                            }
-                            node.querySelectorAll && node.querySelectorAll('.modal, .drawer').forEach(function(child) {
-                                _observer.observe(child, { attributes: true, attributeOldValue: true });
-                            });
-                        });
-                    });
-                }).observe(document.body, { childList: true, subtree: true });
-            });
-        })();
-        // ── END AUTO-PUSH HISTORY ─────────────────────────────────────────────
 
         window.updateDashboard = function() {
             let invoices = window.AppState.invoices || []; 
@@ -16100,17 +15963,6 @@ setTimeout(function(){
 })();
 
 })();
-</script>
-
-<script>
-// ── PWA Service Worker Registration ─────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js')
-      .then(function(reg) { console.log('[PWA] SW registered:', reg.scope); })
-      .catch(function(err) { console.warn('[PWA] SW failed:', err); });
-  });
-}
 </script>
 
 </body>
