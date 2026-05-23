@@ -370,95 +370,6 @@ input:focus,select:focus,textarea:focus{outline:none}
 /* Tbl checkbox accent */
 .tbl input[type=checkbox]{accent-color:var(--op)}
 
-/* ─── INVOICE SUCCESS OVERLAY (Paytm-style) ─── */
-#inv-success-overlay{
-  position:fixed;inset:0;z-index:9999;
-  background:linear-gradient(160deg,#00b09b 0%,#1a6b4a 100%);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;
-}
-#inv-success-overlay.show{display:flex;animation:successFadeIn .3s ease-out}
-@keyframes successFadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-
-/* Step label pill */
-.success-step-pill{
-  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
-  color:#fff;font-size:12px;font-weight:700;letter-spacing:.12em;
-  padding:5px 18px;border-radius:30px;margin-bottom:24px;
-}
-
-/* Checkmark circle */
-.success-circle{
-  width:90px;height:90px;border-radius:50%;
-  background:#22c55e;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 0 0 rgba(34,197,94,.5);
-  margin-bottom:22px;
-  animation:successPulse .6s ease-out .1s both, successRingGrow .8s ease-out .1s both;
-}
-@keyframes successPulse{
-  0%{transform:scale(0);opacity:0}
-  60%{transform:scale(1.12);opacity:1}
-  100%{transform:scale(1)}
-}
-@keyframes successRingGrow{
-  0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}
-  70%{box-shadow:0 0 0 28px rgba(34,197,94,0)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-}
-.success-checkmark{
-  stroke-dasharray:48;stroke-dashoffset:48;
-  animation:drawCheck .5s ease-out .35s forwards;
-}
-@keyframes drawCheck{to{stroke-dashoffset:0}}
-
-/* Title */
-.success-title{
-  font-size:26px;font-weight:800;color:#fff;
-  margin-bottom:6px;letter-spacing:-.3px;
-  animation:slideUp2 .4s ease-out .3s both;
-}
-.success-sub{
-  font-size:13px;color:rgba(255,255,255,.75);
-  margin-bottom:24px;
-  animation:slideUp2 .4s ease-out .4s both;
-}
-@keyframes slideUp2{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-/* Invoice details card */
-.success-card{
-  background:#fff;border-radius:16px;
-  padding:20px;width:100%;max-width:380px;
-  box-shadow:0 8px 32px rgba(0,0,0,.18);
-  margin-bottom:24px;
-  animation:slideUp2 .4s ease-out .5s both;
-}
-.success-card-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:8px 0;border-bottom:1px solid #f1f5f9;
-}
-.success-card-row:last-child{border-bottom:none}
-.success-card-label{font-size:12px;color:#64748b;font-weight:500}
-.success-card-value{font-size:13px;color:#0f172a;font-weight:700;text-align:right;max-width:60%}
-.success-amount{font-size:28px;font-weight:900;color:#22c55e;text-align:center;padding:10px 0 4px}
-
-/* Action buttons */
-.success-btns{
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
-  width:100%;max-width:380px;
-  animation:slideUp2 .4s ease-out .6s both;
-}
-.success-btn{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
-  border-radius:12px;padding:12px 8px;cursor:pointer;
-  font-family:inherit;color:#fff;font-size:11px;font-weight:700;
-  transition:background .15s,transform .1s;
-  letter-spacing:.02em;
-}
-.success-btn:hover{background:rgba(255,255,255,.25)}
-.success-btn:active{transform:scale(.96)}
-
 
 /* Tailwind odoo-* shims */
 .text-odoo-500,.text-odoo-600{color:#714b67}.text-odoo-400{color:#9e6f8e}
@@ -2485,6 +2396,9 @@ input:focus,select:focus,textarea:focus{outline:none}
       </div>
       <div class="flex gap-2 flex-wrap">
         <button onclick="openTemplateGallery();window._previewOpen=true" class="btn btn-ghost btn-sm"><i data-lucide="layout-template" class="w-3.5 h-3.5"></i> Templates</button>
+        <button id="preview-paid-toggle" onclick="window._togglePreviewPaid&&_togglePreviewPaid()" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11px;min-width:88px;" title="Toggle Paid/Unpaid">
+          <i data-lucide="circle-dollar-sign" class="w-3.5 h-3.5"></i> <span id="preview-paid-label">Unpaid</span>
+        </button>
         <button onclick="window.confirmFinalize&&confirmFinalize()" class="btn btn-primary btn-sm"><i data-lucide="check-circle" class="w-4 h-4"></i> Confirm & Finalize</button>
         <button onclick="closeInvoicePreview()" class="btn btn-ghost btn-sm"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
@@ -5689,14 +5603,12 @@ try {
                     }
                 }
                 if(status === 'final') {
-                    // Capture snapshot BEFORE clearing the draft
-                    var _savedInv = JSON.parse(JSON.stringify(invoiceDoc));
+                    var _capturedInv = JSON.parse(JSON.stringify(invoiceDoc));
                     window.AppState.draft = { id: window.getNextInvoiceId(), docType: 'Tax Invoice', currency: 'INR', items: [], discount: 0, discountType: 'fixed', tds: 0, isRcm: false, poNo: '', vehicleNo: '', ewayBill: '', paymentMode: 'upi', paymentStatus: 'unpaid', notes: '', dueDate: '', client: { name: '', mobile: '', gstin: '', address: '' } };
                     localStorage.removeItem('ayur_draft_pro'); window.restoreDraftToUI(); window.updateInvoiceUI();
-                    // Show Paytm-style success animation
-                    setTimeout(function(){ if(window._showInvoiceSuccess) window._showInvoiceSuccess(_savedInv); }, 150);
+                    setTimeout(function(){ if(window._showInvoiceSuccess) window._showInvoiceSuccess(_capturedInv); }, 200);
                 } else {
-                    window.showToast(`${invoiceDoc.docType} Draft Saved successfully!`);
+                    window.showToast(`${window.AppState.draft.docType} Draft Saved successfully!`);
                 }
             } catch (err) { window.showToast("Error saving document.", "error"); }
         }
@@ -11473,40 +11385,7 @@ window._enforceEmployeeUI = function() {
 // ─────────────────────────────────────────────────────────────────
 // 2. INVOICE FINALIZED NOTIFICATION (5s banner with View button)
 // ─────────────────────────────────────────────────────────────────
-window._showInvoiceFinalizedBanner = function(invId) {
-    var existing = document.getElementById('inv-finalized-banner');
-    if(existing) existing.remove();
-
-    var banner = document.createElement('div');
-    banner.id = 'inv-finalized-banner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(135deg,#714b67,#5c3d55);color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 20px rgba(113,75,103,.4);animation:slideDown .3s ease-out;';
-    banner.innerHTML = '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">'
-        +'<span style="font-size:20px">✅</span>'
-        +'<div><div style="font-weight:800;font-size:14px">Invoice Finalized Successfully!</div>'
-        +'<div style="opacity:.8;font-size:11px;margin-top:1px">Invoice #'+invId+' has been saved</div></div>'
-        +'</div>'
-        +'<div style="display:flex;gap:8px;flex-shrink:0">'
-        +'<button onclick="window._viewFinalizedInvoice(\''+invId+'\')" style="background:rgba(255,255,255,.25);border:none;color:white;padding:7px 14px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;backdrop-filter:blur(4px);">View</button>'
-        +'<button onclick="document.getElementById(\'inv-finalized-banner\').remove()" style="background:rgba(255,255,255,.15);border:none;color:white;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;">✕</button>'
-        +'</div>';
-
-    // Add animation keyframe if not present
-    if(!document.getElementById('slide-down-style')) {
-        var s = document.createElement('style');
-        s.id = 'slide-down-style';
-        s.textContent = '@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}';
-        document.head.appendChild(s);
-    }
-
-    document.body.appendChild(banner);
-    // Auto-dismiss after 5 seconds
-    setTimeout(function(){
-        if(document.getElementById('inv-finalized-banner')) {
-            banner.style.animation = 'slideDown .3s ease-out reverse';
-            setTimeout(function(){ banner.remove(); }, 280);
-        }
-    }, 5000);
-};
+window._showInvoiceFinalizedBanner = function(invId) { /* no-op — success overlay handles this */ };
 
 window._viewFinalizedInvoice = function(invId) {
     var banner = document.getElementById('inv-finalized-banner');
@@ -16273,146 +16152,491 @@ setTimeout(function(){
 })();
 </script>
 
-</body>
-</html>
+
+<style>
+/* ─── SUCCESS OVERLAY CSS ─── */
+#inv-success-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#00b09b 0%,#1a6b4a 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;}
+#inv-success-overlay.show{display:flex;animation:sovFadeIn .35s ease-out}
+@keyframes sovFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.sov-step-pill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:11px;font-weight:700;letter-spacing:.12em;padding:5px 18px;border-radius:30px;margin-bottom:20px;}
+.sov-circle{width:88px;height:88px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 0 0 0 rgba(34,197,94,.5);animation:sovPop .55s cubic-bezier(.34,1.56,.64,1) .05s both,sovRing .9s ease-out .05s both;}
+@keyframes sovPop{0%{transform:scale(0);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes sovRing{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 30px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.sov-check{stroke-dasharray:50;stroke-dashoffset:50;animation:sovDraw .45s ease-out .4s forwards;}
+@keyframes sovDraw{to{stroke-dashoffset:0}}
+.sov-title{font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:-.3px;animation:sovUp .4s ease-out .25s both;}
+.sov-sub{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:20px;animation:sovUp .4s ease-out .35s both;}
+@keyframes sovUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sov-card{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin-bottom:20px;animation:sovUp .4s ease-out .45s both;}
+.sov-amount{font-size:30px;font-weight:900;color:#22c55e;text-align:center;padding:8px 0 2px;}
+.sov-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.sov-row:last-child{border-bottom:none;}
+.sov-lbl{font-size:12px;color:#64748b;font-weight:500;}
+.sov-val{font-size:13px;color:#0f172a;font-weight:700;text-align:right;max-width:60%;}
+.sov-btns{display:grid;grid-template-columns:1fr 1fr;gap:9px;width:100%;max-width:380px;animation:sovUp .4s ease-out .55s both;}
+.sov-btns-row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;width:100%;max-width:380px;margin-top:9px;animation:sovUp .4s ease-out .6s both;}
+.sov-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:12px 8px;cursor:pointer;font-family:inherit;color:#fff;font-size:11px;font-weight:700;transition:background .15s,transform .1s;letter-spacing:.02em;line-height:1.3;}
+.sov-btn:hover{background:rgba(255,255,255,.25);}
+.sov-btn:active{transform:scale(.95);}
+/* ─── STOCK MINI MODAL ─── */
+#stock-mini-modal{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);z-index:99999;background:#fff;border-radius:18px;padding:20px;width:min(360px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.25);display:none;opacity:0;transition:opacity .25s,transform .25s;}
+#stock-mini-modal.open{display:block;opacity:1;transform:translateX(-50%) translateY(0);}
+/* ─── ACCOUNT PROFILE MODAL ─── */
+#account-profile-modal{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;}
+#account-profile-modal.open{display:flex;animation:sovFadeIn .2s ease-out;}
+.apm-sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 32px;width:100%;max-width:480px;animation:sovUp .3s ease-out;}
+/* ─── PAID/UNPAID TOGGLE ─── */
+#preview-paid-toggle.is-paid{background:#dcfce7!important;color:#166534!important;border-color:#86efac!important;}
+</style>
+
 <script>
-// ═══════════════════════════════════════════════════════════════════
-// INVOICE SUCCESS OVERLAY — Paytm-style  (injected after all other JS)
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// ALL 7 FIXES — appended below existing JS
+// ═══════════════════════════════════════════════════════════════
 (function(){
-  function _injectSuccessOverlay(){
-    if(document.getElementById('inv-success-overlay')) return;
+
+// ────────────────────────────────────────────────────────────────
+// FIX 1 + 5: INVOICE SUCCESS OVERLAY (Paytm-style green screen)
+// ────────────────────────────────────────────────────────────────
+function _injectSOV(){
+  if(document.getElementById('inv-success-overlay')) return;
+  var el=document.createElement('div');
+  el.id='inv-success-overlay';
+  el.innerHTML=
+    '<div class="sov-step-pill">INVOICE GENERATED</div>'+
+    '<div class="sov-circle">'+
+      '<svg width="46" height="46" viewBox="0 0 46 46" fill="none">'+
+        '<polyline class="sov-check" points="9,24 19,34 37,13" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</svg>'+
+    '</div>'+
+    '<div class="sov-title">Bill Done! \u2705</div>'+
+    '<div class="sov-sub" id="sov-biz-name">My Business</div>'+
+    '<div class="sov-card">'+
+      '<div class="sov-amount" id="sov-amount">\u20b90.00</div>'+
+      '<div class="sov-row"><span class="sov-lbl">Client</span><span class="sov-val" id="sov-client">\u2014</span></div>'+
+      '<div class="sov-row"><span class="sov-lbl">Invoice No</span><span class="sov-val" id="sov-invno" style="font-family:monospace;color:#714b67">\u2014</span></div>'+
+      '<div class="sov-row"><span class="sov-lbl">Date</span><span class="sov-val" id="sov-date">\u2014</span></div>'+
+      '<div class="sov-row"><span class="sov-lbl">Payment</span><span class="sov-val" id="sov-mode">\u2014</span></div>'+
+      '<div class="sov-row"><span class="sov-lbl">Items</span><span class="sov-val" id="sov-items">\u2014</span></div>'+
+    '</div>'+
+    '<div class="sov-btns">'+
+      '<button class="sov-btn" onclick="window._sovOpenInvoice()">'+
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>'+
+        'Open Invoice'+
+      '</button>'+
+      '<button class="sov-btn" id="sov-share-btn" onclick="window._sovShareInvoice()">'+
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+        '<span class="sov-btn-label">Share PDF</span>'+
+      '</button>'+
+    '</div>'+
+    '<div class="sov-btns-row2">'+
+      '<button class="sov-btn" onclick="window._sovCheckStock()">'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>'+
+        'Check Stock'+
+      '</button>'+
+      '<button class="sov-btn" onclick="window._sovNewBill()">'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>'+
+        'New Bill'+
+      '</button>'+
+      '<button class="sov-btn" onclick="window._sovClose()">'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'+
+        'Close'+
+      '</button>'+
+    '</div>';
+  document.body.appendChild(el);
+}
+
+window._showInvoiceSuccess=function(inv){
+  _injectSOV();
+  var ov=document.getElementById('inv-success-overlay');
+  var fmt=window.formatCurrency||function(a){ return '\u20b9'+Number(a).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var biz=(window.AppState&&window.AppState.settings&&window.AppState.settings.businessName)||'My Business';
+  document.getElementById('sov-biz-name').textContent=biz;
+  document.getElementById('sov-amount').textContent=fmt(inv.grandTotal,inv.currency||'INR');
+  document.getElementById('sov-client').textContent=(inv.client&&inv.client.name)||'\u2014';
+  document.getElementById('sov-invno').textContent=inv.id||'\u2014';
+  document.getElementById('sov-date').textContent=inv.date||new Date().toISOString().split('T')[0];
+  var modeMap={upi:'UPI / QR',cash:'Cash',credit:'Credit (Udhar)',split:'Split Payment'};
+  document.getElementById('sov-mode').textContent=modeMap[inv.paymentMode]||inv.paymentMode||'\u2014';
+  var ic=(inv.items||[]).length;
+  document.getElementById('sov-items').textContent=ic+' item'+(ic===1?'':'s');
+  window._sovCurrentInv=inv;
+  // Restart animations
+  ['sov-circle','sov-check'].forEach(function(cls){
+    var el=ov.querySelector('.'+cls); if(!el) return;
+    el.style.animation='none'; void el.offsetWidth; el.style.animation='';
+  });
+  ov.classList.add('show');
+};
+
+window._sovClose=function(){
+  var ov=document.getElementById('inv-success-overlay');
+  if(ov) ov.classList.remove('show');
+};
+
+// FIX 5: Open Invoice (PDF Preview) from success overlay
+window._sovOpenInvoice=function(){
+  window._sovClose();
+  var inv=window._sovCurrentInv; if(!inv) return;
+  setTimeout(function(){
+    if(window.viewInvoice) window.viewInvoice(inv.id);
+    else if(window.switchTab){ window.switchTab('records'); }
+  }, 150);
+};
+
+window._sovCheckStock=function(){
+  window._sovClose();
+  // FIX 2: Show mini stock modal instead of switching tabs
+  setTimeout(function(){ window._showStockMiniModal(window._sovCurrentInv); }, 200);
+};
+
+window._sovShareInvoice=async function(){
+  var inv=window._sovCurrentInv; if(!inv) return;
+  var btn=document.getElementById('sov-share-btn');
+  var lbl=btn&&btn.querySelector('.sov-btn-label');
+  if(btn){btn.style.opacity='0.55';btn.style.pointerEvents='none';}
+  if(lbl) lbl.textContent='Generating\u2026';
+
+  if(typeof html2pdf==='undefined'){
+    if(window.showToast) window.showToast('PDF library load nahi hua. Reload karein.','warning');
+    if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+    if(lbl) lbl.textContent='Share PDF';
+    return;
+  }
+  try{
+    var freshDiv=document.createElement('div');
+    freshDiv.style.cssText='position:fixed;top:-9999px;left:0;width:794px;background:#ffffff;font-size:11px;padding:28px 36px;box-sizing:border-box;overflow:visible;';
+    var html='';
+    if(window.generateInvoiceHTML) html=window.generateInvoiceHTML(inv);
+    if(!html){
+      var ra=document.getElementById('invoice-render-area');
+      if(ra) html=ra.innerHTML;
+    }
+    if(!html){ if(window.showToast) window.showToast('HTML generate nahi hua','error'); if(btn){btn.style.opacity='';btn.style.pointerEvents='';} if(lbl) lbl.textContent='Share PDF'; return; }
+    freshDiv.innerHTML=html;
+    document.body.appendChild(freshDiv);
+    await new Promise(function(r){setTimeout(r,650);});
+    var blob=await html2pdf().set({
+      margin:[4,4,4,4],filename:inv.id+'.pdf',
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,logging:false,allowTaint:true,backgroundColor:'#ffffff',windowWidth:794},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).from(freshDiv).output('blob');
+    if(freshDiv.parentNode) document.body.removeChild(freshDiv);
+    if(!blob||blob.size<500){ if(window.showToast) window.showToast('PDF empty — dobara try karein','error'); if(btn){btn.style.opacity='';btn.style.pointerEvents='';} if(lbl) lbl.textContent='Share PDF'; return; }
+    var filename=inv.id+'.pdf';
+    var file=new File([blob],filename,{type:'application/pdf'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:filename,text:'Invoice '+inv.id});
+      if(window.showToast) window.showToast('Invoice shared! \u2705');
+    } else {
+      if(window.downloadPDFBlob) await window.downloadPDFBlob(blob,filename);
+      else { var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url;a.download=filename;a.style.display='none'; document.body.appendChild(a);a.click(); setTimeout(function(){URL.revokeObjectURL(url);a.remove();},3000); }
+      if(window.showToast) window.showToast('PDF download ho rahi hai \ud83d\udce5');
+    }
+  } catch(e){
+    if(e.name!=='AbortError'){ console.error('PDF err:',e); if(window.showToast) window.showToast('Error: '+e.message,'error'); }
+  }
+  if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+  if(lbl) lbl.textContent='Share PDF';
+};
+
+window._sovNewBill=function(){
+  window._sovClose();
+  if(window.switchTab) window.switchTab('invoice');
+};
+
+// ────────────────────────────────────────────────────────────────
+// FIX 2: Stock Mini Modal (shows items from the current invoice)
+// ────────────────────────────────────────────────────────────────
+(function(){
+  function _buildStockModal(){
+    if(document.getElementById('stock-mini-modal')) return;
     var el=document.createElement('div');
-    el.id='inv-success-overlay';
-    el.innerHTML=`
-      <div class="success-step-pill">INVOICE GENERATED</div>
-      <div class="success-circle">
-        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-          <polyline class="success-checkmark" points="8,23 18,33 36,12"
-            stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="success-title">Bill Done! ✅</div>
-      <div class="success-sub" id="sov-biz-name">My Business ERP</div>
-      <div class="success-card">
-        <div class="success-amount" id="sov-amount">₹0.00</div>
-        <div class="success-card-row">
-          <span class="success-card-label">Client</span>
-          <span class="success-card-value" id="sov-client">—</span>
-        </div>
-        <div class="success-card-row">
-          <span class="success-card-label">Invoice No</span>
-          <span class="success-card-value" id="sov-invno" style="font-family:monospace;color:#714b67">—</span>
-        </div>
-        <div class="success-card-row">
-          <span class="success-card-label">Date</span>
-          <span class="success-card-value" id="sov-date">—</span>
-        </div>
-        <div class="success-card-row">
-          <span class="success-card-label">Payment</span>
-          <span class="success-card-value" id="sov-mode">UPI</span>
-        </div>
-        <div class="success-card-row">
-          <span class="success-card-label">Items</span>
-          <span class="success-card-value" id="sov-items">—</span>
-        </div>
-      </div>
-      <div class="success-btns">
-        <button class="success-btn" onclick="window._sovCheckStock()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 8h10M7 12h6"/></svg>
-          Check Stock
-        </button>
-        <button class="success-btn" id="sov-share-btn" onclick="window._sovShareInvoice()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Share Invoice
-        </button>
-        <button class="success-btn" onclick="window._sovNewBill()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          New Bill
-        </button>
-      </div>
-    `;
+    el.id='stock-mini-modal';
+    el.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+        '<div style="font-weight:800;font-size:15px;color:#0f172a">📦 Current Stock</div>'+
+        '<button onclick="window._closeStockMini()" style="background:#f1f5f9;border:none;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#64748b">\u2715</button>'+
+      '</div>'+
+      '<div id="stock-mini-list" style="max-height:260px;overflow-y:auto;"></div>'+
+      '<button onclick="window._closeStockMini();window.switchTab&&window.switchTab(\'inventory\')" style="margin-top:12px;width:100%;padding:10px;background:#714b67;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer">\ud83d\udd17 View Full Inventory</button>';
+    document.body.appendChild(el);
+    // close on outside click
+    document.addEventListener('click',function(e){ var m=document.getElementById('stock-mini-modal'); if(m&&m.classList.contains('open')&&!m.contains(e.target)&&!e.target.closest('#inv-success-overlay')) window._closeStockMini(); });
+  }
+
+  window._closeStockMini=function(){ var m=document.getElementById('stock-mini-modal'); if(m) m.classList.remove('open'); };
+
+  window._showStockMiniModal=function(inv){
+    _buildStockModal();
+    var modal=document.getElementById('stock-mini-modal');
+    var list=document.getElementById('stock-mini-list');
+    if(!list) return;
+
+    var products=window.AppState&&window.AppState.products||[];
+    var invoiceItems=inv&&inv.items||[];
+
+    // Show invoice items with their current stock
+    var rows='';
+    if(invoiceItems.length===0){
+      rows='<div style="color:#94a3b8;text-align:center;padding:16px">No items in this invoice</div>';
+    } else {
+      invoiceItems.forEach(function(item){
+        var prod=products.find(function(p){ return p.id===item.productId||(p.name&&p.name.toLowerCase()===item.name.toLowerCase()); });
+        var currentStock=prod?(Number(prod.stock)||0):null;
+        var soldQty=Number(item.qty)||1;
+        var low=(currentStock!==null)&&currentStock<=5;
+        rows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9;">'+
+          '<div>'+
+            '<div style="font-weight:700;font-size:13px;color:#0f172a">'+item.name+'</div>'+
+            '<div style="font-size:11px;color:#94a3b8">Sold: '+soldQty+' unit'+( soldQty===1?'':'s')+'</div>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            (currentStock!==null
+              ? '<div style="font-weight:800;font-size:14px;color:'+(low?'#ef4444':'#22c55e')+'">'+currentStock+' left</div>'
+              +'<div style="font-size:10px;color:'+(low?'#ef4444':'#94a3b8')+'">'+(low?'\u26a0\ufe0f Low stock':'In stock')+'</div>'
+              : '<div style="font-size:12px;color:#94a3b8">Not tracked</div>'
+            )+
+          '</div>'+
+        '</div>';
+      });
+    }
+    list.innerHTML=rows;
+    modal.classList.add('open');
+  };
+})();
+
+// ────────────────────────────────────────────────────────────────
+// FIX 4: Paid/Unpaid toggle logic for preview modal
+// ────────────────────────────────────────────────────────────────
+window._togglePreviewPaid=window._togglePreviewPaidStatus=function(){
+  if(!window.AppState||!window.AppState.draft) return;
+  var draft=window.AppState.draft;
+  draft.paymentStatus=(draft.paymentStatus==='paid')?'unpaid':'paid';
+  var btn=document.getElementById('preview-paid-toggle');
+  var lbl=document.getElementById('preview-paid-label');
+  var isPaid=draft.paymentStatus==='paid';
+  if(lbl) lbl.textContent=isPaid?'Paid':'Unpaid';
+  if(btn){
+    btn.classList.toggle('is-paid',isPaid);
+    btn.style.background=isPaid?'#dcfce7':'#fef3c7';
+    btn.style.color=isPaid?'#166534':'#92400e';
+    btn.style.borderColor=isPaid?'#86efac':'#fde68a';
+  }
+  // Re-render preview with updated stamp
+  if(window.openInvoicePreview) window.openInvoicePreview();
+};
+
+// Sync toggle state when preview opens
+var _origOpenPreview=window.openInvoicePreview;
+if(_origOpenPreview){
+  window.openInvoicePreview=function(){
+    var r=_origOpenPreview.apply(this,arguments);
+    setTimeout(function(){
+      var draft=window.AppState&&window.AppState.draft;
+      var btn=document.getElementById('preview-paid-toggle');
+      var lbl=document.getElementById('preview-paid-label');
+      if(!draft||!btn||!lbl) return;
+      var isPaid=draft.paymentStatus==='paid';
+      lbl.textContent=isPaid?'Paid':'Unpaid';
+      btn.classList.toggle('is-paid',isPaid);
+      btn.style.background=isPaid?'#dcfce7':'#fef3c7';
+      btn.style.color=isPaid?'#166534':'#92400e';
+      btn.style.borderColor=isPaid?'#86efac':'#fde68a';
+    },100);
+    return r;
+  };
+}
+
+// ────────────────────────────────────────────────────────────────
+// FIX 6: Mobile back button — navigate one step back
+// ────────────────────────────────────────────────────────────────
+(function(){
+  var _tabHistory=[];
+  var _origSwitch=window.switchTab;
+  // Patch switchTab to record history
+  function _patchSwitchTab(){
+    if(window.switchTab&&!window.switchTab._backPatched){
+      var orig=window.switchTab;
+      window.switchTab=function(tabId){
+        var cur=window._currentTab||null;
+        if(cur&&cur!==tabId) _tabHistory.push(cur);
+        if(_tabHistory.length>20) _tabHistory.shift();
+        return orig.apply(this,arguments);
+      };
+      window.switchTab._backPatched=true;
+    }
+  }
+  _patchSwitchTab();
+  // Try again after DOMContentLoaded
+  document.addEventListener('DOMContentLoaded',function(){ setTimeout(_patchSwitchTab,1000); setTimeout(_patchSwitchTab,3000); });
+
+  window.addEventListener('popstate',function(e){
+    // Close any open modal first
+    var modals=['inv-success-overlay','stock-mini-modal','account-profile-modal','invoice-preview-modal','invoice-modal','ledger-modal','reports-modal'];
+    var closed=false;
+    for(var i=0;i<modals.length;i++){
+      var m=document.getElementById(modals[i]);
+      if(!m) continue;
+      var isOpen=m.classList.contains('show')||m.classList.contains('open')||(m.style.display&&m.style.display!=='none'&&!m.classList.contains('modal'));
+      if(m.classList.contains('modal')&&m.style.display==='flex'){ isOpen=true; }
+      if(isOpen){
+        if(m.id==='inv-success-overlay') m.classList.remove('show');
+        else if(m.id==='stock-mini-modal') m.classList.remove('open');
+        else if(m.id==='account-profile-modal') m.classList.remove('open');
+        else if(window.closeInvoicePreview&&m.id==='invoice-preview-modal') window.closeInvoicePreview();
+        else if(window.closeInvModal&&m.id==='invoice-modal') window.closeInvModal();
+        else m.style.display='none';
+        closed=true; break;
+      }
+    }
+    if(!closed&&_tabHistory.length>0){
+      var prev=_tabHistory.pop();
+      if(window.switchTab&&window.switchTab._backPatched){
+        // call original to avoid pushing to history again
+        var orig2=window.switchTab;
+        window.switchTab._backPatched=false;
+        window.switchTab(prev);
+        window.switchTab._backPatched=true;
+      }
+    }
+    history.pushState(null,'',location.href); // keep stack alive
+  });
+  // Push an initial state so popstate fires on back
+  history.pushState(null,'',location.href);
+})();
+
+// ────────────────────────────────────────────────────────────────
+// FIX 7a: Sidebar Sign Out — ensure it works
+// ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  // Wire any sign-out buttons that may be missing their handler
+  document.querySelectorAll('[onclick*="handleLogout"],[onclick*="employeeLogout"]').forEach(function(btn){
+    if(!btn._signOutWired){
+      btn._signOutWired=true;
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        if(window._isEmployeeSession&&window.employeeLogout) window.employeeLogout();
+        else if(window.handleLogout) window.handleLogout();
+      });
+    }
+  });
+});
+
+// ────────────────────────────────────────────────────────────────
+// FIX 7b: Account Icon → Profile Modal
+// ────────────────────────────────────────────────────────────────
+(function(){
+  function _buildAccountModal(){
+    if(document.getElementById('account-profile-modal')) return;
+    var el=document.createElement('div');
+    el.id='account-profile-modal';
+    el.onclick=function(e){ if(e.target===el) window._closeAccountModal(); };
+    el.innerHTML=
+      '<div class="apm-sheet">'+
+        '<div style="width:40px;height:4px;background:#e2e8f0;border-radius:4px;margin:0 auto 20px;"></div>'+
+        '<div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">'+
+          '<div id="apm-avatar" style="width:56px;height:56px;border-radius:50%;background:#ede4e9;color:#714b67;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">U</div>'+
+          '<div>'+
+            '<div id="apm-name" style="font-weight:800;font-size:16px;color:#0f172a">User</div>'+
+            '<div id="apm-email" style="font-size:12px;color:#64748b;margin-top:2px"></div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:16px">'+
+          '<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Business Info</div>'+
+          '<div style="margin-bottom:10px">'+
+            '<label style="font-size:12px;color:#64748b;font-weight:600">Business Name</label>'+
+            '<input id="apm-biz-name" type="text" style="margin-top:4px;width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box" placeholder="Enter business name"/>'+
+          '</div>'+
+          '<div style="margin-bottom:10px">'+
+            '<label style="font-size:12px;color:#64748b;font-weight:600">Phone</label>'+
+            '<input id="apm-phone" type="tel" style="margin-top:4px;width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box" placeholder="Business phone"/>'+
+          '</div>'+
+          '<div>'+
+            '<label style="font-size:12px;color:#64748b;font-weight:600">GSTIN</label>'+
+            '<input id="apm-gstin" type="text" style="margin-top:4px;width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;text-transform:uppercase" placeholder="GSTIN (optional)"/>'+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px">'+
+          '<button onclick="window._saveAccountProfile()" style="flex:1;padding:12px;background:#714b67;color:#fff;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer">\ud83d\udcbe Save</button>'+
+          '<button onclick="window._signOutFromModal()" style="padding:12px 16px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer">\ud83d\udeaa Sign Out</button>'+
+        '</div>'+
+      '</div>';
     document.body.appendChild(el);
   }
 
-  window._showInvoiceSuccess=function(inv){
-    _injectSuccessOverlay();
-    var overlay=document.getElementById('inv-success-overlay');
-    var fmt=window.formatCurrency||function(a){ return '₹'+Number(a).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-    var biz=(window.AppState&&window.AppState.settings&&window.AppState.settings.businessName)||'My Business';
-    document.getElementById('sov-biz-name').textContent=biz;
-    document.getElementById('sov-amount').textContent=fmt(inv.grandTotal,inv.currency||'INR');
-    document.getElementById('sov-client').textContent=(inv.client&&inv.client.name)||'—';
-    document.getElementById('sov-invno').textContent=inv.id||'—';
-    document.getElementById('sov-date').textContent=inv.date||new Date().toISOString().split('T')[0];
-    var modeMap={upi:'UPI / QR',cash:'Cash',credit:'Credit (Udhar)',split:'Split Payment'};
-    document.getElementById('sov-mode').textContent=modeMap[inv.paymentMode]||inv.paymentMode||'—';
-    var ic=(inv.items||[]).length;
-    document.getElementById('sov-items').textContent=ic+' item'+(ic===1?'':'s');
-    window._sovCurrentInv=inv;
-    // Restart animations
-    var circle=overlay.querySelector('.success-circle');
-    var check=overlay.querySelector('.success-checkmark');
-    if(circle){circle.style.animation='none';void circle.offsetWidth;circle.style.animation='';}
-    if(check){check.style.animation='none';void check.offsetWidth;check.style.animation='';}
-    overlay.classList.add('show');
+  window._openAccountModal=function(){
+    _buildAccountModal();
+    var modal=document.getElementById('account-profile-modal');
+    // Populate fields
+    var user=window.AppState&&window.AppState.user;
+    var settings=window.AppState&&window.AppState.settings||{};
+    var email=(user&&(user.email||user.uid))||'';
+    var initial=email?email.charAt(0).toUpperCase():'U';
+    var apmAv=document.getElementById('apm-avatar'); if(apmAv) apmAv.textContent=initial;
+    var apmN=document.getElementById('apm-name'); if(apmN) apmN.textContent=settings.businessName||email||'My Account';
+    var apmE=document.getElementById('apm-email'); if(apmE) apmE.textContent=email;
+    var apmBiz=document.getElementById('apm-biz-name'); if(apmBiz) apmBiz.value=settings.businessName||'';
+    var apmPh=document.getElementById('apm-phone'); if(apmPh) apmPh.value=settings.businessPhone||settings.phone||'';
+    var apmG=document.getElementById('apm-gstin'); if(apmG) apmG.value=settings.gstin||'';
+    modal.classList.add('open');
   };
 
-  window._sovCheckStock=function(){
-    var ov=document.getElementById('inv-success-overlay');
-    if(ov) ov.classList.remove('show');
-    if(window.switchTab) window.switchTab('inventory');
+  window._closeAccountModal=function(){
+    var m=document.getElementById('account-profile-modal'); if(m) m.classList.remove('open');
   };
 
-  window._sovShareInvoice=async function(){
-    var inv=window._sovCurrentInv; if(!inv) return;
-    var btn=document.getElementById('sov-share-btn');
-    if(btn){btn.style.opacity='0.55';btn.style.pointerEvents='none';btn.textContent='Generating…';}
-    if(typeof html2pdf!=='undefined'&&window.generateInvoiceHTML){
-      try{
-        var freshDiv=document.createElement('div');
-        freshDiv.style.cssText='position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;font-size:11px;padding:30px 36px;box-sizing:border-box;z-index:9990;overflow:visible;opacity:0.001;pointer-events:none;';
-        freshDiv.innerHTML=window.generateInvoiceHTML(inv);
-        document.body.appendChild(freshDiv);
-        await new Promise(function(r){setTimeout(r,500);});
-        var blob=await html2pdf().set({
-          margin:0,filename:inv.id+'.pdf',
-          image:{type:'jpeg',quality:0.95},
-          html2canvas:{scale:2,useCORS:true,logging:false,allowTaint:true,backgroundColor:'#ffffff',windowWidth:794,width:794},
-          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-        }).from(freshDiv).output('blob');
-        if(freshDiv.parentNode) document.body.removeChild(freshDiv);
-        var file=new File([blob],inv.id+'.pdf',{type:'application/pdf'});
-        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-          await navigator.share({files:[file],title:inv.id+' Invoice',text:'Invoice '+inv.id+' — '+document.getElementById('sov-amount').textContent});
-          if(window.showToast) window.showToast('Invoice shared! ✅');
-        } else {
-          var url=URL.createObjectURL(blob);
-          var a=document.createElement('a');
-          a.href=url;a.download=inv.id+'.pdf';
-          document.body.appendChild(a);a.click();
-          setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1000);
-          if(window.showToast) window.showToast('PDF download shuru! 📥');
-        }
-      } catch(e){
-        if(e.name!=='AbortError'){
-          console.error('PDF err:',e);
-          if(window.showToast) window.showToast('PDF error: '+e.message,'error');
-        }
-      }
-    } else {
-      if(window.showToast) window.showToast('PDF library load nahi hua. Reload karein.','warning');
+  window._saveAccountProfile=function(){
+    var bizName=(document.getElementById('apm-biz-name')||{}).value||'';
+    var phone=(document.getElementById('apm-phone')||{}).value||'';
+    var gstin=((document.getElementById('apm-gstin')||{}).value||'').toUpperCase();
+    if(!window.AppState) window.AppState={};
+    if(!window.AppState.settings) window.AppState.settings={};
+    window.AppState.settings.businessName=bizName;
+    window.AppState.settings.businessPhone=phone;
+    window.AppState.settings.gstin=gstin;
+    // Persist to localStorage as fallback
+    try{ var ls=JSON.parse(localStorage.getItem('ayur_settings')||'{}'); ls.businessName=bizName;ls.businessPhone=phone;ls.gstin=gstin; localStorage.setItem('ayur_settings',JSON.stringify(ls)); }catch(e){}
+    // Persist to Firestore if available
+    if(window._db&&window._firestoreDoc&&window._firestoreSetDoc){
+      try{ window._firestoreSetDoc(window._firestoreDoc(window._db,'settings','main'),{businessName:bizName,businessPhone:phone,gstin:gstin},{merge:true}).catch(function(){}); }catch(e){}
     }
-    if(btn){
-      btn.style.opacity='';btn.style.pointerEvents='';
-      btn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Share Invoice';
-    }
+    if(window.showToast) window.showToast('Profile saved! \u2705');
+    window._closeAccountModal();
+    // Update avatar
+    var av=document.getElementById('user-avatar'); if(av&&bizName) av.textContent=bizName.charAt(0).toUpperCase();
   };
 
-  window._sovNewBill=function(){
-    var ov=document.getElementById('inv-success-overlay');
-    if(ov) ov.classList.remove('show');
-    if(window.switchTab) window.switchTab('invoice');
+  window._signOutFromModal=function(){
+    window._closeAccountModal();
+    setTimeout(function(){
+      if(window._isEmployeeSession&&window.employeeLogout) window.employeeLogout();
+      else if(window.handleLogout) window.handleLogout();
+    },200);
   };
+
+  // Wire header account icon
+  function _wireAccountIcon(){
+    var topbarUser=document.querySelector('#topbar [title="Account"]');
+    if(topbarUser&&!topbarUser._accWired){
+      topbarUser._accWired=true;
+      topbarUser.onclick=function(e){ e.stopPropagation(); window._openAccountModal(); };
+    }
+    // Also wire sidebar avatar
+    var sideAvatar=document.getElementById('user-avatar');
+    if(sideAvatar&&!sideAvatar._accWired){
+      sideAvatar._accWired=true;
+      sideAvatar.style.cursor='pointer';
+      sideAvatar.onclick=function(){ window._openAccountModal(); };
+    }
+  }
+  document.addEventListener('DOMContentLoaded',function(){ setTimeout(_wireAccountIcon,1000); setTimeout(_wireAccountIcon,3000); });
+  setTimeout(_wireAccountIcon,2000);
 })();
+
+})(); // end IIFE
 </script>
+
+</body>
+</html>
