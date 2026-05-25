@@ -16219,16 +16219,36 @@ function _injectSOV(){
       '<div class="sov-row"><span class="sov-lbl">Payment</span><span class="sov-val" id="sov-mode">\u2014</span></div>'+
       '<div class="sov-row"><span class="sov-lbl">Items</span><span class="sov-val" id="sov-items">\u2014</span></div>'+
     '</div>'+
-    '<div class="sov-btns">'+
-      '<button class="sov-btn" onclick="window._sovOpenInvoice()">'+
-        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>'+
-        'Open Invoice'+
+    '<div id="sov-wa-card" style="width:100%;max-width:340px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto 14px;">'+
+      '<div id="sov-wa-preview" style="background:#f0f2f5;min-height:80px;display:flex;align-items:center;justify-content:center;padding:12px;">'+
+        '<div style="text-align:center;">'+
+          '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#714b67" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>'+
+          '<div style="font-size:11px;color:#714b67;font-weight:600;margin-top:4px;">TAX INVOICE</div>'+
+          '<div id="sov-wa-invid" style="font-size:10px;color:#64748b;margin-top:2px;"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:8px 12px;border-top:1px solid #e2e8f0;">'+
+        '<div id="sov-wa-desc" style="font-size:12px;color:#1e293b;font-weight:500;"></div>'+
+        '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">PDF • Tax Invoice</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="sov-btns" style="gap:10px;margin-bottom:6px;">'+
+      '<button class="sov-btn" style="background:#25D366;color:#fff;flex:1;" onclick="window._sovViewReceipt()">'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'+
+        'View Receipt'+
       '</button>'+
+      '<button class="sov-btn" style="background:#6366f1;color:#fff;flex:1;" onclick="window._sovOpenInvoice()">'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>'+
+        'View Invoice'+
+      '</button>'+
+    '</div>'+
+    '<div class="sov-btns">'+
       '<button class="sov-btn" id="sov-share-btn" onclick="window._sovShareInvoice()">'+
-        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
         '<span class="sov-btn-label">Share PDF</span>'+
       '</button>'+
     '</div>'+
+
     '<div class="sov-btns-row2">'+
       '<button class="sov-btn" onclick="window._sovCheckStock()">'+
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>'+
@@ -16261,6 +16281,12 @@ window._showInvoiceSuccess=function(inv){
   var ic=(inv.items||[]).length;
   document.getElementById('sov-items').textContent=ic+' item'+(ic===1?'':'s');
   window._sovCurrentInv=inv;
+  // Populate WhatsApp-style preview card
+  var waInvId=document.getElementById('sov-wa-invid');
+  var waDesc=document.getElementById('sov-wa-desc');
+  var fmt2=window.formatCurrency||function(a){return '\u20b9'+Number(a).toLocaleString('en-IN',{minimumFractionDigits:2});};
+  if(waInvId) waInvId.textContent=inv.id||'';
+  if(waDesc) waDesc.textContent=(inv.client&&inv.client.name?inv.client.name+' — ':'')+fmt2(inv.grandTotal)+' • '+(inv.paymentMode||'').toUpperCase();
   // Restart animations
   ['sov-circle','sov-check'].forEach(function(cls){
     var el=ov.querySelector('.'+cls); if(!el) return;
@@ -16279,9 +16305,34 @@ window._sovOpenInvoice=function(){
   window._sovClose();
   var inv=window._sovCurrentInv; if(!inv) return;
   setTimeout(function(){
-    if(window.viewInvoice) window.viewInvoice(inv.id);
+    // Open PDF preview modal
+    if(window.openInvoicePreview){
+      window._curInvId = inv.id;
+      window.openInvoicePreview();
+    } else if(window.viewInvoice) window.viewInvoice(inv.id);
     else if(window.switchTab){ window.switchTab('records'); }
   }, 150);
+};
+
+// "View Receipt" — opens the green success tab / records tab
+window._sovViewReceipt=function(){
+  window._sovClose();
+  var inv=window._sovCurrentInv; if(!inv) return;
+  setTimeout(function(){
+    if(window.switchTab) window.switchTab('records');
+    // Try to highlight/scroll to this invoice
+    setTimeout(function(){
+      var rows=document.querySelectorAll('[data-inv-id],[data-id]');
+      rows.forEach(function(r){
+        if(r.dataset.invId===inv.id||r.dataset.id===inv.id){
+          r.scrollIntoView({behavior:'smooth',block:'center'});
+          r.style.transition='background .3s';
+          r.style.background='#dcfce7';
+          setTimeout(function(){r.style.background='';},2000);
+        }
+      });
+    },400);
+  },150);
 };
 
 window._sovCheckStock=function(){
@@ -16636,6 +16687,1345 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 
 })(); // end IIFE
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     VOICE ERP CONTROLLER — v2.0
+     Advanced: WhatsApp share, PDF, Daily report, Lang toggle,
+     Custom shortcuts, Barcode scan, History log, Bug fixes
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* ── Voice FAB ── */
+/* Hide FAB on splash/auth */
+#splash:not(.splash-out) ~ #vc-fab,
+#auth-wrap[style*="block"] ~ #vc-fab { display:none!important; }
+#vc-fab{
+  position:fixed;bottom:88px;right:16px;z-index:9990;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#6366f1,#7c3aed);
+  box-shadow:0 4px 18px rgba(99,102,241,.55);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;outline:none;
+  -webkit-tap-highlight-color:transparent;
+}
+#vc-fab:active{transform:scale(.93);}
+#vc-fab svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#vc-fab.vc-listening{
+  animation:vcpulse 1.2s ease-in-out infinite;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  box-shadow:0 4px 22px rgba(239,68,68,.6);
+}
+@keyframes vcpulse{
+  0%,100%{box-shadow:0 4px 22px rgba(239,68,68,.6);}
+  50%{box-shadow:0 4px 32px rgba(239,68,68,.9),0 0 0 10px rgba(239,68,68,.15);}
+}
+/* ── Panel ── */
+#vc-panel{
+  position:fixed;bottom:0;left:0;right:0;z-index:9980;
+  background:#fff;border-radius:20px 20px 0 0;
+  box-shadow:0 -8px 40px rgba(0,0,0,.18);
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  max-height:78vh;display:flex;flex-direction:column;
+}
+#vc-panel.vc-open{transform:translateY(0);}
+#vc-panel-header{
+  padding:10px 14px 8px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid #f1f5f9;flex-shrink:0;
+}
+#vc-panel-header .vc-title{font-weight:600;font-size:13px;color:#1e293b;flex:1;}
+#vc-lang-btn{
+  padding:3px 8px;border-radius:12px;border:1px solid #e2e8f0;
+  background:#f8fafc;font-size:10px;font-weight:600;cursor:pointer;color:#6366f1;
+  flex-shrink:0;
+}
+#vc-panel-header .vc-status{font-size:10px;color:#6366f1;font-weight:500;min-width:60px;text-align:right;}
+#vc-close-btn{width:26px;height:26px;border:none;background:#f1f5f9;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#vc-close-btn svg{width:13px;height:13px;stroke:#64748b;stroke-width:2.5;fill:none;}
+/* ── Waveform ── */
+#vc-wave{
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  height:32px;padding:0 16px;flex-shrink:0;
+}
+#vc-wave .vc-bar{width:3px;border-radius:2px;background:#6366f1;height:6px;}
+#vc-wave.vc-active .vc-bar{animation:vcwave 0.6s ease-in-out infinite;}
+#vc-wave.vc-active .vc-bar:nth-child(1){animation-delay:0s;}
+#vc-wave.vc-active .vc-bar:nth-child(2){animation-delay:.07s;}
+#vc-wave.vc-active .vc-bar:nth-child(3){animation-delay:.14s;}
+#vc-wave.vc-active .vc-bar:nth-child(4){animation-delay:.21s;}
+#vc-wave.vc-active .vc-bar:nth-child(5){animation-delay:.28s;}
+#vc-wave.vc-active .vc-bar:nth-child(6){animation-delay:.35s;}
+#vc-wave.vc-active .vc-bar:nth-child(7){animation-delay:.42s;}
+@keyframes vcwave{0%,100%{height:5px;opacity:.5;}50%{height:22px;opacity:1;}}
+/* ── Interim ── */
+#vc-interim{min-height:18px;padding:0 16px 2px;font-size:11px;color:#94a3b8;font-style:italic;flex-shrink:0;text-align:center;}
+/* ── Toolbar row (scan + history + shortcuts) ── */
+#vc-toolbar{display:flex;gap:6px;padding:4px 12px;flex-shrink:0;align-items:center;}
+.vc-tool-btn{
+  padding:4px 10px;border-radius:14px;border:1px solid #e2e8f0;
+  background:#f8fafc;font-size:11px;cursor:pointer;color:#475569;
+  display:flex;align-items:center;gap:4px;white-space:nowrap;
+}
+.vc-tool-btn:active{background:#6366f1;color:#fff;border-color:#6366f1;}
+/* ── Chat ── */
+#vc-chat{flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:7px;}
+.vc-bubble{max-width:84%;padding:8px 12px;border-radius:16px;font-size:13px;line-height:1.45;word-break:break-word;animation:vcpop .2s ease;}
+@keyframes vcpop{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+.vc-bubble.user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px;}
+.vc-bubble.bot{align-self:flex-start;background:#f1f5f9;color:#1e293b;border-bottom-left-radius:4px;max-width:88%;}
+.vc-bubble.bot.typing::after{content:'●●●';animation:vcdots 1s infinite;font-size:10px;letter-spacing:2px;}
+@keyframes vcdots{0%,100%{opacity:.3;}50%{opacity:1;}}
+/* ── Action buttons inside bot bubble ── */
+.vc-action-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.vc-action-btn{
+  padding:4px 10px;border-radius:12px;border:none;
+  background:#6366f1;color:#fff;font-size:11px;cursor:pointer;font-weight:500;
+}
+.vc-action-btn:active{background:#4f46e5;}
+/* ── Chips ── */
+#vc-chips{display:flex;gap:6px;padding:4px 12px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+#vc-chips::-webkit-scrollbar{display:none;}
+.vc-chip{
+  white-space:nowrap;padding:5px 11px;border-radius:20px;border:1px solid #e2e8f0;
+  background:#fff;font-size:11px;color:#6366f1;cursor:pointer;flex-shrink:0;font-weight:500;
+}
+.vc-chip:active{background:#6366f1;color:#fff;}
+/* ── Input row ── */
+#vc-input-row{display:flex;gap:6px;padding:6px 12px 10px;flex-shrink:0;border-top:1px solid #f1f5f9;}
+#vc-text-input{flex:1;border:1px solid #e2e8f0;border-radius:22px;padding:8px 14px;font-size:13px;outline:none;color:#1e293b;background:#f8fafc;}
+#vc-text-input:focus{border-color:#6366f1;}
+#vc-send-btn{width:36px;height:36px;border-radius:50%;border:none;background:#6366f1;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#vc-send-btn svg{width:15px;height:15px;stroke:#fff;stroke-width:2.5;fill:none;}
+#vc-mic-btn{width:36px;height:36px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#vc-mic-btn svg{width:15px;height:15px;stroke:#6366f1;stroke-width:2;fill:none;}
+#vc-mic-btn.active{background:#6366f1;}
+#vc-mic-btn.active svg{stroke:#fff;}
+/* ── Overlay ── */
+#vc-overlay{position:fixed;inset:0;z-index:9970;background:rgba(0,0,0,.3);display:none;}
+#vc-overlay.vc-open{display:block;}
+/* ── Modals ── */
+.vc-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;}
+.vc-modal-inner{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto;}
+.vc-modal-title{font-weight:700;font-size:15px;color:#1e293b;margin-bottom:14px;}
+/* ── Shortcut editor ── */
+.vc-sc-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#f8fafc;border-radius:10px;}
+.vc-sc-row input{flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;}
+.vc-sc-row input:focus{border-color:#6366f1;}
+.vc-sc-del{width:28px;height:28px;border:none;background:#fee2e2;border-radius:50%;cursor:pointer;color:#ef4444;font-size:14px;display:flex;align-items:center;justify-content:center;}
+/* ── History log ── */
+.vc-hist-row{padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;}
+.vc-hist-row .vc-hr-time{font-size:10px;color:#94a3b8;margin-bottom:2px;}
+.vc-hist-row .vc-hr-user{color:#6366f1;font-weight:500;}
+.vc-hist-row .vc-hr-bot{color:#475569;}
+/* ── Scan overlay ── */
+#vc-scan-modal{position:fixed;inset:0;z-index:10010;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#vc-scan-modal video{width:100%;max-width:400px;border-radius:12px;}
+#vc-scan-close{position:absolute;top:24px;right:20px;background:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:20px;cursor:pointer;}
+#vc-scan-status{color:#fff;margin-top:14px;font-size:14px;}
+</style>
+
+<!-- Voice Controller DOM -->
+<div id="vc-overlay"></div>
+<button id="vc-fab" title="Voice Assistant" aria-label="Voice Assistant">
+  <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+</button>
+
+<div id="vc-panel" role="dialog" aria-label="Voice Assistant">
+  <div id="vc-panel-header">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+    <span class="vc-title">Voice Assistant</span>
+    <button id="vc-lang-btn" title="Toggle Language">HI</button>
+    <span id="vc-status-label" class="vc-status">Ready</span>
+    <button id="vc-close-btn" aria-label="Close">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div id="vc-wave">
+    <div class="vc-bar"></div><div class="vc-bar"></div><div class="vc-bar"></div>
+    <div class="vc-bar"></div><div class="vc-bar"></div><div class="vc-bar"></div>
+    <div class="vc-bar"></div>
+  </div>
+  <div id="vc-interim"></div>
+  <!-- Toolbar -->
+  <div id="vc-toolbar">
+    <button class="vc-tool-btn" id="vc-scan-btn">📷 Scan</button>
+    <button class="vc-tool-btn" id="vc-history-btn">📋 History</button>
+    <button class="vc-tool-btn" id="vc-shortcuts-btn">⚡ Shortcuts</button>
+    <button class="vc-tool-btn" id="vc-report-btn">📊 Report</button>
+  </div>
+  <!-- Quick chips -->
+  <div id="vc-chips">
+    <div class="vc-chip" data-cmd="naya invoice banao">📄 Invoice</div>
+    <div class="vc-chip" data-cmd="aaj ki kamai">💰 Kamai</div>
+    <div class="vc-chip" data-cmd="stock check">📦 Stock</div>
+    <div class="vc-chip" data-cmd="whatsapp share last invoice">📲 Share</div>
+    <div class="vc-chip" data-cmd="pdf download last invoice">🖨 PDF</div>
+    <div class="vc-chip" data-cmd="dashboard">🏠 Home</div>
+  </div>
+  <div id="vc-chat"></div>
+  <div id="vc-input-row">
+    <input id="vc-text-input" type="text" placeholder="Type karein ya mic dabao..." autocomplete="off">
+    <button id="vc-mic-btn" title="Mic">
+      <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button id="vc-send-btn" title="Send">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Barcode scan modal -->
+<div id="vc-scan-modal" style="display:none;">
+  <button id="vc-scan-close">✕</button>
+  <video id="vc-scan-video" autoplay playsinline></video>
+  <div id="vc-scan-status">Camera shuru ho rahi hai...</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ══════════════════════════════════════════════
+// 1. CONFIG & STATE
+// ══════════════════════════════════════════════
+var CFG = {
+  ttsRate:0.92, ttsPitch:1.0, ttsVol:1.0,
+  fuzzyThreshold:0.42, maxHistory:60,
+  historyKey:'vc_cmd_history', shortcutsKey:'vc_shortcuts',
+  langKey:'vc_lang'
+};
+
+var VC = {
+  panelOpen:false, isListening:false, isSpeaking:false,
+  recognition:null, synth:window.speechSynthesis||null,
+  voices:[], hindiVoice:null, enVoice:null,
+  lang: localStorage.getItem(CFG.langKey)||'hi', // 'hi' or 'en'
+  ctx:{ intent:null, step:0, data:{}, lastProduct:null, lastClient:null, lastResponse:'', lastInvoice:null },
+  cmdHistory:[], // [{ts, user, bot}]
+  shortcuts:[], // [{trigger:'...', action:'...'}]
+  scanActive:false
+};
+
+// Load persisted data
+try{ VC.cmdHistory = JSON.parse(localStorage.getItem(CFG.historyKey)||'[]'); }catch(e){ VC.cmdHistory=[]; }
+try{ VC.shortcuts = JSON.parse(localStorage.getItem(CFG.shortcutsKey)||'[]'); }catch(e){ VC.shortcuts=[]; }
+if(!VC.shortcuts.length){
+  VC.shortcuts = [
+    {trigger:'daily report', action:'aaj ki kamai'},
+    {trigger:'new sale', action:'naya invoice banao'},
+    {trigger:'check medicine', action:'stock check'},
+  ];
+}
+
+// ══════════════════════════════════════════════
+// 2. DOM REFS
+// ══════════════════════════════════════════════
+var $=function(id){return document.getElementById(id);};
+var FAB=$('vc-fab'), PANEL=$('vc-panel'), OVERLAY=$('vc-overlay');
+var CHAT=$('vc-chat'), INTERIM=$('vc-interim'), STATUS=$('vc-status-label');
+var WAVE=$('vc-wave'), TINPUT=$('vc-text-input'), SENDBTN=$('vc-send-btn');
+var MICBTN=$('vc-mic-btn'), CLOSEBTN=$('vc-close-btn'), LANGBTN=$('vc-lang-btn');
+
+// ══════════════════════════════════════════════
+// 3. FUZZY MATCHING
+// ══════════════════════════════════════════════
+function levenshtein(a,b){
+  a=a.toLowerCase().trim(); b=b.toLowerCase().trim();
+  var m=a.length, n=b.length, dp=[];
+  for(var i=0;i<=m;i++){ dp[i]=[i]; for(var j=1;j<=n;j++) dp[i][j]=i===0?j:0; }
+  for(var j=1;j<=n;j++) dp[0][j]=j;
+  for(var i=1;i<=m;i++) for(var j=1;j<=n;j++){
+    if(a[i-1]===b[j-1]) dp[i][j]=dp[i-1][j-1];
+    else dp[i][j]=1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+  }
+  return dp[m][n];
+}
+function similarity(a,b){
+  a=a.toLowerCase().trim(); b=b.toLowerCase().trim();
+  if(!a||!b) return 0;
+  if(b.includes(a)||a.includes(b)) return 0.95;
+  var dist=levenshtein(a,b), maxLen=Math.max(a.length,b.length);
+  return maxLen===0?1:1-dist/maxLen;
+}
+// ── Devanagari → Roman transliteration map ──
+var DEVA_MAP = {
+  'अ':'a','आ':'aa','इ':'i','ई':'ee','उ':'u','ऊ':'oo','ए':'e','ऐ':'ai','ओ':'o','औ':'au',
+  'क':'k','ख':'kh','ग':'g','घ':'gh','च':'ch','छ':'chh','ज':'j','झ':'jh',
+  'ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n',
+  'त':'t','थ':'th','द':'d','ध':'dh','न':'n',
+  'प':'p','फ':'ph','ब':'b','भ':'bh','म':'m',
+  'य':'y','र':'r','ल':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h',
+  'ा':'a','ि':'i','ी':'ee','ु':'u','ू':'oo','े':'e','ै':'ai','ो':'o','ौ':'au',
+  'ं':'n','ः':'h','्':'','ँ':'n',
+  'क्ष':'ksh','त्र':'tr','ज्ञ':'gya',
+  'ृ':'ri','ॠ':'ri',
+  'प्र':'pr','प्री':'pree','प्रि':'pri'
+};
+function devaToRoman(text){
+  if(!text) return text;
+  var result = '';
+  for(var i=0;i<text.length;i++){
+    result += DEVA_MAP[text[i]] || text[i];
+  }
+  return result.replace(/\s+/g,' ').trim();
+}
+function normalizeForMatch(text){
+  text = (text||'').toLowerCase().trim();
+  // If contains Devanagari, transliterate
+  if(/[\u0900-\u097F]/.test(text)) text = devaToRoman(text).toLowerCase();
+  // Common Hinglish normalizations
+  text = text
+    .replace(/ph/g,'f').replace(/bh/g,'b')
+    .replace(/kh/g,'k').replace(/gh/g,'g')
+    .replace(/ee|ii/g,'i').replace(/oo|uu/g,'u')
+    .replace(/aa/g,'a')
+    .replace(/sh/g,'s').replace(/th/g,'t')
+    .replace(/[^a-z0-9\s]/g,'');
+  return text;
+}
+function similarityNorm(a,b){
+  var s=similarity(a,b);
+  var na=normalizeForMatch(a), nb=normalizeForMatch(b);
+  var sn=similarity(na,nb);
+  return Math.max(s,sn);
+}
+
+function bestMatch(query,items,keyFn,threshold){
+  threshold=threshold||CFG.fuzzyThreshold;
+  if(!query||!items||!items.length) return null;
+  var qNorm = normalizeForMatch(query);
+  var qOrig = query.toLowerCase().trim();
+  var best=null, bestScore=0;
+  items.forEach(function(item){
+    var nameOrig=(keyFn?keyFn(item):item)||'';
+    var nameNorm=normalizeForMatch(nameOrig);
+    var nameLow=nameOrig.toLowerCase().trim();
+    // Score with both original and normalized
+    var score=Math.max(
+      similarityNorm(qOrig, nameLow),
+      similarityNorm(qNorm, nameNorm)
+    );
+    // Word-level check too
+    nameLow.split(/\s+/).forEach(function(w){
+      var ws=Math.max(similarity(qOrig,w), similarity(qNorm,normalizeForMatch(w)));
+      if(ws>score) score=ws;
+    });
+    if(score>bestScore){bestScore=score;best=item;}
+  });
+  return bestScore>=threshold?best:null;
+}
+
+// ══════════════════════════════════════════════
+// 4. NUMBER/PRICE PARSER
+// ══════════════════════════════════════════════
+var HN={
+  'ek':1,'do':2,'teen':3,'char':4,'paanch':5,'chhe':6,'saat':7,'aath':8,'nau':9,'das':10,
+  'gyarah':11,'barah':12,'terah':13,'chaudah':14,'pandrah':15,'solah':16,'satrah':17,
+  'atharah':18,'unnees':19,'bees':20,'ikkees':21,'pachees':25,'tees':30,'chalees':40,
+  'pachaas':50,'saath':60,'sattar':70,'assi':80,'nabbe':90,'ek sau':100,'do sau':200,
+  'teen sau':300,'char sau':400,'paanch sau':500,'chhe sau':600,'saat sau':700,
+  'sau':100,'hazaar':1000,'lakh':100000,'karod':10000000,
+  'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+  'eleven':11,'twelve':12,'fifteen':15,'twenty':20,'thirty':30,'fifty':50,'hundred':100,'thousand':1000
+};
+function parseNumber(text){
+  text=(text||'').toLowerCase().trim();
+  var m=text.match(/\d+(\.\d+)?/); if(m) return parseFloat(m[0]);
+  // try two-word combos first
+  var words=text.split(/\s+/);
+  for(var i=0;i<words.length-1;i++){
+    var combo=words[i]+' '+words[i+1];
+    if(HN[combo]!==undefined) return HN[combo];
+  }
+  var total=0,current=0;
+  words.forEach(function(w){
+    var v=HN[w];
+    if(v!==undefined){
+      if(v===100){current=current===0?100:current*100;}
+      else if(v===1000||v===100000||v===10000000){total+=(current===0?1:current)*v;current=0;}
+      else current+=v;
+    }
+  });
+  return (total+current)||null;
+}
+function extractNumber(text){ var n=parseNumber(text); if(n) return n; var m=(text||'').match(/(\d+)/); return m?parseInt(m[1]):null; }
+function extractPrice(text){
+  text=(text||'').toLowerCase();
+  var m=text.match(/(?:rs\.?|rupees?|₹)\s*(\d+(?:\.\d+)?)/i)||text.match(/(\d+(?:\.\d+)?)\s*(?:rs\.?|rupees?|₹)/i)||text.match(/(\d+(?:\.\d+)?)/);
+  return m?parseFloat(m[1]):null;
+}
+
+// ══════════════════════════════════════════════
+// 5. SAFE AppState ACCESSOR
+// ══════════════════════════════════════════════
+function AS(){ return window.AppState||{products:[],clients:[],invoices:[],expenses:[],purchaseOrders:[],settings:{},draft:{client:{}}}; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+// ══════════════════════════════════════════════
+// 6. INTENT CLASSIFIER — FIXED
+// ══════════════════════════════════════════════
+var INTENTS=[
+  {id:'stop',       kw:['ruko','stop','chup','cancel','band karo','band kar'],priority:10},
+  {id:'repeat',     kw:['phir se','repeat','dobara bolo','dobara','again'],priority:9},
+  {id:'confirm',    kw:['haan','yes','ha ','okay','theek hai','sahi hai','bilkul','done','finalize','confirm','kar do'],priority:8},
+  {id:'cancel_flow',kw:['nahi','no ','mat karo','chhodo','hatao'],priority:7},
+  {id:'help',       kw:['help','madad','kya kar sakte','commands','kya karte ho','batao kya kya'],priority:6},
+  {id:'small_talk', kw:['hello','hi ','namaste','namaskar','kaisa hai','shukriya','thank you','thanks','dhanyavaad','bye ','alvida'],priority:5},
+  // WhatsApp & PDF
+  {id:'whatsapp_share',kw:['whatsapp share','whatsapp pe bhejo','share karo whatsapp','wa share','whatsapp bhejo','share invoice'],priority:4},
+  {id:'pdf_download',  kw:['pdf download','pdf banao','pdf generate','invoice pdf','download pdf','pdf lo'],priority:4},
+  // Invoice
+  {id:'invoice_create',kw:['invoice banao','bill banao','naya bill','naya invoice','invoice bana','bill bana','create invoice','new invoice','naya sale'],priority:4},
+  // Stock
+  {id:'stock_query',   kw:['stock','kitna hai','kitni hai','inventory check','check karo','units','quantity','maal kitna'],priority:4},
+  // Finance
+  {id:'financial_query',kw:['kamai','revenue','kitna hua','aaj ka','earnings','sales','bikri','profit','income','aaj kitna','daily report'],priority:4},
+  // Navigate
+  {id:'navigate',      kw:['dashboard','records dikhaao','records','reports dikhaao','reports','settings','inventory tab','purchase','jao'],priority:4},
+  // Client
+  {id:'client_lookup', kw:['client dhundho','party dhundho','client ka','party ka','ka address','ka number','ka mobile','client search'],priority:4},
+  // Product add
+  {id:'product_add',   kw:['naya product','product add karo','product banao','new product','add product'],priority:4},
+  // Invoice records
+  {id:'invoice_records',kw:['last invoice','aaj ke bills','recent invoices','invoice list','invoices dikhaao','purane invoices'],priority:4},
+  // Expense
+  {id:'expense_add',   kw:['expense add','kharcha','kharcha add','expense daalo','kharch'],priority:4},
+  // Settings
+  {id:'settings_update',kw:['business name','gstin update','phone number update','settings update','naam change','naam rakh'],priority:4},
+  // Discount
+  {id:'discount_apply', kw:['discount','chhoot','kam karo price','discount lagao','percent off'],priority:4},
+];
+
+function classifyIntent(text){
+  text=(text||'').toLowerCase().trim();
+  var best=null, bestScore=0;
+  INTENTS.forEach(function(intent){
+    intent.kw.forEach(function(kw){
+      if(text.includes(kw.trim())){
+        var score=intent.priority+kw.length/10;
+        if(score>bestScore){bestScore=score;best=intent;}
+      }
+    });
+  });
+  return best?best.id:'unknown';
+}
+
+// ══════════════════════════════════════════════
+// 7. WHATSAPP & PDF HANDLERS
+// ══════════════════════════════════════════════
+function handleWhatsAppShare(text){
+  var invs=AS().invoices||[];
+  if(!invs.length) return t('Koi invoice nahi hai abhi.','No invoices found.');
+  // Find last final invoice or by name
+  var inv=null;
+  // Check if client name mentioned
+  var clients=AS().clients||[];
+  var nameQuery=text.replace(/whatsapp|share|karo|bhejo|invoice|bill|pe|ka|ki|ke|last|aakhri/gi,'').trim();
+  if(nameQuery.length>1){
+    var cm=bestMatch(nameQuery,invs,function(i){return (i.client&&i.client.name)||''},0.5);
+    if(cm) inv=cm;
+  }
+  if(!inv) inv=invs.filter(function(i){return i.status==='final';}).slice(-1)[0]||invs.slice(-1)[0];
+  if(!inv) return t('Koi finalized invoice nahi mili.','No finalized invoice found.');
+
+  VC.ctx.lastInvoice=inv;
+  var clientMobile=(inv.client&&inv.client.mobile)||'';
+  var bizName=(AS().settings&&AS().settings.businessName)||'Business';
+  var total=inv.grandTotal||0;
+  var msg=encodeURIComponent(bizName+' se invoice '+inv.id+' — Total: ₹'+total.toFixed(0)+'. Date: '+(inv.date||'').slice(0,10)+'. Thank you!');
+  var waUrl='https://wa.me/'+(clientMobile?'91'+clientMobile.replace(/\D/g,''):'')+
+    (clientMobile?'?text='+msg:'?text='+msg);
+
+  // Show action bubble with button
+  setTimeout(function(){
+    var div=document.createElement('div');
+    div.className='vc-bubble bot';
+    div.innerHTML=(VC.lang==='hi'?
+      '<b>'+inv.id+'</b> — '+(inv.client&&inv.client.name||'Client')+' ₹'+total.toFixed(0)+
+      '<br>WhatsApp pe bhejein?':
+      '<b>'+inv.id+'</b> — '+(inv.client&&inv.client.name||'Client')+' ₹'+total.toFixed(0)+
+      '<br>Send on WhatsApp?')+
+      '<div class="vc-action-row">'+
+      '<button class="vc-action-btn" onclick="window.open(\''+waUrl+'\',\'_blank\')">'+
+      (VC.lang==='hi'?'📲 WhatsApp Bhejo':'📲 Send WhatsApp')+'</button>'+
+      '</div>';
+    CHAT.appendChild(div);
+    CHAT.scrollTop=CHAT.scrollHeight;
+  },350);
+  return t('Invoice '+inv.id+' WhatsApp ke liye ready hai. Neeche button dabao.','Invoice '+inv.id+' ready for WhatsApp. Tap the button below.');
+}
+
+function handlePdfDownload(text){
+  var invs=AS().invoices||[];
+  if(!invs.length) return t('Koi invoice nahi hai.','No invoice found.');
+  var inv=invs.filter(function(i){return i.status==='final';}).slice(-1)[0]||invs.slice(-1)[0];
+  if(!inv) return t('Koi finalized invoice nahi mili.','No finalized invoice found.');
+  VC.ctx.lastInvoice=inv;
+
+  // Try to use ERP's built-in PDF function
+  if(window._curInvId!==undefined) window._curInvId=inv.id;
+  setTimeout(function(){
+    var div=document.createElement('div');
+    div.className='vc-bubble bot';
+    div.innerHTML=(VC.lang==='hi'?
+      'Invoice <b>'+inv.id+'</b> ka PDF:':
+      'Invoice <b>'+inv.id+'</b> PDF:')+
+      '<div class="vc-action-row">'+
+      '<button class="vc-action-btn" onclick="(function(){'+
+        'if(window.generateInvoicePDF){window.generateInvoicePDF(\''+inv.id+'\');}'+
+        'else if(window.openInvoicePreview){window._curInvId=\''+inv.id+'\';window.openInvoicePreview();}'+
+        'else{window.showToast&&window.showToast(\'PDF function mila nahi\',\'error\');}'+
+      '})()">'+
+      (VC.lang==='hi'?'📄 PDF Download':'📄 Download PDF')+'</button>'+
+      '<button class="vc-action-btn" style="background:#25D366" onclick="(function(){'+
+        'if(window.shareInvoiceWhatsApp){window.shareInvoiceWhatsApp(\''+inv.id+'\');}'+
+        'else{window.showToast&&window.showToast(\'WhatsApp share shuru\');}'+
+      '})()">'+
+      (VC.lang==='hi'?'📲 WhatsApp':'📲 WhatsApp')+'</button>'+
+      '</div>';
+    CHAT.appendChild(div);
+    CHAT.scrollTop=CHAT.scrollHeight;
+  },350);
+  return t('Invoice '+inv.id+' — PDF aur WhatsApp ke options neeche hain.','Invoice '+inv.id+' — PDF and WhatsApp options below.');
+}
+
+// ══════════════════════════════════════════════
+// 8. DAILY REPORT
+// ══════════════════════════════════════════════
+function getDailyReport(fullDetail){
+  var invs=AS().invoices||[];
+  var today=todayStr();
+  var todayInvs=invs.filter(function(i){return i.date&&i.date.slice(0,10)===today&&i.status==='final';});
+  var total=todayInvs.reduce(function(s,i){return s+(i.grandTotal||0);},0);
+  var cash=todayInvs.filter(function(i){return (i.paymentMode||'').toLowerCase()==='cash';}).reduce(function(s,i){return s+(i.grandTotal||0);},0);
+  var upi=todayInvs.filter(function(i){return (i.paymentMode||'').toLowerCase()==='upi';}).reduce(function(s,i){return s+(i.grandTotal||0);},0);
+  var credit=total-cash-upi;
+  var prods=AS().products||[];
+  var lowStock=prods.filter(function(p){return typeof p.stock==='number'&&p.stock<10;});
+  var exps=AS().expenses||[];
+  var todayExp=exps.filter(function(e){return e.date&&e.date.slice(0,10)===today;});
+  var totalExp=todayExp.reduce(function(s,e){return s+(e.amount||0);},0);
+
+  if(VC.lang==='hi'){
+    var r='Aaj ka report: ';
+    r+=todayInvs.length+' invoice'+(todayInvs.length!==1?'s':'')+', Total ₹'+total.toFixed(0)+'. ';
+    if(cash>0) r+='Cash ₹'+cash.toFixed(0)+'. ';
+    if(upi>0)  r+='UPI ₹'+upi.toFixed(0)+'. ';
+    if(credit>0) r+='Credit ₹'+credit.toFixed(0)+'. ';
+    if(totalExp>0) r+='Expenses ₹'+totalExp.toFixed(0)+'. ';
+    if(lowStock.length>0) r+=lowStock.length+' product low stock mein hain. ';
+    if(fullDetail && lowStock.length>0) r+='Low stock: '+lowStock.slice(0,3).map(function(p){return p.name+'('+p.stock+')'}).join(', ')+'. ';
+    return r;
+  } else {
+    var r='Today\'s report: ';
+    r+=todayInvs.length+' invoice'+(todayInvs.length!==1?'s':'')+', Total ₹'+total.toFixed(0)+'. ';
+    if(cash>0) r+='Cash ₹'+cash.toFixed(0)+'. ';
+    if(upi>0)  r+='UPI ₹'+upi.toFixed(0)+'. ';
+    if(totalExp>0) r+='Expenses ₹'+totalExp.toFixed(0)+'. ';
+    if(lowStock.length>0) r+=lowStock.length+' products low on stock. ';
+    return r;
+  }
+}
+
+// ══════════════════════════════════════════════
+// 9. LANGUAGE HELPER
+// ══════════════════════════════════════════════
+function t(hi, en){ return VC.lang==='hi' ? hi : en; }
+
+// ══════════════════════════════════════════════
+// 10. CORE INTENT HANDLERS
+// ══════════════════════════════════════════════
+function handleStop(){
+  if(VC.synth) VC.synth.cancel();
+  VC.ctx.intent=null; VC.ctx.step=0; VC.ctx.data={};
+  return t('Theek hai, ruk gaya.','Okay, stopped.');
+}
+function handleRepeat(){ return VC.ctx.lastResponse||t('Kuch nahi bola abhi.','Nothing to repeat.'); }
+function handleHelp(){
+  return t(
+    'Main yeh kar sakta hoon: Invoice banao. Stock check karo. Aaj ki kamai. WhatsApp share karo invoice. PDF download karo. Client dhundho. Expense add karo. Reports dekho. Business name change karo. Scan karke product dhundho.',
+    'I can: Create invoice. Check stock. Today\'s sales. WhatsApp share invoice. Download PDF. Find client. Add expense. View reports. Update business name. Scan product barcode.'
+  );
+}
+function handleSmallTalk(text){
+  var biz=(AS().settings&&AS().settings.businessName)||t('aapka business','your business');
+  text=text.toLowerCase();
+  if(text.match(/hello|hi\b|namaste|namaskar/)) return t('Namaste! Main '+biz+' ka voice assistant hoon. Kaise madad karoon?','Hello! I\'m '+biz+'\'s voice assistant. How can I help?');
+  if(text.match(/kaisa hai|kaisi ho/)) return t('Main bilkul theek hoon! Batao kya karna hai?','I\'m great! What do you need?');
+  if(text.match(/shukriya|thank|dhanyavaad/)) return t('Khushi hui! Aur kuch chahiye?','My pleasure! Anything else?');
+  if(text.match(/bye\b|alvida/)) return t('Phir milenge! Take care.','Goodbye! Take care.');
+  return t('Haan, bolo! Kya karna hai?','Yes, go ahead! What do you need?');
+}
+function handleFinancialQuery(text){
+  return getDailyReport(text.match(/detail|sab|full|complete/)!==null);
+}
+function handleDiscountApply(text){
+  var pct=extractNumber(text);
+  if(!pct) return t('Kitna percent discount chahiye?','How much percent discount?');
+  if(window.AppState&&window.AppState.draft){
+    window.AppState.draft.discount=pct;
+    if(window.updateDraftField) window.updateDraftField('discount',pct);
+    var el=document.getElementById('inv-discount');
+    if(el){el.value=pct;el.dispatchEvent(new Event('input'));}
+    if(window.calculateInvoiceTotals) window.calculateInvoiceTotals();
+    return t(pct+'% discount laga diya!',pct+'% discount applied!');
+  }
+  return t('Pehle invoice tab mein jaao.','Go to invoice tab first.');
+}
+
+// ── FIXED: Invoice creation — proper intent parsing ──
+function startInvoiceFlow(text){
+  // Remove ALL invoice-related trigger keywords first
+  var cleaned=text
+    .replace(/\b(invoice\s*banao|bill\s*banao|naya\s*bill|naya\s*invoice|invoice\s*bana|bill\s*bana|create\s*invoice|new\s*invoice|naya\s*sale|invoice|bill|naya|banao|bana|create|new)\b/gi,'')
+    .replace(/\s+/g,' ').trim();
+
+  VC.ctx.intent='invoice_create';
+  VC.ctx.step=1;
+  VC.ctx.data={items:[],client:null,paymentMode:'cash'};
+
+  if(window.switchTab) window.switchTab('invoice');
+
+  if(cleaned.length>1){
+    // Try to find client in cleaned text
+    var clients=AS().clients||[];
+    var match=bestMatch(cleaned,clients,function(c){return c.name;});
+    if(match){ return processClientSelect(match); }
+    // Check if it looks like a name (not a product)
+    var prods=AS().products||[];
+    var prodMatch=bestMatch(cleaned,prods,function(p){return p.name;},0.55);
+    if(!prodMatch){
+      // Treat as client name
+      VC.ctx.data.clientName=cleaned;
+      VC.ctx.step=15;
+      return t('"'+cleaned+'" naam ka client nahi mila. Naya client? Mobile number batao (skip ke liye "skip" bolo):',
+               '"'+cleaned+'" client not found. New client? Enter mobile (say "skip" to skip):');
+    }
+  }
+  return t('Invoice banate hain! Kaun sa client hai?','Creating invoice! Which client?');
+}
+
+function processClientSelect(match){
+  VC.ctx.data.client=match;
+  VC.ctx.lastClient=match;
+  if(window.selectClient) window.selectClient(match);
+  else{
+    var fields={'inv-client-name':match.name,'inv-client-mobile':match.mobile||'','inv-client-gstin':match.gstin||'','inv-client-address':match.address||''};
+    Object.keys(fields).forEach(function(id){var el=document.getElementById(id);if(el){el.value=fields[id];el.dispatchEvent(new Event('input'));}});
+  }
+  VC.ctx.step=2;
+  return t(match.name+' select ho gaya. Kya add karein invoice mein?', match.name+' selected. What to add to invoice?');
+}
+
+function continueInvoiceFlow(text){
+  var step=VC.ctx.step;
+
+  // Step 1: client selection
+  if(step===1){
+    var clients=AS().clients||[];
+    var match=bestMatch(text,clients,function(c){return c.name;});
+    if(match) return processClientSelect(match);
+    VC.ctx.data.clientName=text;
+    VC.ctx.step=15;
+    return t('"'+text+'" client nahi mila. Naya client ka mobile number? ("skip" bolo skip ke liye):',
+             '"'+text+'" not found. Mobile for new client? (say "skip"):');
+  }
+  // Step 15: new client mobile
+  if(step===15){
+    var mob=text.match(/\d{10}/)?text.match(/\d{10}/)[0]:'';
+    if(text.toLowerCase().includes('skip')) mob='';
+    var nc={name:VC.ctx.data.clientName,mobile:mob,id:'vc_'+Date.now()};
+    VC.ctx.data.client=nc; VC.ctx.lastClient=nc;
+    var el=document.getElementById('inv-client-name');
+    if(el){el.value=nc.name;el.dispatchEvent(new Event('input'));}
+    el=document.getElementById('inv-client-mobile');
+    if(el){el.value=mob;el.dispatchEvent(new Event('input'));}
+    VC.ctx.step=2;
+    return t('Theek hai, '+nc.name+'. Kya add karein invoice mein?','Okay, '+nc.name+'. What to add?');
+  }
+  // Step 2: add items
+  if(step===2){
+    if(text.match(/\b(nahi|nahi bas|bas|done|ho gaya|khatam|finish|aur nahi|that's all|thats all|enough)\b/i)){
+      if(VC.ctx.data.items.length===0) return t('Koi item nahi add kiya! Pehle product batao.','No items added yet! Mention a product.');
+      VC.ctx.step=3;
+      return t('Theek hai. Payment kaise? UPI, cash, ya credit?','Okay. Payment mode? UPI, cash, or credit?');
+    }
+    // "wahi wala" / same as last
+    if(text.match(/wahi|same|wahi wala|wo hi/) && VC.ctx.lastProduct){
+      var qty=extractNumber(text)||1;
+      return addItemToInvoice(VC.ctx.lastProduct, qty);
+    }
+    var prods=AS().products||[];
+    // Extract qty
+    var qty=1;
+    var qtyMatch=text.match(/(\d+)/); if(qtyMatch) qty=parseInt(qtyMatch[1]);
+    else{ var hn=extractNumber(text); if(hn&&hn<1000) qty=hn; }
+    // Clean text for product search
+    var cleanQ=text.replace(/\d+/g,'').replace(/\b(packet|pcs|piece|unit|tablet|strip|box|bottle|dozen|ek|do|teen|char|paanch|chhe|saat|aath|nau|das)\b/gi,'').trim();
+    var match=bestMatch(cleanQ,prods,function(p){return p.name;})||bestMatch(text,prods,function(p){return p.name;});
+    if(match) return addItemToInvoice(match,qty);
+    return t('"'+text+'" koi product nahi mila. Doosra naam try karein ya "bas" bolo.','"'+text+'" product not found. Try another name or say "done".');
+  }
+  // Step 3: payment mode
+  if(step===3){
+    var mode='cash';
+    if(text.match(/upi|gpay|phonepe|paytm|online|digital/i)) mode='upi';
+    else if(text.match(/credit|udhar|baad|later/i)) mode='credit';
+    VC.ctx.data.paymentMode=mode;
+    if(window.updateDraftField) window.updateDraftField('paymentMode',mode);
+    document.querySelectorAll('[data-payment-mode]').forEach(function(btn){if(btn.dataset.paymentMode===mode) btn.click();});
+    VC.ctx.step=4;
+    var total=VC.ctx.data.items.reduce(function(s,it){return s+(it.product.rate||0)*it.qty;},0);
+    return t('Payment: '+mode.toUpperCase()+'. Total approx ₹'+total.toFixed(0)+'. Invoice finalize karein?',
+             'Payment: '+mode.toUpperCase()+'. Total approx ₹'+total.toFixed(0)+'. Finalize invoice?');
+  }
+  // Step 4: confirm
+  if(step===4){
+    if(text.match(/\b(haan|yes|ha\b|theek|okay|kar do|finalize|confirm|bilkul|ok\b|sure)\b/i)){
+      VC.ctx.intent=null; VC.ctx.step=0; VC.ctx.data={};
+      if(window.saveInvoice){ setTimeout(function(){window.saveInvoice('final');},200); }
+      return t('Invoice finalize ho raha hai! ✅','Invoice is being finalized! ✅');
+    } else {
+      var inv=VC.ctx.data;
+      VC.ctx.intent=null; VC.ctx.step=0; VC.ctx.data={};
+      if(window.saveInvoice){ setTimeout(function(){window.saveInvoice('draft');},200); }
+      return t('Invoice draft mein save kar diya. Baad mein finalize kar sakte ho.','Invoice saved as draft. You can finalize it later.');
+    }
+  }
+  return t('Samajh nahi aaya. Phir se bolein.','Didn\'t understand. Please repeat.');
+}
+
+function addItemToInvoice(match, qty){
+  VC.ctx.data.items.push({product:match,qty:qty});
+  VC.ctx.lastProduct=match;
+  if(window.addDraftItem) window.addDraftItem(match);
+  setTimeout(function(){
+    var rows=document.querySelectorAll('.draft-item-row,[data-item-id]');
+    if(rows.length&&qty>1){
+      var last=rows[rows.length-1];
+      var qi=last.querySelector('input[type="number"],.qty-input');
+      if(qi){qi.value=qty;qi.dispatchEvent(new Event('input'));}
+    }
+  },300);
+  var price=match.rate?' ₹'+match.rate+' each':'';
+  return t(match.name+' — '+qty+' unit'+(qty>1?'s':'')+price+'. Aur kuch? (Ya "bas" bolo)',
+           match.name+' — '+qty+' unit'+(qty>1?'s':'')+price+'. More items? (or say "done")');
+}
+
+// ── Stock query ──
+function handleStockQuery(text){
+  var q=text.replace(/\b(stock|kitna|kitni|hai|check|karo|maal|units|quantity|inventory|ka|ki|ke|abhi|check|dekho)\b/gi,'').replace(/\s+/g,' ').trim();
+  if(q.length<2){VC.ctx.intent='stock_query';VC.ctx.step=1;return t('Kaunsa product?','Which product?');}
+  return checkStock(q);
+}
+function checkStock(q){
+  var prods=AS().products||[];
+  var match=bestMatch(q,prods,function(p){return p.name;});
+  if(!match) return t('"'+q+'" naam ka koi product nahi mila.','"'+q+'" product not found.');
+  var stock=match.stock!==undefined?match.stock:'?';
+  var warn=(typeof stock==='number'&&stock<10)?' ⚠️ '+t('Low stock!','Low stock!'):'';
+  return t(match.name+' — abhi '+stock+' units stock mein.'+warn, match.name+' — '+stock+' units in stock.'+warn);
+}
+
+// ── Navigate ──
+function handleNavigate(text){
+  text=text.toLowerCase();
+  var tab=null;
+  if(text.match(/dashboard|home|ghar/)) tab='dashboard';
+  else if(text.match(/record|bills list|invoice list/)) tab='records';
+  else if(text.match(/report/)) tab='reports';
+  else if(text.match(/setting/)) tab='settings';
+  else if(text.match(/inventory|stock list/)) tab='inventory';
+  else if(text.match(/purchase|po|vendor/)) tab='purchase-orders';
+  else if(text.match(/invoice|bill bana/)) tab='invoice';
+  if(tab&&window.switchTab){window.switchTab(tab);return t(tab+' tab khul gaya.',tab+' tab opened.');}
+  return t('Kaunsa tab? Dashboard, records, reports, settings, inventory.','Which tab? Dashboard, records, reports, settings, inventory.');
+}
+
+// ── Client lookup ──
+function handleClientLookup(text){
+  var q=text.replace(/\b(client|party|dhundho|ka|ki|ke|address|mobile|number|search|find)\b/gi,'').trim();
+  if(q.length<2){VC.ctx.intent='client_lookup';VC.ctx.step=1;return t('Kaunse client ka details?','Which client\'s details?');}
+  return lookupClient(q);
+}
+function lookupClient(q){
+  var clients=AS().clients||[];
+  var match=bestMatch(q,clients,function(c){return c.name;});
+  if(!match) return t('"'+q+'" naam ka client nahi mila.','"'+q+'" client not found.');
+  var r=match.name+' — '+t('Mobile','Mobile')+': '+(match.mobile||t('nahi hai','not available'));
+  if(match.address) r+=', '+t('Address','Address')+': '+match.address;
+  if(match.gstin) r+=', GSTIN: '+match.gstin;
+  return r;
+}
+
+// ── Invoice records ──
+function handleInvoiceRecords(){
+  var invs=AS().invoices||[];
+  if(!invs.length) return t('Abhi koi invoice nahi hai.','No invoices yet.');
+  var today=todayStr();
+  var recent=invs.filter(function(i){return i.date&&i.date.slice(0,10)===today;});
+  if(!recent.length) recent=invs.slice(-5);
+  var r=t('Recent invoices: ','Recent invoices: ');
+  recent.slice(-3).forEach(function(i){r+=i.id+' — '+(i.client&&i.client.name||'?')+' ₹'+(i.grandTotal||0).toFixed(0)+'. ';});
+  return r;
+}
+
+// ── Settings ──
+function handleSettingsUpdate(text){
+  var s=AS().settings;
+  var cleaned=text.replace(/\b(business\s*name|naam\s*change|naam\s*rakh|naam\s*karo|change|update|karo|kar|rakh|ko)\b/gi,'').trim();
+  if(cleaned.length>1){
+    if(s) s.businessName=cleaned;
+    try{var ls=JSON.parse(localStorage.getItem('erp_settings')||'{}');ls.businessName=cleaned;localStorage.setItem('erp_settings',JSON.stringify(ls));}catch(e){}
+    return t('Business name "'+cleaned+'" ho gaya!','Business name set to "'+cleaned+'"!');
+  }
+  VC.ctx.intent='settings_update';VC.ctx.step=1;VC.ctx.data={setting:'businessName'};
+  return t('Naya business name kya rakhna hai?','What should the new business name be?');
+}
+
+// ── Expense ──
+function handleExpenseFlow(text){
+  var amt=extractPrice(text);
+  var desc=text.replace(/\b(expense|add|karo|daalo|kharcha|kharch|rs\.?|rupees?|₹)\b/gi,'').replace(/\d+/g,'').trim();
+  if(amt&&desc.length>1){
+    var exp={id:'vc_exp_'+Date.now(),desc:desc,amount:amt,date:todayStr(),category:'Other'};
+    var exps=AS().expenses; if(exps) exps.push(exp);
+    return t('₹'+amt+' ka "'+desc+'" expense add ho gaya! ✅','₹'+amt+' expense "'+desc+'" added! ✅');
+  }
+  if(amt){VC.ctx.intent='expense_add';VC.ctx.step=1;VC.ctx.data={amount:amt};return t('₹'+amt+'. Kya description likhein?','₹'+amt+'. What description?');}
+  VC.ctx.intent='expense_add';VC.ctx.step=1;VC.ctx.data={};
+  return t('Kitna kharcha hua? (e.g. "200 rupees transport")','How much expense? (e.g. "200 rupees transport")');
+}
+function continueExpenseFlow(text){
+  if(VC.ctx.step===1&&!VC.ctx.data.amount){
+    var amt=extractPrice(text);
+    if(!amt) return t('Amount samajh nahi aaya. Phir se bolein.','Couldn\'t understand amount. Repeat please.');
+    VC.ctx.data.amount=amt;VC.ctx.step=2;
+    return t('₹'+amt+'. Ab description:','₹'+amt+'. Now description:');
+  }
+  var desc=text.trim();
+  var exp={id:'vc_exp_'+Date.now(),desc:desc,amount:VC.ctx.data.amount,date:todayStr(),category:'Other'};
+  var exps=AS().expenses; if(exps) exps.push(exp);
+  VC.ctx.intent=null;VC.ctx.step=0;VC.ctx.data={};
+  return t('₹'+exp.amount+' ka "'+desc+'" expense add ho gaya! ✅','₹'+exp.amount+' expense "'+desc+'" added! ✅');
+}
+
+// ══════════════════════════════════════════════
+// 11. SHORTCUTS CHECK
+// ══════════════════════════════════════════════
+function checkShortcuts(text){
+  for(var i=0;i<VC.shortcuts.length;i++){
+    var sc=VC.shortcuts[i];
+    if(sc.trigger&&text.toLowerCase().includes(sc.trigger.toLowerCase())){
+      return sc.action;
+    }
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════
+// 12. MAIN PROCESS
+// ══════════════════════════════════════════════
+function processText(text){
+  text=(text||'').trim(); if(!text) return;
+  addBubble('user',text);
+  var typId=addTyping();
+  setTimeout(function(){
+    var resp=generateResponse(text);
+    removeTyping(typId);
+    if(resp){ VC.ctx.lastResponse=resp; addBubble('bot',resp); speak(resp); saveHistory(text,resp); }
+  },300);
+}
+
+function generateResponse(text){
+  var t_lower=text.toLowerCase().trim();
+
+  // Stop always wins
+  if(t_lower.match(/\b(ruko|stop\b|chup)\b/)) return handleStop();
+  if(t_lower.match(/\b(phir se|repeat|dobara bolo)\b/)) return handleRepeat();
+
+  // Check custom shortcuts first
+  var scAction=checkShortcuts(t_lower);
+  if(scAction) return generateResponse(scAction);
+
+  // Active flows
+  if(VC.ctx.intent==='invoice_create') return continueInvoiceFlow(t_lower);
+  if(VC.ctx.intent==='stock_query'&&VC.ctx.step===1){VC.ctx.intent=null;return checkStock(t_lower);}
+  if(VC.ctx.intent==='client_lookup'&&VC.ctx.step===1){VC.ctx.intent=null;return lookupClient(t_lower);}
+  if(VC.ctx.intent==='expense_add') return continueExpenseFlow(t_lower);
+  if(VC.ctx.intent==='settings_update'&&VC.ctx.step===1){
+    var s=AS().settings; if(s) s[VC.ctx.data.setting]=text.trim();
+    try{var ls=JSON.parse(localStorage.getItem('erp_settings')||'{}');ls[VC.ctx.data.setting]=text.trim();localStorage.setItem('erp_settings',JSON.stringify(ls));}catch(e){}
+    var field=VC.ctx.data.setting==='businessName'?'Business name':'Setting';
+    VC.ctx.intent=null;VC.ctx.step=0;
+    return t(field+' "'+text.trim()+'" update ho gaya!',field+' "'+text.trim()+'" updated!');
+  }
+
+  var intent=classifyIntent(t_lower);
+  if(intent==='help') return handleHelp();
+  if(intent==='small_talk') return handleSmallTalk(t_lower);
+  if(intent==='whatsapp_share') return handleWhatsAppShare(t_lower);
+  if(intent==='pdf_download') return handlePdfDownload(t_lower);
+  if(intent==='financial_query') return handleFinancialQuery(t_lower);
+  if(intent==='navigate') return handleNavigate(t_lower);
+  if(intent==='stock_query') return handleStockQuery(t_lower);
+  if(intent==='client_lookup') return handleClientLookup(t_lower);
+  if(intent==='invoice_records') return handleInvoiceRecords();
+  if(intent==='settings_update') return handleSettingsUpdate(t_lower);
+  if(intent==='invoice_create') return startInvoiceFlow(t_lower);
+  if(intent==='expense_add') return handleExpenseFlow(t_lower);
+  if(intent==='discount_apply') return handleDiscountApply(t_lower);
+  if(intent==='confirm'){ return t('Theek hai!','Okay!'); }
+  if(intent==='cancel_flow'){
+    VC.ctx.intent=null;VC.ctx.step=0;VC.ctx.data={};
+    return t('Cancel kar diya. Kuch aur karna hai?','Cancelled. Anything else?');
+  }
+
+  // Fallback: try product name
+  var prods=AS().products||[];
+  var pm=bestMatch(t_lower,prods,function(p){return p.name;},0.62);
+  if(pm) return t(pm.name+' — Stock: '+(pm.stock!==undefined?pm.stock:'N/A')+' units, Rate: ₹'+(pm.rate||'N/A'),
+                  pm.name+' — Stock: '+(pm.stock!==undefined?pm.stock:'N/A')+', Rate: ₹'+(pm.rate||'N/A'));
+
+  return t('Samajh nahi aaya "'+text+'". "Help" bolo commands ke liye.','Didn\'t understand "'+text+'". Say "help" for commands.');
+}
+
+// ══════════════════════════════════════════════
+// 13. HISTORY LOG
+// ══════════════════════════════════════════════
+function saveHistory(userText, botText){
+  var entry={ts:new Date().toISOString(),user:userText,bot:botText};
+  VC.cmdHistory.unshift(entry);
+  if(VC.cmdHistory.length>200) VC.cmdHistory=VC.cmdHistory.slice(0,200);
+  try{localStorage.setItem(CFG.historyKey,JSON.stringify(VC.cmdHistory.slice(0,100)));}catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// 14. SPEECH RECOGNITION
+// ══════════════════════════════════════════════
+var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
+function initRecognition(){
+  if(!SpeechRec) return;
+  var rec=new SpeechRec();
+  rec.lang=VC.lang==='hi'?'hi-IN':'en-IN';
+  rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
+  rec.onstart=function(){
+    VC.isListening=true;setStatus(t('Listening...','Listening...'),true);
+    FAB.classList.add('vc-listening');MICBTN.classList.add('active');
+    WAVE.classList.add('vc-active');INTERIM.textContent='';
+    if(VC.synth) VC.synth.cancel();
+  };
+  rec.onresult=function(e){
+    var interim='',final='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    INTERIM.textContent=interim||final;
+    if(final){INTERIM.textContent='';processText(final);}
+  };
+  rec.onerror=function(e){
+    VC.isListening=false;setStatus('Ready');
+    FAB.classList.remove('vc-listening');MICBTN.classList.remove('active');WAVE.classList.remove('vc-active');
+    INTERIM.textContent='';
+    if(e.error==='not-allowed') addBubble('bot',t('Microphone allow karein browser settings mein.','Please allow microphone in browser settings.'));
+  };
+  rec.onend=function(){
+    VC.isListening=false;setStatus('Ready');
+    FAB.classList.remove('vc-listening');MICBTN.classList.remove('active');WAVE.classList.remove('vc-active');
+    INTERIM.textContent='';
+  };
+  VC.recognition=rec;
+}
+function startListening(){
+  if(!VC.recognition){initRecognition();}
+  if(VC.isListening){stopListening();return;}
+  if(VC.isSpeaking&&VC.synth) VC.synth.cancel();
+  try{VC.recognition.lang=VC.lang==='hi'?'hi-IN':'en-IN';VC.recognition.start();}catch(e){}
+}
+function stopListening(){ if(VC.recognition&&VC.isListening) try{VC.recognition.stop();}catch(e){} }
+
+// ══════════════════════════════════════════════
+// 15. TTS
+// ══════════════════════════════════════════════
+function loadVoices(){
+  if(!VC.synth) return;
+  VC.voices=VC.synth.getVoices();
+  VC.hindiVoice=VC.voices.find(function(v){return v.lang==='hi-IN';})||VC.voices.find(function(v){return v.lang.startsWith('hi');})||null;
+  VC.enVoice=VC.voices.find(function(v){return v.lang==='en-IN';})||VC.voices.find(function(v){return v.lang.startsWith('en');})||null;
+}
+// ── Hinglish → readable text for TTS ──
+function cleanForTTS(text){
+  if(!text) return '';
+  // Replace ₹ with spoken form
+  text = text.replace(/₹\s*(\d+(?:\.\d+)?)/g, function(_,n){ return (VC.lang==='hi'?'rupaye ':'rupees ')+n; });
+  // Remove emojis (cause garbled speech)
+  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}✅⚠️📄📲🖨🏠💰📦📋⚡📷🇮🇳🇬🇧]/gu,'');
+  if(VC.lang==='hi'){
+    // Common Hinglish → Hindi substitutions for better TTS
+    text = text
+      .replace(/\bstock\b/gi,'स्टॉक')
+      .replace(/\binvoice\b/gi,'इनवॉइस')
+      .replace(/\bbill\b/gi,'बिल')
+      .replace(/\bunits?\b/gi,'यूनिट')
+      .replace(/\brate\b/gi,'रेट')
+      .replace(/\bcash\b/gi,'कैश')
+      .replace(/\bupi\b/gi,'यूपीआई')
+      .replace(/\bcredit\b/gi,'क्रेडिट')
+      .replace(/\bdashboard\b/gi,'डैशबोर्ड')
+      .replace(/\bpdf\b/gi,'पीडीएफ')
+      .replace(/\bwhatsapp\b/gi,'व्हाट्सएप')
+      .replace(/\breport\b/gi,'रिपोर्ट')
+      .replace(/\bproduct\b/gi,'प्रोडक्ट')
+      .replace(/\bclient\b/gi,'क्लाइंट')
+      .replace(/\bfinal\b/gi,'फाइनल')
+      .replace(/\bdraft\b/gi,'ड्राफ्ट')
+      .replace(/\bexpense\b/gi,'खर्चा')
+      .replace(/\bsettings\b/gi,'सेटिंग्स')
+      .replace(/\bready\b/gi,'रेडी')
+      .replace(/\bselect\b/gi,'सेलेक्ट')
+      .replace(/\badd\b/gi,'एड');
+  }
+  // Clean markdown bold/etc
+  text = text.replace(/\*\*|__/g,'').replace(/\*/g,'').replace(/<[^>]*>/g,' ');
+  // Collapse whitespace
+  text = text.replace(/\s+/g,' ').trim();
+  return text;
+}
+
+function speak(text){
+  if(!VC.synth||!text) return;
+  VC.synth.cancel();
+  var cleaned = cleanForTTS(text);
+  if(!cleaned) return;
+  var utt=new SpeechSynthesisUtterance(cleaned);
+  var voice=VC.lang==='hi'?VC.hindiVoice:VC.enVoice;
+  if(voice) utt.voice=voice;
+  utt.lang=VC.lang==='hi'?'hi-IN':'en-IN';
+  utt.rate=CFG.ttsRate; utt.pitch=CFG.ttsPitch; utt.volume=CFG.ttsVol;
+  utt.onstart=function(){VC.isSpeaking=true;setStatus(t('Speaking...','Speaking...'));};
+  utt.onend=function(){VC.isSpeaking=false;setStatus('Ready');};
+  utt.onerror=function(){VC.isSpeaking=false;setStatus('Ready');};
+  VC.synth.speak(utt);
+}
+
+// ══════════════════════════════════════════════
+// 16. UI HELPERS
+// ══════════════════════════════════════════════
+function setStatus(msg,listening){
+  STATUS.textContent=msg;
+  STATUS.style.color=listening?'#ef4444':'#6366f1';
+}
+function addBubble(role,text){
+  var div=document.createElement('div');
+  div.className='vc-bubble '+role;
+  div.textContent=text;
+  CHAT.appendChild(div);
+  CHAT.scrollTop=CHAT.scrollHeight;
+  return div;
+}
+var _tc=0;
+function addTyping(){
+  var id='vct-'+(++_tc);
+  var div=document.createElement('div');
+  div.className='vc-bubble bot typing';div.id=id;
+  CHAT.appendChild(div);CHAT.scrollTop=CHAT.scrollHeight;
+  return id;
+}
+function removeTyping(id){var el=document.getElementById(id);if(el)el.remove();}
+
+function openPanel(){
+  VC.panelOpen=true;
+  PANEL.classList.add('vc-open');OVERLAY.classList.add('vc-open');
+  if(CHAT.children.length===0){
+    var biz=(AS().settings&&AS().settings.businessName)||t('aapke business','your business');
+    var welcome=t('Namaste! Main '+biz+' ka voice assistant hoon. Bolo ya mic dabao!',
+                  'Hello! I\'m '+biz+'\'s voice assistant. Speak or tap the mic!');
+    addBubble('bot',welcome);
+    VC.ctx.lastResponse=welcome;
+    // Auto daily report after greeting
+    setTimeout(function(){
+      var report=getDailyReport(false);
+      addBubble('bot',report);
+      speak(welcome+' '+report);
+    },600);
+  }
+}
+function closePanel(){
+  VC.panelOpen=false;
+  PANEL.classList.remove('vc-open');OVERLAY.classList.remove('vc-open');
+  stopListening();
+}
+
+// ══════════════════════════════════════════════
+// 17. LANGUAGE TOGGLE
+// ══════════════════════════════════════════════
+LANGBTN.addEventListener('click',function(){
+  VC.lang=VC.lang==='hi'?'en':'hi';
+  localStorage.setItem(CFG.langKey,VC.lang);
+  LANGBTN.textContent=VC.lang==='hi'?'HI':'EN';
+  if(VC.recognition) VC.recognition.lang=VC.lang==='hi'?'hi-IN':'en-IN';
+  addBubble('bot',VC.lang==='hi'?'Hindi mode on! 🇮🇳':'English mode on! 🇬🇧');
+});
+
+// ══════════════════════════════════════════════
+// 18. HISTORY MODAL
+// ══════════════════════════════════════════════
+function showHistoryModal(){
+  var modal=document.createElement('div');modal.className='vc-modal';
+  var inner=document.createElement('div');inner.className='vc-modal-inner';
+  var title=document.createElement('div');title.className='vc-modal-title';
+  title.textContent=t('📋 Command History','📋 Command History');
+  inner.appendChild(title);
+  if(!VC.cmdHistory.length){
+    var p=document.createElement('p');p.style.cssText='color:#94a3b8;font-size:13px;';
+    p.textContent=t('Abhi koi command nahi hua.','No commands yet.');
+    inner.appendChild(p);
+  } else {
+    var clearBtn=document.createElement('button');
+    clearBtn.style.cssText='padding:5px 12px;border:1px solid #fee2e2;border-radius:8px;background:#fff;color:#ef4444;font-size:12px;cursor:pointer;margin-bottom:10px;';
+    clearBtn.textContent=t('🗑 History Clear Karo','🗑 Clear History');
+    clearBtn.onclick=function(){
+      VC.cmdHistory=[];localStorage.removeItem(CFG.historyKey);
+      document.body.removeChild(modal);
+      addBubble('bot',t('History clear ho gaya!','History cleared!'));
+    };
+    inner.appendChild(clearBtn);
+    VC.cmdHistory.slice(0,50).forEach(function(entry){
+      var row=document.createElement('div');row.className='vc-hist-row';
+      var dt=new Date(entry.ts);
+      row.innerHTML='<div class="vc-hr-time">'+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'</div>'+
+        '<div class="vc-hr-user">👤 '+entry.user+'</div>'+
+        '<div class="vc-hr-bot">🤖 '+entry.bot.slice(0,80)+(entry.bot.length>80?'...':'')+'</div>';
+      inner.appendChild(row);
+    });
+  }
+  var closeBtn=document.createElement('button');
+  closeBtn.style.cssText='width:100%;margin-top:14px;padding:10px;border:none;border-radius:12px;background:#6366f1;color:#fff;font-size:14px;cursor:pointer;font-weight:600;';
+  closeBtn.textContent=t('Bandh Karo','Close');
+  closeBtn.onclick=function(){document.body.removeChild(modal);};
+  inner.appendChild(closeBtn);
+  modal.appendChild(inner);
+  modal.onclick=function(e){if(e.target===modal)document.body.removeChild(modal);};
+  document.body.appendChild(modal);
+}
+
+// ══════════════════════════════════════════════
+// 19. SHORTCUTS MODAL
+// ══════════════════════════════════════════════
+function showShortcutsModal(){
+  var modal=document.createElement('div');modal.className='vc-modal';
+  var inner=document.createElement('div');inner.className='vc-modal-inner';
+  var title=document.createElement('div');title.className='vc-modal-title';
+  title.textContent=t('⚡ Voice Shortcuts','⚡ Voice Shortcuts');
+  inner.appendChild(title);
+  var desc=document.createElement('p');
+  desc.style.cssText='font-size:12px;color:#64748b;margin-bottom:12px;';
+  desc.textContent=t('Custom trigger words set karo jo kisi bhi command ko activate karein.','Set custom trigger words that activate any command.');
+  inner.appendChild(desc);
+  var container=document.createElement('div');container.id='vc-sc-container';
+  function renderShortcuts(){
+    container.innerHTML='';
+    VC.shortcuts.forEach(function(sc,i){
+      var row=document.createElement('div');row.className='vc-sc-row';
+      row.innerHTML='<input type="text" placeholder="'+t('Trigger word','Trigger word')+'" value="'+sc.trigger+'" data-i="'+i+'" data-field="trigger">'+
+        '<span style="font-size:11px;color:#94a3b8;flex-shrink:0;">→</span>'+
+        '<input type="text" placeholder="'+t('Command','Command')+'" value="'+sc.action+'" data-i="'+i+'" data-field="action">'+
+        '<button class="vc-sc-del" data-del="'+i+'">✕</button>';
+      container.appendChild(row);
+    });
+    container.querySelectorAll('input').forEach(function(inp){
+      inp.oninput=function(){
+        var i=parseInt(this.dataset.i),field=this.dataset.field;
+        if(VC.shortcuts[i]) VC.shortcuts[i][field]=this.value;
+        saveShortcuts();
+      };
+    });
+    container.querySelectorAll('[data-del]').forEach(function(btn){
+      btn.onclick=function(){VC.shortcuts.splice(parseInt(this.dataset.del),1);saveShortcuts();renderShortcuts();};
+    });
+  }
+  renderShortcuts();
+  inner.appendChild(container);
+  var addBtn=document.createElement('button');
+  addBtn.style.cssText='padding:8px 14px;border:1px dashed #6366f1;border-radius:10px;background:#fff;color:#6366f1;font-size:12px;cursor:pointer;margin-top:8px;width:100%;';
+  addBtn.textContent=t('+ Naya Shortcut Add Karo','+ Add New Shortcut');
+  addBtn.onclick=function(){VC.shortcuts.push({trigger:'',action:''});saveShortcuts();renderShortcuts();};
+  inner.appendChild(addBtn);
+  var closeBtn=document.createElement('button');
+  closeBtn.style.cssText='width:100%;margin-top:12px;padding:10px;border:none;border-radius:12px;background:#6366f1;color:#fff;font-size:14px;cursor:pointer;font-weight:600;';
+  closeBtn.textContent=t('Save & Bandh Karo','Save & Close');
+  closeBtn.onclick=function(){saveShortcuts();document.body.removeChild(modal);addBubble('bot',t('Shortcuts save ho gaye!','Shortcuts saved!'));};
+  inner.appendChild(closeBtn);
+  modal.appendChild(inner);
+  modal.onclick=function(e){if(e.target===modal){saveShortcuts();document.body.removeChild(modal);}};
+  document.body.appendChild(modal);
+}
+function saveShortcuts(){ try{localStorage.setItem(CFG.shortcutsKey,JSON.stringify(VC.shortcuts));}catch(e){} }
+
+// ══════════════════════════════════════════════
+// 20. BARCODE SCANNER
+// ══════════════════════════════════════════════
+function startBarcodeScanner(){
+  var scanModal=$('vc-scan-modal');
+  var video=$('vc-scan-video');
+  var statusEl=$('vc-scan-status');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    addBubble('bot',t('Camera support nahi hai is browser mein.','Camera not supported in this browser.'));
+    return;
+  }
+  VC.scanActive=true;
+  scanModal.style.display='flex';
+  statusEl.textContent=t('Camera shuru ho rahi hai...','Starting camera...');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+  .then(function(stream){
+    video.srcObject=stream;
+    VC.scanStream=stream;
+    statusEl.textContent=t('Barcode ya product ke upar camera rakhein.','Point camera at barcode or product.');
+    // If BarcodeDetector available (Chrome Android)
+    if('BarcodeDetector' in window){
+      var bd=new BarcodeDetector({formats:['ean_13','ean_8','code_128','qr_code','code_39']});
+      var scanning=true;
+      function doScan(){
+        if(!scanning||!VC.scanActive) return;
+        bd.detect(video).then(function(codes){
+          if(codes.length){
+            scanning=false;
+            var code=codes[0].rawValue;
+            statusEl.textContent=t('Mila: '+code,'Found: '+code);
+            setTimeout(function(){ closeBarcodeScanner(); processBarcodeResult(code); },500);
+          } else { requestAnimationFrame(doScan); }
+        }).catch(function(){ requestAnimationFrame(doScan); });
+      }
+      video.onloadedmetadata=function(){doScan();};
+    } else {
+      // Manual input fallback
+      statusEl.innerHTML=t('BarcodeDetector support nahi. Neeche type karein:','BarcodeDetector not supported. Type below:')+
+        '<br><input id="vc-barcode-input" type="text" placeholder="Barcode enter karein..." '+
+        'style="margin-top:8px;padding:8px 12px;border-radius:8px;border:none;font-size:14px;width:220px;">'+
+        '<button onclick="(function(){var v=document.getElementById(\'vc-barcode-input\').value;if(v){window.VoiceERP&&window.VoiceERP.processBarcodeResult(v);}})()" '+
+        'style="margin-top:8px;padding:8px 14px;border-radius:8px;border:none;background:#6366f1;color:#fff;cursor:pointer;">'+t('Search','Search')+'</button>';
+    }
+  }).catch(function(e){
+    VC.scanActive=false;scanModal.style.display='none';
+    addBubble('bot',t('Camera allow karein: '+e.message,'Allow camera: '+e.message));
+  });
+}
+
+function closeBarcodeScanner(){
+  VC.scanActive=false;
+  var scanModal=$('vc-scan-modal');
+  var video=$('vc-scan-video');
+  if(VC.scanStream) VC.scanStream.getTracks().forEach(function(t){t.stop();});
+  VC.scanStream=null;
+  if(video) video.srcObject=null;
+  if(scanModal) scanModal.style.display='none';
+}
+
+function processBarcodeResult(code){
+  if(!VC.panelOpen) openPanel();
+  addBubble('user','📷 Scan: '+code);
+  var typId=addTyping();
+  setTimeout(function(){
+    removeTyping(typId);
+    // Search products by HSN, batch, or name containing code
+    var prods=AS().products||[];
+    var match=prods.find(function(p){
+      return (p.hsn&&p.hsn===code)||(p.batch&&p.batch===code)||(p.barcode&&p.barcode===code);
+    })||bestMatch(code,prods,function(p){return p.name;},0.5);
+    var resp;
+    if(match){
+      resp=t(match.name+' mila! Stock: '+(match.stock||0)+' units, Rate: ₹'+(match.rate||0)+'. Invoice mein add karein?',
+             match.name+' found! Stock: '+(match.stock||0)+' units, Rate: ₹'+(match.rate||0)+'. Add to invoice?');
+      VC.ctx.lastProduct=match;
+      // Show add button
+      setTimeout(function(){
+        var div=document.createElement('div');
+        div.className='vc-bubble bot';
+        div.innerHTML='<b>'+match.name+'</b> — ₹'+(match.rate||0)+
+          '<div class="vc-action-row">'+
+          '<button class="vc-action-btn" onclick="(function(){if(window.addDraftItem){window.switchTab&&window.switchTab(\'invoice\');window.addDraftItem('+JSON.stringify(match)+');window.VoiceERP.addBubble(\'bot\',\''+match.name+t(' invoice mein add ho gaya!',' added to invoice!')+'\')}})()">'+
+          (t('+ Invoice Mein Add','+ Add to Invoice'))+'</button>'+
+          '</div>';
+        CHAT.appendChild(div);CHAT.scrollTop=CHAT.scrollHeight;
+      },350);
+    } else {
+      resp=t('Code "'+code+'" ka koi product nahi mila. Manually search karein.','Product with code "'+code+'" not found. Search manually.');
+    }
+    VC.ctx.lastResponse=resp;
+    addBubble('bot',resp);speak(resp);saveHistory('Scan: '+code,resp);
+  },400);
+}
+
+// ══════════════════════════════════════════════
+// 21. EVENT BINDINGS
+// ══════════════════════════════════════════════
+FAB.addEventListener('click',function(){if(VC.panelOpen)closePanel();else openPanel();});
+
+var fabPressTimer;
+FAB.addEventListener('touchstart',function(e){
+  fabPressTimer=setTimeout(function(){if(!VC.panelOpen)openPanel();startListening();},500);
+},{passive:true});
+FAB.addEventListener('touchend',function(){clearTimeout(fabPressTimer);});
+
+CLOSEBTN.addEventListener('click',closePanel);
+OVERLAY.addEventListener('click',closePanel);
+MICBTN.addEventListener('click',function(){if(!VC.panelOpen)openPanel();startListening();});
+
+SENDBTN.addEventListener('click',function(){var v=TINPUT.value.trim();if(v){TINPUT.value='';processText(v);}});
+TINPUT.addEventListener('keydown',function(e){if(e.key==='Enter'){var v=TINPUT.value.trim();if(v){TINPUT.value='';processText(v);}}});
+
+// Toolbar buttons
+$('vc-history-btn').addEventListener('click',showHistoryModal);
+$('vc-shortcuts-btn').addEventListener('click',showShortcutsModal);
+$('vc-scan-btn').addEventListener('click',startBarcodeScanner);
+$('vc-report-btn').addEventListener('click',function(){
+  var r=getDailyReport(true);
+  if(!VC.panelOpen)openPanel();
+  addBubble('bot',r);speak(r);
+});
+$('vc-scan-close').addEventListener('click',closeBarcodeScanner);
+
+// Quick chips
+document.querySelectorAll('.vc-chip').forEach(function(chip){
+  chip.addEventListener('click',function(){
+    var cmd=chip.dataset.cmd;
+    if(cmd){if(!VC.panelOpen)openPanel();processText(cmd);}
+  });
+});
+
+// Voices
+if(VC.synth){VC.synth.onvoiceschanged=loadVoices;loadVoices();}
+
+// Lang button initial state
+LANGBTN.textContent=VC.lang==='hi'?'HI':'EN';
+
+// Init recognition
+initRecognition();
+
+// ── Hide FAB on splash/auth, show on app ──
+(function(){
+  function updateFabVisibility(){
+    var fab = document.getElementById('vc-fab');
+    var panel = document.getElementById('vc-panel');
+    if(!fab) return;
+    var splash = document.getElementById('splash');
+    var auth = document.getElementById('auth-wrap');
+    var splashVisible = splash && !splash.classList.contains('splash-out') && splash.style.display !== 'none';
+    var authVisible = auth && auth.style.display === 'block';
+    var hide = splashVisible || authVisible;
+    fab.style.display = hide ? 'none' : '';
+    if(panel) panel.style.display = hide ? 'none' : '';
+  }
+  // Poll for state changes
+  setInterval(updateFabVisibility, 400);
+  updateFabVisibility();
+})();
+
+// Expose for debugging + barcode callback
+window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcodeResult:processBarcodeResult,CFG:CFG};
+
+})();
 </script>
 
 </body>
