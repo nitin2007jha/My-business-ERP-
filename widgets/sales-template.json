@@ -1,0 +1,94 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Today's Collection",
+                  "size": "Small",
+                  "weight": "Bolder",
+                  "color": "Attention"
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${todayRevenue}",
+                  "size": "ExtraLarge",
+                  "weight": "Bolder",
+                  "spacing": "None"
+                },
+                {
+                  "type": "ColumnSet",
+                  "spacing": "Small",
+                  "columns": [
+                    {
+                      "type": "Column",
+                      "width": "auto",
+                      "items": [
+                        { "type": "TextBlock", "text": "💵 Cash: ${cashTotal}", "size": "Small", "spacing": "None" }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "auto",
+                      "items": [
+                        { "type": "TextBlock", "text": "📱 UPI: ${upiTotal}", "size": "Small", "spacing": "None" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${invoiceCount}",
+                  "size": "ExtraLarge",
+                  "weight": "Bolder",
+                  "horizontalAlignment": "Right",
+                  "color": "Accent"
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "Invoices",
+                  "size": "Small",
+                  "horizontalAlignment": "Right",
+                  "spacing": "None",
+                  "isSubtle": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TextBlock",
+          "text": "⏰ Updated: ${updatedAt}",
+          "size": "Small",
+          "isSubtle": true,
+          "spacing": "Small"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Open ERP",
+      "url": "./index.html?action=today-sales"
+    }
+  ]
+}
