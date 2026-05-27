@@ -1,0 +1,52 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "style": "attention",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "⚠️ Low Stock Alerts", "size": "Small", "weight": "Bolder", "color": "Warning" },
+                { "type": "TextBlock", "text": "${alertCount} items need restocking", "size": "Medium", "spacing": "None" }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                { "type": "TextBlock", "text": "${alertCount}", "size": "ExtraLarge", "weight": "Bolder", "color": "Attention", "horizontalAlignment": "Right" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FactSet",
+          "spacing": "Small",
+          "facts": "${items}"
+        },
+        {
+          "type": "TextBlock",
+          "text": "⏰ ${updatedAt}",
+          "size": "Small",
+          "isSubtle": true,
+          "spacing": "Small"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "View Inventory",
+      "url": "./index.html?action=low-stock"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "GST / Tax Tracker",
+          "size": "Small",
+          "weight": "Bolder",
+          "color": "Good"
+        },
+        {
+          "type": "ColumnSet",
+          "spacing": "Small",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "Total GST Collected", "size": "Small", "isSubtle": true, "spacing": "None" },
+                { "type": "TextBlock", "text": "${totalGST}", "size": "Large", "weight": "Bolder", "spacing": "None", "color": "Good" }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "Taxable Amount", "size": "Small", "isSubtle": true, "spacing": "None" },
+                { "type": "TextBlock", "text": "${taxableAmount}", "size": "Large", "weight": "Bolder", "spacing": "None" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "ColumnSet",
+          "spacing": "Small",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "CGST", "size": "Small", "isSubtle": true },
+                { "type": "TextBlock", "text": "${cgst}", "weight": "Bolder", "spacing": "None" }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "SGST", "size": "Small", "isSubtle": true },
+                { "type": "TextBlock", "text": "${sgst}", "weight": "Bolder", "spacing": "None" }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                { "type": "TextBlock", "text": "IGST", "size": "Small", "isSubtle": true },
+                { "type": "TextBlock", "text": "${igst}", "weight": "Bolder", "spacing": "None" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TextBlock",
+          "text": "📅 Period: ${period}  |  ⏰ ${updatedAt}",
+          "size": "Small",
+          "isSubtle": true,
+          "spacing": "Small"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "GST Report",
+      "url": "./index.html?action=gst-report"
+    }
+  ]
+}
