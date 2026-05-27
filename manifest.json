@@ -6,58 +6,101 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#059669",
+  "theme_color": "#714b67",
   "background_color": "#0d1117",
+
   "icons": [
-    {
-      "src": "./LS20260511122645.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "./LS20260511122645.png",
-      "sizes": "192x192",
-      "type": "image/png",     "purpose": "maskable"
-    },
-    {
-      "src": "./bX9u3g9K7WNf5mPRDI5OHS.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "./bX9u3g9K7WNf5mPRDI5OHS.png",
-      "sizes": "192×192",
-      "purpose": "any"
-    }
+    { "src": "./LS20260511122645.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "./bX9u3g9K7WNf5mPRDI5OHS.png", "sizes": "152x152", "type": "image/png" },
+    { "src": "./LS20260511122645.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "./bX9u3g9K7WNf5mPRDI5OHS.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
   ],
+
   "categories": ["business", "finance", "productivity"],
+
   "shortcuts": [
     {
-      "name": "Voice Assistant",
-      "short_name": "Voice AI",
-      "description": "Talk to your ERP AI Assistant directly from home screen",
-      "url": "./index.html?action=voice-launch",
-      "icons": [
-        {
-          "src": "./LS20260511122645.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "name": "New Invoice",
+      "short_name": "Invoice",
+      "description": "Create a new tax invoice instantly",
+      "url": "./index.html?action=new-invoice",
+      "icons": [{ "src": "./LS20260511122645.png", "sizes": "96x96" }]
     },
     {
-      "name": "New Invoice",
-      "short_name": "Billing",
-      "description": "Quickly create a new invoice",
-      "url": "./index.html?action=quick-billing",
-      "icons": [
-        {
-          "src": "./LS20260511122645.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "name": "Today's Sales",
+      "short_name": "Sales",
+      "description": "View today's collection & revenue",
+      "url": "./index.html?action=today-sales",
+      "icons": [{ "src": "./LS20260511122645.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Low Stock Alert",
+      "short_name": "Stock",
+      "description": "Check items running low on stock",
+      "url": "./index.html?action=low-stock",
+      "icons": [{ "src": "./icons/LS20260511122645.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Voice Assistant",
+      "short_name": "Voice",
+      "description": "Speak commands to your ERP",
+      "url": "./index.html?action=voice",
+      "icons": [{ "src": "./icons/LS20260511122645.png", "sizes": "96x96" }]
     }
-  ]
+  ],
+
+  "widgets": [
+    {
+      "name": "Today's Sales",
+      "tag": "erp-sales-widget",
+      "ms_ac_template": "./widgets/sales-template.json",
+      "data": "./widgets/sales-data.json",
+      "type": "application/json",
+      "screenshots": [{ "src": "./widgets/screenshot-sales.png", "sizes": "720x240" }],
+      "icons": [{ "src": "./LS20260511122645.png", "sizes": "192x192" }],
+      "update_timeout": "PT15M",
+      "multiple": false
+    },
+    {
+      "name": "GST / Tax Tracker",
+      "tag": "erp-gst-widget",
+      "ms_ac_template": "./widgets/gst-template.json",
+      "data": "./widgets/gst-data.json",
+      "type": "application/json",
+      "screenshots": [{ "src": "./widgets/screenshot-gst.png", "sizes": "720x240" }],
+      "icons": [{ "src": "./LS20260511122645.png", "sizes": "192x192" }],
+      "update_timeout": "PT30M",
+      "multiple": false
+    },
+    {
+      "name": "Low Stock Alerts",
+      "tag": "erp-stock-widget",
+      "ms_ac_template": "./widgets/stock-template.json",
+      "data": "./widgets/stock-data.json",
+      "type": "application/json",
+      "screenshots": [{ "src": "./widgets/screenshot-stock.png", "sizes": "720x240" }],
+      "icons": [{ "src": "./LS20260511122645.png", "sizes": "192x192" }],
+      "update_timeout": "PT1H",
+      "multiple": false
+    }
+  ],
+
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "share_title",
+      "text":  "share_text"
+    }
+  },
+
+  "protocol_handlers": [
+    { "protocol": "web+erp", "url": "./index.html?protocol=%s" }
+  ],
+
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+
+  "handle_links": "preferred"
 }
