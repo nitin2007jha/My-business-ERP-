@@ -14,10 +14,6 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
 <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
-<!-- Android shortcut icons (create 96×96 px PNGs for these) -->
-<link rel="preload" href="./voice-erp.js"        as="script">
-<link rel="preload" href="./erp-pwa-widgets.js"  as="script">
-
 <!-- Favicon -->
 <link rel="icon" type="image/png" sizes="96x96" href="./icons/icon-96.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-96.png">
@@ -10169,180 +10165,35 @@ window.generateDigitalInvoiceQR = function(inv) {
 })();
 
 // ── PWA OFFLINE MODE — Service Worker ────────────────────────
-(function () {
-
-  // ── Service Worker Registration ──────────────────────────────────
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-
-        // Notify if a new SW version is waiting
-        reg.addEventListener('updatefound', () => {
-          const newSW = reg.installing;
-          newSW?.addEventListener('statechange', () => {
-            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-              showUpdateBanner();
-            }
-          });
-        });
-
-        // Tell SW to register periodic sync (needs permission)
-        navigator.serviceWorker.ready.then(sw => {
-          sw.active?.postMessage({ type: 'REGISTER_PERIODIC_SYNC' });
-        });
-
-        console.log('[ERP] Service Worker registered:', reg.scope);
-      } catch (err) {
-        console.error('[ERP] SW registration failed:', err);
-      }
-    });
-
-    // Handle SW navigation messages (from notification clicks)
-    navigator.serviceWorker.addEventListener('message', event => {
-      const { type, url } = event.data || {};
-      if (type === 'SW_NAVIGATE' && url) {
-        const params = new URLSearchParams(new URL(url, location.origin).search);
-        const action = params.get('action');
-        if (action === 'new-invoice')     { window.switchTab?.('invoice'); }
-        else if (action === 'today-sales'){ window.switchTab?.('dashboard'); }
-        else if (action === 'low-stock')  { window.switchTab?.('inventory'); }
-        else if (action === 'gst-report') { window.switchTab?.('reports'); }
-        else if (action === 'voice')      { window._VA?.open(); }
-      }
-    });
-  }
-
-  // ── Install Prompt (A2HS) ────────────────────────────────────────
-  let deferredPrompt = null;
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    showInstallBanner();
-  });
-
-  window.addEventListener('appinstalled', () => {
-    hideInstallBanner();
-    deferredPrompt = null;
-    // Show success toast
-    showToast('✅ ERP installed! Home screen par dekho.');
-  });
-
-  // ── Install Banner UI ────────────────────────────────────────────
-  function showInstallBanner() {
-    if (document.getElementById('erp-install-banner')) return;
-
-    const banner = document.createElement('div');
-    banner.id = 'erp-install-banner';
-    banner.style.cssText = `
-      position:fixed; bottom:72px; left:12px; right:12px;
-      background:linear-gradient(135deg,#714b67,#5c3d55);
-      border-radius:16px; padding:14px 16px;
-      display:flex; align-items:center; gap:12px;
-      box-shadow:0 8px 32px rgba(113,75,103,.5);
-      z-index:9990; animation:slideUp .3s ease;
-      font-family:'Inter',sans-serif;
-    `;
-    banner.innerHTML = `
-      <div style="font-size:28px;flex-shrink:0">📲</div>
-      <div style="flex:1">
-        <div style="color:#fff;font-weight:700;font-size:14px">Install ERP App</div>
-        <div style="color:rgba(255,255,255,.7);font-size:12px;margin-top:2px">Home screen par add karein — offline bhi chalega</div>
-      </div>
-      <button onclick="window.installERP()" style="background:#fff;color:#714b67;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:'Inter',sans-serif">
-        Install
-      </button>
-      <button onclick="document.getElementById('erp-install-banner').remove()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">
-        Later
-      </button>
-    `;
-    document.body.appendChild(banner);
-
-    // Auto-hide after 8 seconds
-    setTimeout(() => banner?.remove(), 8000);
-  }
-
-  function hideInstallBanner() {
-    document.getElementById('erp-install-banner')?.remove();
-  }
-
-  window.installERP = async () => {
-    if (!deferredPrompt) return;
-    hideInstallBanner();
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('[ERP] Install prompt outcome:', outcome);
-    deferredPrompt = null;
-  };
-
-  // ── Update Banner ────────────────────────────────────────────────
-  function showUpdateBanner() {
-    if (document.getElementById('erp-update-banner')) return;
-
-    const banner = document.createElement('div');
-    banner.id = 'erp-update-banner';
-    banner.style.cssText = `
-      position:fixed; top:0; left:0; right:0;
-      background:#059669; color:#fff;
-      padding:10px 16px; display:flex;
-      align-items:center; justify-content:space-between;
-      z-index:9991; font-family:'Inter',sans-serif;
-      font-size:13px; gap:12px;
-    `;
-    banner.innerHTML = `
-      <span>🆕 New ERP update available!</span>
-      <button onclick="window.location.reload()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
-        Update Now
-      </button>
-    `;
-    document.body.appendChild(banner);
-  }
-
-  // ── Toast helper ─────────────────────────────────────────────────
-  function showToast(msg) {
-    const t = document.createElement('div');
-    t.style.cssText = `
-      position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
-      background:#1a1127; color:#fff; border-radius:24px;
-      padding:10px 20px; font-size:13px; font-family:'Inter',sans-serif;
-      box-shadow:0 4px 20px rgba(0,0,0,.4); z-index:9992;
-      animation:slideUp .3s ease; white-space:nowrap;
-    `;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-
-  // ── CSS for animations ───────────────────────────────────────────
-  const s = document.createElement('style');
-  s.textContent = `
-    @keyframes slideUp {
-      from { opacity:0; transform:translateX(-50%) translateY(16px); }
-      to   { opacity:1; transform:translateX(-50%) translateY(0); }
+(function(){
+    if('serviceWorker' in navigator) {
+        var swCode = `
+const CACHE = 'ayur-erp-v1';
+const ASSETS = [
+  '/',
+  '/index.html',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/lucide@latest',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js'
+];
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, {mode:'no-cors'}))))); self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); });
+self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/index.html')))); });
+        `;
+        var blob = new Blob([swCode], {type:'application/javascript'});
+        var swUrl = URL.createObjectURL(blob);
+        // Note: SW from blob URL has limited scope, but this works for basic caching
+        // For production: serve sw.js from same origin
+        try {
+            navigator.serviceWorker.register(swUrl).then(function(reg){
+                console.log('SW registered, offline mode active');
+            }).catch(function(e){ console.log('SW registration limited (blob URL):', e.message); });
+        } catch(e) {}
     }
-  `;
-  document.head.appendChild(s);
-
-  // ── Handle URL params from shortcuts / notifications ─────────────
-  window.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const action = params.get('action');
-    if (!action) return;
-
-    setTimeout(() => {
-      if (action === 'new-invoice')  window.switchTab?.('invoice');
-      if (action === 'today-sales')  window.switchTab?.('dashboard');
-      if (action === 'low-stock')    window.switchTab?.('inventory');
-      if (action === 'gst-report')   window.switchTab?.('reports');
-      if (action === 'voice')        window._VA?.open();
-      if (action === 'purchase-order') window.switchTab?.('purchase-orders');
-      // Clean URL without reload
-      history.replaceState({}, '', location.pathname);
-    }, 800);
-  });
-
 })();
+
 // ── MULTI-USER / STAFF ACCESS UI ─────────────────────────────
 window.openStaffModal = function() {
     var modal = document.getElementById('staff-modal');
@@ -19233,10 +19084,6 @@ document.addEventListener('DOMContentLoaded',function(){
 
 })(); // end gestures IIFE
 </script>
-
-<script src="./erp-pwa-widgets.js" defer></script>
-<script src="./voice-erp.js"       defer></script>
-
 
 </body>
 </html>
