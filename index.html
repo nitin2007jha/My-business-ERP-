@@ -53,8 +53,8 @@ html,body{height:100%;height:100dvh;overflow:hidden;max-width:100vw;overflow-x:h
 body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-webkit-font-smoothing:antialiased}
 
 :root{
-  --op:#0b6377;--op-dark:#084a5c;--op-light:#e7f4f6;
-  --ot:#017e84;--ot-light:#e6f4f5;
+  --op:#0f7a80;--op-dark:#0a5a60;--op-light:#e6f6f6;
+  --ot:#0f7a80;--ot-light:#e6f6f6;
   --ob:#dee2e6;--ob-light:#f0f0f0;
   --sidebar-bg:#ffffff;
   --card-shadow:0 1px 2px rgba(0,0,0,.06);
@@ -413,7 +413,7 @@ input:focus,select:focus,textarea:focus{outline:none}
 .bg-odoo-50{background:#e7f4f6!important}.bg-odoo-500{background:#0b6377!important}
 .bg-odoo-600{background:#084a5c!important}
 .border-odoo-200{border-color:#d8c4d0}.border-odoo-500{border-color:#0b6377}
-.from-odoo-500{--tw-gradient-from:#0b6377}.to-odoo-700{--tw-gradient-to:#073e4d}
+.from-odoo-500{--tw-gradient-from:var(--op)}.to-odoo-700{--tw-gradient-to:var(--op-dark)}
 .hover\:bg-purple-50:hover{background:#e7f4f6}
 
 /* Pull o-cp flush to tab edges (cancels p-4 / p-6 padding including top) */
@@ -433,7 +433,7 @@ input:focus,select:focus,textarea:focus{outline:none}
 /* Daybook border-left */
 .card.border-l-4.border-emerald-500{border-left-color:#0b6377!important}
 .card.border-l-4.border-red-500{border-left-color:#dc3545!important}
-.card.border-l-4.border-blue-500{border-left-color:#017e84!important}
+.card.border-l-4.border-blue-500{border-left-color:var(--op)!important}
 
 /* Records gradient banner */
 #view-records .rounded-xl[style*="linear-gradient"]{
@@ -717,7 +717,7 @@ body.fullscreen-page-open #dash-fab-row{
               </div>
             </div>
             <p id="emp-login-error" class="text-red-400 text-sm hidden"></p>
-            <button type="submit" id="emp-login-btn" class="btn w-full justify-center py-3 font-bold text-sm" style="background:#017e84;color:white;border-color:#017e84;">
+            <button type="submit" id="emp-login-btn" class="btn w-full justify-center py-3 font-bold text-sm" style="background:var(--op);color:white;border-color:var(--op);">
               <i data-lucide="log-in" class="w-4 h-4"></i> Sign In as Employee
             </button>
             <div class="text-center">
@@ -1005,7 +1005,7 @@ body.fullscreen-page-open #dash-fab-row{
                 <input type="password" id="ob-confirm-pwd" required placeholder="Repeat password" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:13px 16px;color:#fff;font-size:14px;font-family:inherit;outline:none;">
               </div>
             </div>
-            <button type="button" onclick="window.obLaunch()" id="adv-create-btn" style="margin-top:20px;width:100%;background:linear-gradient(135deg,#017e84,#015f64);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;">
+            <button type="button" onclick="window.obLaunch()" id="adv-create-btn" style="margin-top:20px;width:100%;background:linear-gradient(135deg,var(--op),#015f64);border:none;border-radius:14px;padding:16px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
               Launch My Business ERP!
             </button>
@@ -1279,7 +1279,7 @@ body.fullscreen-page-open #dash-fab-row{
   <aside id="sidebar" class="w-[220px] flex-shrink-0 flex flex-col z-[100]">
     <!-- Brand bar — same height as topbar (46px) -->
     <div class="flex items-center gap-2 flex-shrink-0 px-3" style="height:46px;border-bottom:1px solid #dee2e6;">
-      <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#0b6377,#073e4d);">
+      <div class="w-7 h-7 rounded flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,var(--op),var(--op-dark));">
         <i data-lucide="leaf" class="w-4 h-4 text-white"></i>
       </div>
       <div class="min-w-0">
@@ -1407,7 +1407,7 @@ body.fullscreen-page-open #dash-fab-row{
 <!-- ===== DASHBOARD ===== -->
 <div id="view-dashboard" class="tab">
   <!-- Header bar — improved design -->
-  <div style="background:linear-gradient(135deg,var(--ot) 0%,#015f64 100%);padding:16px 16px 0 16px;color:#fff;flex-shrink:0;border-radius:16px 16px 0 0;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0 16px;color:#fff;flex-shrink:0;border-radius:16px 16px 0 0;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Overview</div>
@@ -1597,7 +1597,7 @@ body.fullscreen-page-open #dash-fab-row{
 <!-- ===== DAYBOOK ===== -->
 <div id="view-daybook" class="tab">
   <!-- Daybook Header -->
-  <div style="background:linear-gradient(135deg,var(--ot) 0%,#015f64 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Finance</div>
@@ -1833,13 +1833,13 @@ body.fullscreen-page-open #dash-fab-row{
 <!-- ===== EXPENSES ===== -->
 <div id="view-expenses" class="tab">
   <!-- Expenses Header -->
-  <div style="background:linear-gradient(135deg,#8b2252 0%,#084a5c 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Operations</div>
         <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0;letter-spacing:-.3px;">Expenses</h2>
       </div>
-      <button onclick="toggleExpenseModal(true)" style="background:#fff;border:none;border-radius:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#8b2252;display:flex;align-items:center;gap:5px;font-family:inherit;margin-top:2px;">
+      <button onclick="toggleExpenseModal(true)" style="background:#fff;border:none;border-radius:10px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;color:var(--op);display:flex;align-items:center;gap:5px;font-family:inherit;margin-top:2px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Expense
       </button>
     </div>
@@ -2633,7 +2633,7 @@ body.fullscreen-page-open #dash-fab-row{
 <!-- ===== APPOINTMENTS ===== -->
 <div id="view-appointments" class="tab">
   <!-- Appointments Header -->
-  <div style="background:linear-gradient(135deg,var(--ot) 0%,#015f64 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Clinic Queue</div>
@@ -2674,7 +2674,7 @@ body.fullscreen-page-open #dash-fab-row{
       <div style="font-size:10px;color:#adb5bd;margin-bottom:4px;">Next Token</div>
       <div id="appt-next-token" style="font-size:28px;font-weight:800;color:#6c757d;line-height:1;">—</div>
     </div>
-    <button onclick="window.callNextToken&&callNextToken()" style="background:linear-gradient(135deg,var(--ot),#015f64);border:none;border-radius:12px;padding:14px 20px;cursor:pointer;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:6px;font-family:inherit;">
+    <button onclick="window.callNextToken&&callNextToken()" style="background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;border-radius:12px;padding:14px 20px;cursor:pointer;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:6px;font-family:inherit;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 16 16 12 12 8"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Next
     </button>
   </div>
@@ -2704,7 +2704,7 @@ body.fullscreen-page-open #dash-fab-row{
   </div>
   <!-- Active branch info card — brand colors -->
   <div style="margin:16px 0;background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e9ecef;border-left:3px solid var(--ot);display:flex;align-items:center;gap:12px;">
-    <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--ot),#015f64);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--op),var(--op-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </div>
     <div style="flex:1;">
@@ -2784,7 +2784,7 @@ body.fullscreen-page-open #dash-fab-row{
 
 <div id="view-ai-report" class="tab">
   <!-- AI Report Header -->
-  <div style="background:linear-gradient(135deg,#4a2d6b 0%,var(--op-dark) 100%);padding:16px 16px 14px;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 14px;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Insights</div>
@@ -3684,7 +3684,7 @@ setTimeout(window._patchConfirms, 5000);
     <!-- New Invoice -->
     <div class="fqm-wrap" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transform:translateY(16px);opacity:0;">
       <span class="fqm-label" style="font-size:12px;font-weight:700;color:#fff;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);padding:5px 10px;border-radius:14px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);">New Invoice</span>
-      <button onclick="window.closeFabQuickMenu();window.switchTab('invoice')" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0b6377,#073e4d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(11,99,119,.5);-webkit-tap-highlight-color:transparent;flex-shrink:0;">
+      <button onclick="window.closeFabQuickMenu();window.switchTab('invoice')" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(11,99,119,.5);-webkit-tap-highlight-color:transparent;flex-shrink:0;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
       </button>
     </div>
@@ -3698,7 +3698,7 @@ setTimeout(window._patchConfirms, 5000);
     <!-- New Client -->
     <div class="fqm-wrap" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transform:translateY(16px);opacity:0;">
       <span class="fqm-label" style="font-size:12px;font-weight:700;color:#fff;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);padding:5px 10px;border-radius:14px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25);">New Client</span>
-      <button onclick="window.closeFabQuickMenu();window.switchTab('clients');setTimeout(function(){window.openClientDrawer&&openClientDrawer(null,true);},200)" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#017e84,#015f64);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(1,126,132,.45);-webkit-tap-highlight-color:transparent;flex-shrink:0;">
+      <button onclick="window.closeFabQuickMenu();window.switchTab('clients');setTimeout(function(){window.openClientDrawer&&openClientDrawer(null,true);},200)" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(15,122,128,.45);-webkit-tap-highlight-color:transparent;flex-shrink:0;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
       </button>
     </div>
@@ -3744,7 +3744,7 @@ function hideFqmLabel(wrap) {}
   <!-- Business name header — sticky so user can always see biz info -->
   <div style="position:sticky;top:24px;background:#fff;z-index:2;border-bottom:1px solid #f0f0f0;">
     <div style="display:flex;align-items:center;gap:12px;padding:0 20px 12px;">
-      <div id="more-biz-avatar" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0b6377,#073e4d);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px;flex-shrink:0;">M</div>
+      <div id="more-biz-avatar" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--op),var(--op-dark));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px;flex-shrink:0;">M</div>
       <div style="flex:1;min-width:0;">
         <div id="more-biz-name" style="font-weight:700;font-size:15px;color:#212529;line-height:1.3;">My Business</div>
         <div style="font-size:11px;color:#6c757d;">Manage your business</div>
@@ -3763,7 +3763,7 @@ function hideFqmLabel(wrap) {}
       <div style="font-size:10px;color:#6c757d;font-weight:600;">Invoices</div>
     </div>
     <div style="background:#fff;padding:12px;text-align:center;">
-      <div id="more-stat-clients" style="font-size:20px;font-weight:800;color:#017e84;">0</div>
+      <div id="more-stat-clients" style="font-size:20px;font-weight:800;color:var(--op);">0</div>
       <div style="font-size:10px;color:#6c757d;font-weight:600;">Clients</div>
     </div>
     <div style="background:#fff;padding:12px;text-align:center;">
@@ -3777,7 +3777,7 @@ function hideFqmLabel(wrap) {}
     <div style="font-size:10px;font-weight:700;color:#adb5bd;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;">Sales</div>
     <div style="background:#fff;border:1px solid #f0f0f0;border-radius:14px;overflow:hidden;margin-bottom:14px;">
       <button class="more-nav-row" onclick="window.switchTab('clients');closeMobileMoreSheet();updateBnav('clients')">
-        <div class="more-nav-icon" style="background:#e6f4f5;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#017e84" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="more-nav-icon" style="background:#e6f4f5;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <span class="more-nav-label">Clients</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ced4da" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
@@ -3878,7 +3878,7 @@ function hideFqmLabel(wrap) {}
       <!-- Demo / logged out state -->
       <div id="more-account-demo" style="display:none;">
         <button onclick="window.exitDemoMode&&exitDemoMode();closeMobileMoreSheet();" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border:none;background:none;cursor:pointer;font-family:inherit;">
-          <div style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#0b6377,#073e4d);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--op),var(--op-dark));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           </div>
           <span style="font-size:14px;font-weight:700;color:#0b6377;">Sign In / Create Account</span>
@@ -7629,8 +7629,51 @@ try {
                 const hsnStr = window.isFeatureEnabled('hsn') && p.hsn ? `HSN: ${p.hsn} ` : '';
                 const lowStockAlert = p.lowStockAlert || 10;
                 const isLow = (p.stock||0) <= lowStockAlert;
-                const imgHtml = p.productImage ? `<div class="w-12 h-12 rounded-xl overflow-hidden border border-slate-100 shrink-0"><img src="${p.productImage}" class="w-full h-full object-cover"></div>` : `<div class="w-12 h-12 rounded-xl shrink-0" style="background:var(--op-light);border:1px solid rgba(11,99,119,.15);display:flex;align-items:center;justify-content:center;"><i data-lucide="package" class="w-5 h-5" style="color:var(--op);"></i></div>`;
-                return `<div class="card card-hover p-4 flex flex-col gap-3 ${p.isHidden ? 'opacity-50' : ''}"><div class="flex items-start gap-3"><div>${imgHtml}</div><div class="flex-1 min-w-0"><div class="flex items-start justify-between gap-2"><h4 class="font-bold text-slate-800 text-sm truncate">${p.name}</h4><span class="badge badge-slate text-[10px] shrink-0">GST ${p.gst}%</span></div><div class="text-sm font-semibold text-slate-600 mt-0.5">₹${p.rate} <span class="text-xs font-normal text-slate-400">/ ${p.category||'Item'}</span></div>${margin ? `<div class="text-xs font-bold" style="color:var(--ot)">Margin: ${margin}%</div>` : ''}</div></div>${(batchExpStr||hsnStr)?`<div class="text-[11px] text-slate-400 border-t border-slate-100 pt-2">${hsnStr?hsnStr+'• ':''}${batchExpStr}</div>`:''}<div class="flex items-center justify-between border-t border-slate-100 pt-3"><div class="flex flex-col"><span class="text-xs ${isLow?'text-red-600 font-bold':'text-slate-400'}">Stock: ${p.stock||0}</span>${isLow?`<span class="text-[10px] text-red-500 font-semibold">⚠ Low Stock (≤${lowStockAlert})</span>`:''}</div><div class="flex items-center gap-1"><button onclick="openProductDrawer('${p.id}')" class="btn btn-secondary btn-sm text-xs">Edit</button><button onclick="window.toggleHideProduct('${p.id}',${p.isHidden})" class="btn btn-secondary btn-sm text-xs">${p.isHidden?'Unhide':'Archive'}</button>${window.isFeatureEnabled('deleteBtn')?`<button onclick="window.softDeleteProduct('${p.id}')" class="btn btn-icon btn-secondary btn-sm"><i data-lucide="trash-2" class="w-3 h-3 text-red-400"></i></button>`:''}</div></div></div>`;
+                const isOut = (p.stock||0) <= 0;
+                const stockPct = Math.max(4, Math.min(100, Math.round(((p.stock||0)/(lowStockAlert*2||20))*100)));
+                const stockBarColor = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#22c55e';
+                const stockLabelColor = isOut ? '#dc2626' : isLow ? '#d97706' : '#16a34a';
+                const stockLabel = isOut ? '⚠ Out of Stock' : isLow ? '⚠ Low Stock' : '✓ In Stock';
+                const imgHtml = p.productImage
+                    ? `<div style="width:60px;height:60px;border-radius:15px;overflow:hidden;border:1px solid #f1f5f9;flex-shrink:0;box-shadow:0 1px 4px rgba(15,23,42,.08);"><img src="${p.productImage}" style="width:100%;height:100%;object-fit:cover;"></div>`
+                    : `<div style="width:60px;height:60px;border-radius:15px;flex-shrink:0;background:linear-gradient(135deg,var(--op-light) 0%,#ffffff 100%);border:1px solid rgba(15,122,128,.18);display:flex;align-items:center;justify-content:center;"><i data-lucide="package" class="w-6 h-6" style="color:var(--op);"></i></div>`;
+                const deleteBtnHtml = window.isFeatureEnabled('deleteBtn')
+                    ? `<button onclick="window.softDeleteProduct('${p.id}')" title="Delete" style="width:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;cursor:pointer;"><i data-lucide="trash-2" style="width:14px;height:14px;color:#ef4444;"></i></button>`
+                    : '';
+                return `<div class="card card-hover ${p.isHidden ? 'opacity-50' : ''}" style="padding:15px;border-radius:18px;position:relative;overflow:hidden;">
+                    ${isOut ? `<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:9.5px;font-weight:800;padding:4px 14px 4px 18px;border-radius:0 0 0 14px;letter-spacing:.04em;">OUT OF STOCK</div>` : isLow ? `<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:9.5px;font-weight:800;padding:4px 14px 4px 18px;border-radius:0 0 0 14px;letter-spacing:.04em;">LOW STOCK</div>` : ''}
+                    <div style="display:flex;gap:12px;">
+                        ${imgHtml}
+                        <div style="flex:1;min-width:0;">
+                            <h4 style="font-weight:800;color:#1e293b;font-size:14.5px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</h4>
+                            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                                <span style="background:var(--op-light);color:var(--op-dark);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:7px;">${p.category||'Item'}</span>
+                                <span style="background:#eef2f7;color:#475569;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:7px;">GST ${p.gst}%</span>
+                            </div>
+                            <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px;">
+                                <span style="font-size:19px;font-weight:800;color:#0f172a;">₹${p.rate}</span>
+                                ${margin ? `<span style="font-size:10.5px;font-weight:700;color:#15803d;background:#ecfdf5;padding:1px 7px;border-radius:6px;">↑ ${margin}% margin</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${(batchExpStr||hsnStr)?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">${hsnStr?`<span style="font-size:10.5px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:2px 8px;border-radius:6px;">HSN ${p.hsn||''}</span>`:''}${batchExpStr?`<span style="font-size:10.5px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:2px 8px;border-radius:6px;">${batchExpStr}</span>`:''}</div>`:''}
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <span style="font-size:11px;font-weight:700;color:${stockLabelColor};">${stockLabel}</span>
+                            <span style="font-size:12px;font-weight:800;color:#334155;">${p.stock||0} units</span>
+                        </div>
+                        <div style="height:5px;background:#eef1f5;border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:${stockPct}%;background:${stockBarColor};border-radius:3px;transition:width .3s;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-top:12px;">
+                        <button onclick="openProductDrawer('${p.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--op-light);color:var(--op-dark);border:none;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit
+                        </button>
+                        <button onclick="window.toggleHideProduct('${p.id}',${p.isHidden})" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#f8fafc;color:#475569;border:1px solid #eef1f5;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">${p.isHidden?'Unhide':'Archive'}</button>
+                        ${deleteBtnHtml}
+                    </div>
+                </div>`;
             }).join('') || `<div class="col-span-full" style="padding:48px 16px;text-align:center;"><div style="width:64px;height:64px;background:var(--op-light);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div style="font-size:15px;font-weight:700;color:#343a40;margin-bottom:4px;">No products found</div><div style="font-size:13px;color:#adb5bd;margin-bottom:16px;">Add your first product to start tracking inventory</div><button onclick="openProductDrawer(null)" style="background:var(--op);color:#fff;border:none;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">+ Add First Product</button></div>`);
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
@@ -13685,7 +13728,7 @@ window.renderEmployees=function(){
     if(pwR.length||pmR.length){
         pendHTML='<div class="col-span-full mb-4"><div class="card p-4 border-amber-200 bg-amber-50"><div class="font-bold text-amber-800 text-sm mb-2 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4"></i> Pending Requests ('+((pwR.length+pmR.length))+')</div>'
         +pwR.map(function(r){return'<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-amber-100 mb-2"><div><div class="text-sm font-bold text-amber-900">🔑 Password Reset</div><div class="text-xs text-amber-600">'+r.email+' · '+new Date(r.requestedAt).toLocaleDateString('en-IN')+'</div></div><button onclick="window.handlePwResetRequest(\''+r.email+'\')" class="btn btn-sm btn-primary text-xs">Reset</button></div>';}).join('')
-        +pmR.map(function(r){return'<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-blue-100 mb-2"><div><div class="text-sm font-bold text-blue-900">🔓 Permission Request</div><div class="text-xs text-blue-600">'+r.empName+' · '+new Date(r.requestedAt).toLocaleDateString('en-IN')+'</div></div><button onclick="window.openPermissionRequest(\''+r.empEmail+'\')" class="btn btn-sm text-xs" style="background:#017e84;color:white;border-color:#017e84;">Review</button></div>';}).join('')
+        +pmR.map(function(r){return'<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-blue-100 mb-2"><div><div class="text-sm font-bold text-blue-900">🔓 Permission Request</div><div class="text-xs text-blue-600">'+r.empName+' · '+new Date(r.requestedAt).toLocaleDateString('en-IN')+'</div></div><button onclick="window.openPermissionRequest(\''+r.empEmail+'\')" class="btn btn-sm text-xs" style="background:var(--op);color:white;border-color:var(--op);">Review</button></div>';}).join('')
         +'</div></div>';
     }
     if(!emps.length){listEl.innerHTML=pendHTML+'<div class="col-span-full p-8 text-center text-slate-400 flex flex-col items-center gap-2"><span class="text-4xl">👥</span><div class="font-semibold">No employees yet</div><button onclick="window.openEmployeeDrawer(null)" class="btn btn-primary btn-sm mt-2"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Add Employee</button></div>';if(typeof lucide!=='undefined')lucide.createIcons({node:listEl});return;}
@@ -13699,7 +13742,7 @@ window.renderEmployees=function(){
         +'<div class="grid grid-cols-2 gap-2 mb-3 text-xs"><div class="bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">Salary</span><div class="font-bold text-slate-800">₹'+Number(emp.salary||0).toLocaleString('en-IN')+'</div></div>'
         +'<div class="bg-blue-50 p-2 rounded-lg"><span class="text-slate-400">Permissions</span><div class="font-bold text-blue-700">'+pc+'/'+totalPerms+'</div></div></div>'
         +'<div class="flex gap-2 pt-3 border-t border-slate-100"><button onclick="window.openEmployeeDrawer(\''+emp.id+'\')" class="btn btn-ghost btn-sm flex-1 justify-center text-xs">Edit</button>'
-        +'<button onclick="window.openRoleDrawer(\''+emp.id+'\')" class="btn btn-sm flex-1 justify-center text-xs" style="background:#017e84;color:white;border-color:#017e84;"><i data-lucide="shield" class="w-3 h-3"></i> Roles</button></div></div>';
+        +'<button onclick="window.openRoleDrawer(\''+emp.id+'\')" class="btn btn-sm flex-1 justify-center text-xs" style="background:var(--op);color:white;border-color:var(--op);"><i data-lucide="shield" class="w-3 h-3"></i> Roles</button></div></div>';
     }).join('');
     if(typeof lucide!=='undefined')lucide.createIcons({node:listEl});
 };
@@ -14065,7 +14108,7 @@ window.renderEmpRequests = function() {
                 + '</div>'
                 + '<div class="flex gap-2">'
                 + '<button onclick="window.approvePermRequest(\'' + r.empEmail + '\')" class="btn btn-sm text-xs flex-1 justify-center" style="background:#0b6377;color:white"><i data-lucide="check" class="w-3 h-3"></i> Approve</button>'
-                + '<button onclick="window.openPermissionRequest(\'' + r.empEmail + '\')" class="btn btn-sm text-xs flex-1 justify-center" style="background:#017e84;color:white;border-color:#017e84;"><i data-lucide="shield" class="w-3 h-3"></i> Edit Roles</button>'
+                + '<button onclick="window.openPermissionRequest(\'' + r.empEmail + '\')" class="btn btn-sm text-xs flex-1 justify-center" style="background:var(--op);color:white;border-color:var(--op);"><i data-lucide="shield" class="w-3 h-3"></i> Edit Roles</button>'
                 + '<button onclick="window.dismissPermRequest(\'' + r.empEmail + '\')" class="btn btn-ghost btn-sm text-xs flex-shrink-0 text-red-500">✕</button>'
                 + '</div></div>';
         }).join('');
@@ -16590,7 +16633,7 @@ window._obUpdateProgress = function(step) {
     for(var i=1;i<=5;i++){
         var dot = document.getElementById('ob-dot-'+i);
         if(!dot) continue;
-        if(i < step) { dot.style.background='#017e84'; dot.style.height='4px'; dot.style.flex='1'; dot.style.width=''; }
+        if(i < step) { dot.style.background='var(--op)'; dot.style.height='4px'; dot.style.flex='1'; dot.style.width=''; }
         else if(i === step) { dot.style.background='#0b6377'; dot.style.height='8px'; dot.style.width='28px'; dot.style.flex=''; }
         else { dot.style.background='rgba(255,255,255,.15)'; dot.style.height='4px'; dot.style.flex='1'; dot.style.width=''; }
     }
@@ -17707,7 +17750,7 @@ window.trackInvoiceGenerated = async function(inv) {
 
             var shareBtn = document.createElement('button');
             shareBtn.className = 'pdf-dl-close';
-            shareBtn.style.background = '#017e84';
+            shareBtn.style.background = 'var(--op)';
             shareBtn.textContent = '↗ Share';
             shareBtn.onclick = async function(){
                 try {
@@ -20293,7 +20336,7 @@ if(_origOpenPreview){
 #vc-fab{
   position:fixed;bottom:84px;right:18px;z-index:9990;
   width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;
-  background:linear-gradient(135deg,#0b6377 0%,#073e4d 100%);
+  background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);
   box-shadow:0 4px 20px rgba(11,99,119,.5);
   display:flex;align-items:center;justify-content:center;
   transition:transform .18s,box-shadow .18s,background .3s;
@@ -20617,7 +20660,7 @@ body.fab-menu-open #vc-fab{display:none!important;}
   <!-- Mic FAB wrap — hidden while quick-create menu is open -->
   <div id="mic-fab-wrap" style="pointer-events:auto;display:flex;align-items:center;gap:10px;transition:opacity .18s,transform .18s;">
     <div style="background:rgba(15,23,42,.8);backdrop-filter:blur(8px);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.3);">Voice Assistant</div>
-    <button onclick="(function(){var f=document.getElementById('vc-fab');if(f)f.click();})()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0b6377,#073e4d);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(11,99,119,.55);-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:transform .15s;" onmousedown="this.style.transform='scale(.88)'" onmouseup="this.style.transform=''">
+    <button onclick="(function(){var f=document.getElementById('vc-fab');if(f)f.click();})()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(11,99,119,.55);-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:transform .15s;" onmousedown="this.style.transform='scale(.88)'" onmouseup="this.style.transform=''">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
     </button>
   </div>
@@ -21707,7 +21750,7 @@ window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcod
 }
 #acct-avatar-big{
   width:50px;height:50px;border-radius:50%;
-  background:linear-gradient(135deg,#0b6377,#073e4d);
+  background:linear-gradient(135deg,var(--op),var(--op-dark));
   display:flex;align-items:center;justify-content:center;
   font-size:20px;font-weight:800;color:#fff;
   overflow:hidden;flex-shrink:0;cursor:pointer;
@@ -21833,7 +21876,7 @@ textarea.ap-input{resize:vertical;min-height:70px;}
 /* ── Buttons ── */
 .ap-btn-primary{
   width:100%;padding:11px;border-radius:10px;
-  background:linear-gradient(135deg,#0b6377,#073e4d);
+  background:linear-gradient(135deg,var(--op),var(--op-dark));
   color:#fff;font-size:13px;font-weight:600;cursor:pointer;
   border:none;display:flex;align-items:center;justify-content:center;
   gap:8px;transition:all .15s;font-family:inherit;
@@ -21884,7 +21927,7 @@ textarea.ap-input{resize:vertical;min-height:70px;}
 .ap-acc-item.current-acc{border-color:#0b6377;background:#e7f4f6;}
 .ap-acc-avatar{
   width:36px;height:36px;border-radius:50%;
-  background:linear-gradient(135deg,#0b6377,#073e4d);
+  background:linear-gradient(135deg,var(--op),var(--op-dark));
   display:flex;align-items:center;justify-content:center;
   font-size:14px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;
 }
@@ -22036,9 +22079,6 @@ textarea.ap-input{resize:vertical;min-height:70px;}
       </div>
       <input type="file" id="acct-logo-inp2" accept="image/*" style="display:none" onchange="apLogoUpload(this)">
 
-      <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">App Theme</div>
-      <div class="ap-swatches" id="ap-swatches"></div>
-
       <button class="ap-btn-ghost" style="width:100%;margin-bottom:8px;" onclick="openSettingsModal('branding')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
         Advanced Branding & Signature
@@ -22162,16 +22202,7 @@ textarea.ap-input{resize:vertical;min-height:70px;}
 (function(){
 
 /* ── Themes ── */
-var AP_THEMES = [
-  {name:'Odoo Purple', p:'#0b6377', d:'#084a5c', l:'#e7f4f6'},
-  {name:'Royal Blue',  p:'#1d4ed8', d:'#1e40af', l:'#eff6ff'},
-  {name:'Forest',      p:'#16a34a', d:'#15803d', l:'#f0fdf4'},
-  {name:'Crimson',     p:'#dc2626', d:'#b91c1c', l:'#fef2f2'},
-  {name:'Slate',       p:'#334155', d:'#1e293b', l:'#f8fafc'},
-  {name:'Teal',        p:'#0d9488', d:'#0f766e', l:'#f0fdfa'},
-  {name:'Amber',       p:'#d97706', d:'#b45309', l:'#fffbeb'},
-  {name:'Indigo',      p:'#4f46e5', d:'#4338ca', l:'#eef2ff'},
-];
+// AP_THEMES removed — app uses a single fixed brand color (see --op/--op-dark/--op-light in :root)
 
 /* ── Open / Close ── */
 window.openAccountPanel = function() {
@@ -22201,7 +22232,7 @@ window.apTab = function(tab) {
   document.querySelectorAll('.ap-sec').forEach(function(s){
     s.classList.toggle('active', s.id === 'ap-sec-' + tab);
   });
-  if(tab === 'appearance') apRenderSwatches();
+  if(tab === 'appearance') { /* theme swatches removed — single fixed brand color */ }
   if(tab === 'accounts')   apRenderSavedAccounts();
 };
 
@@ -22337,35 +22368,18 @@ var li2=document.getElementById('acct-logo-inp2');
 if(li1) li1.addEventListener('change',function(){window.apLogoUpload(this);});
 if(li2) li2.addEventListener('change',function(){window.apLogoUpload(this);});
 
-/* ── Theme swatches ── */
-function apRenderSwatches() {
-  var grid = document.getElementById('ap-swatches'); if(!grid) return;
-  var cur; try{ var t=JSON.parse(localStorage.getItem('acct_theme')||'{}'); cur=t.p; }catch(e){}
-  cur = cur || '#0b6377';
-  grid.innerHTML = AP_THEMES.map(function(t){
-    return '<div class="ap-swatch'+(cur===t.p?' active':'')+'" style="background:'+t.p+';" title="'+t.name+'" onclick="applyTheme(\''+t.p+'\',\''+t.d+'\',\''+t.l+'\')"></div>';
-  }).join('');
-}
-
-window.applyTheme = function(p,d,l) {
-  var r=document.documentElement.style;
-  r.setProperty('--op',p); r.setProperty('--op-dark',d); r.setProperty('--op-light',l);
-  var tb=document.getElementById('topbar'); if(tb) tb.style.background=p;
-  var fab=document.getElementById('vc-fab'); if(fab) fab.style.background='linear-gradient(135deg,'+p+','+d+')';
-  // Sidebar active nav item accent
-  document.querySelectorAll('.nav-item.active').forEach(function(n){n.style.background=l;n.style.color=p;});
-  try{localStorage.setItem('acct_theme',JSON.stringify({p:p,d:d,l:l}));}catch(e){}
-  apRenderSwatches();
-  window.showToast && window.showToast('Theme updated! 🎨');
-};
-
-// Restore theme on load
-(function(){
-  try{
-    var t=JSON.parse(localStorage.getItem('acct_theme'));
-    if(t&&t.p) setTimeout(function(){window.applyTheme(t.p,t.d,t.l);},900);
-  }catch(e){}
-})();
+/* ── App theme: single fixed brand color (light green) everywhere ──
+   NOTE: A per-device theme switcher used to live here (AP_THEMES /
+   apRenderSwatches / applyTheme), storing the chosen color in
+   localStorage('acct_theme') and re-applying it on every load. That's why
+   the color could look different (e.g. purple) after uploading to a fresh
+   origin like GitHub Pages — an old saved theme value from a previous test
+   was silently restored. The app now always uses the --op/--op-dark/--op-light
+   CSS variables defined in :root, with no runtime override, so the color is
+   identical everywhere and on every deploy. */
+window.applyTheme = function(){ /* disabled — single fixed brand color */ };
+// One-time cleanup: remove any theme leftover from the old per-device switcher
+try{ localStorage.removeItem('acct_theme'); }catch(e){}
 
 /* ── Saved accounts list ── */
 function apRenderSavedAccounts() {
