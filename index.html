@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>My Business ERP</title>
-<meta name="theme-color" content="#0b6377">
+<meta name="theme-color" content="#0f7a80">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,7 +19,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>window.tailwind=window.tailwind||{};tailwind.config={theme:{extend:{colors:{e:{50:'#e7f4f6',100:'#ede4e9',500:'#0b6377',600:'#084a5c',700:'#073e4d',800:'#052e38',900:'#041e26'}}}}};</script>
+<script>window.tailwind=window.tailwind||{};tailwind.config={theme:{extend:{colors:{e:{50:'#e7f4f6',100:'var(--op-light)',500:'#0b6377',600:'#084a5c',700:'#073e4d',800:'#052e38',900:'#041e26'}}}}};</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -94,7 +94,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
   position:relative;
 }
 .nav-item:hover{color:#212529;background:var(--op-light)}
-.nav-item.active{color:var(--op);background:#ede4e9;font-weight:600}
+.nav-item.active{color:var(--op);background:var(--op-light);font-weight:600}
 .nav-item.active::before{
   content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
   width:3px;height:20px;background:var(--op);border-radius:0 2px 2px 0;
@@ -131,7 +131,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 .btn-primary:hover{background:var(--op-dark);border-color:var(--op-dark)}
 .btn-primary:active{transform:scale(.98)}
 .btn-ghost{background:#fff;color:#495057;border:1px solid var(--ob)}
-.btn-ghost:hover{background:var(--op-light);border-color:#bf9db4;color:var(--op)}
+.btn-ghost:hover{background:var(--op-light);border-color:#5fb8bd;color:var(--op)}
 .btn-danger{background:#fff;color:#dc3545;border:1px solid #f5c6cb}
 .btn-danger:hover{background:#dc3545;color:#fff}
 .btn-secondary{background:#fff;color:#495057;border:1px solid var(--ob)}
@@ -198,38 +198,64 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
   backdrop-filter:blur(0px);display:none;
   transition:background .3s,backdrop-filter .3s}
 .drawer-bg.open{display:block;background:rgba(33,37,41,.45);backdrop-filter:blur(3px)}
-/* Mobile: bottom sheet (profile panel style) */
-@media(max-width:767px){
-  .drawer{
-    position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;
-    max-height:92vh;border-radius:20px 20px 0 0;
-    background:#fff;z-index:401;display:flex;flex-direction:column;
-    box-shadow:0 -8px 48px rgba(0,0,0,.18);
-    transform:translateY(110%);
-    transition:transform .35s cubic-bezier(.32,1,.46,1);
-    will-change:transform;
-  }
-  .drawer.open{transform:translateY(0)}
-  /* Drag handle for mobile drawers */
-  .drawer::before{
-    content:'';display:block;width:36px;height:4px;
-    background:rgba(0,0,0,.13);border-radius:4px;
-    margin:10px auto 2px;flex-shrink:0;
-  }
-  .drawer-head{border-radius:0;border-top:none}
+/* Non-desktop (phones, tablets, and any wide-viewport mobile browser):
+   bottom sheet. This is gated on the JS-detected real-desktop class, NOT
+   on viewport width, so a wide mobile/tablet browser still gets the
+   mobile bottom-sheet treatment. */
+body:not(.is-desktop-device) .drawer{
+  position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;
+  max-height:92vh;border-radius:20px 20px 0 0;
+  background:#fff;z-index:401;display:flex;flex-direction:column;
+  box-shadow:0 -8px 48px rgba(0,0,0,.18);
+  transform:translateY(110%);
+  transition:transform .35s cubic-bezier(.32,1,.46,1);
+  will-change:transform;
 }
-/* Desktop: right-side drawer (original) */
-@media(min-width:768px){
-  .drawer{
-    position:fixed;top:0;right:0;bottom:0;left:auto;
-    width:min(540px,100vw);border-radius:0;
-    background:#fff;z-index:401;display:flex;flex-direction:column;
-    box-shadow:-4px 0 32px rgba(0,0,0,.12);
-    transform:translateX(100%);
-    transition:transform .25s cubic-bezier(.4,0,.2,1);
-  }
-  .drawer.open{transform:translateX(0)}
+body:not(.is-desktop-device) .drawer.open{transform:translateY(0)}
+/* Drag handle for mobile drawers */
+body:not(.is-desktop-device) .drawer::before{
+  content:'';display:block;width:36px;height:4px;
+  background:rgba(0,0,0,.13);border-radius:4px;
+  margin:10px auto 2px;flex-shrink:0;
 }
+body:not(.is-desktop-device) .drawer-head{border-radius:0;border-top:none}
+/* Real desktop / laptop only: floating centered modal, like Financial Reports */
+body.is-desktop-device .drawer{
+  position:fixed;top:0;right:0;bottom:0;left:0;margin:auto;
+  width:min(520px,92vw);height:fit-content;max-height:88vh;
+  border-radius:16px;
+  background:#fff;z-index:401;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  transform:scale(.94);opacity:0;visibility:hidden;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s;
+  will-change:transform,opacity;
+}
+body.is-desktop-device .drawer.open{transform:scale(1);opacity:1;visibility:visible;}
+body.is-desktop-device .drawer-head{border-radius:16px 16px 0 0}
+body.is-desktop-device #rec-filter-sheet{width:min(440px,92vw);}
+body.is-desktop-device #cl-filter-sheet{width:min(420px,92vw);}
+/* Minimize button — desktop only, sits next to the close (X) button */
+.drawer-minimize-btn{display:none;}
+body.is-desktop-device .drawer-minimize-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;
+  color:rgba(255,255,255,.75)!important;background:rgba(255,255,255,.1)!important;
+  margin-right:2px;flex-shrink:0;
+}
+.drawer-minimize-btn:hover{color:#fff!important;background:rgba(255,255,255,.2)!important}
+.drawer-minimize-btn.light{color:#64748b!important;background:rgba(11,99,119,.1)!important}
+.drawer-minimize-btn.light:hover{color:#0b6377!important;background:rgba(11,99,119,.2)!important}
+/* ── Minimized-panel chips in topbar (desktop only) ── */
+#desktop-minimized-bar{display:none;align-items:center;gap:6px;margin-right:4px;}
+body.is-desktop-device #desktop-minimized-bar.has-items{display:flex;}
+.desktop-min-chip{
+  display:flex;align-items:center;gap:6px;max-width:150px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);
+  color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;
+  cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:inherit;
+}
+.desktop-min-chip:hover{background:rgba(255,255,255,.3);}
 .drawer-head{
   padding:14px 20px;border-bottom:1px solid var(--ob);
   flex-shrink:0;display:flex;align-items:center;gap:12px;
@@ -280,14 +306,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 .auth-card{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,.12);border-radius:8px}
 #auth-wrap .inp{background:rgba(255,255,255,.09)!important;border-color:rgba(255,255,255,.2)!important;
-  color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#bf9db4!important}
-#auth-wrap .inp:focus{background:rgba(255,255,255,.14)!important;border-color:#bf9db4!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#5fb8bd!important}
+#auth-wrap .inp:focus{background:rgba(255,255,255,.14)!important;border-color:#5fb8bd!important;
   box-shadow:0 0 0 2px rgba(191,157,180,.25)!important}
 #auth-wrap .inp::placeholder{color:rgba(255,255,255,.35)!important;-webkit-text-fill-color:rgba(255,255,255,.35)!important}
 #auth-wrap .btn-primary{background:var(--op)!important;border-color:var(--op)!important}
 #auth-wrap .btn-primary:hover{background:var(--op-dark)!important}
 /* auth toggle colors now handled by .auth-toggle-btn.active + #auth-toggle-indicator */
-#auth-wrap a,.auth-link{color:#bf9db4!important}
+#auth-wrap a,.auth-link{color:#5fb8bd!important}
 #emp-login-btn{background:var(--ot)!important;border-color:var(--ot)!important}
 
 /* ─── SPLASH ─── */
@@ -319,7 +345,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 .o-smart-btn{display:inline-flex;flex-direction:column;align-items:center;
   padding:6px 14px;border:1px solid var(--ob);border-radius:var(--radius);
   background:#fff;cursor:pointer;transition:all .12s;min-width:60px;text-decoration:none}
-.o-smart-btn:hover{border-color:#bf9db4;background:var(--op-light)}
+.o-smart-btn:hover{border-color:#5fb8bd;background:var(--op-light)}
 .o-smart-btn .o-sb-count{font-size:15px;font-weight:700;color:var(--op);line-height:1.3}
 .o-smart-btn .o-sb-label{font-size:10px;color:#6c757d;font-weight:500;white-space:nowrap}
 
@@ -346,16 +372,16 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 /* ─── GLOBAL COLOUR OVERRIDES (Tailwind classes → Odoo purple) ─── */
 .text-emerald-600,.text-emerald-700{color:var(--op)!important}
 .text-emerald-500{color:var(--op)!important}
-.text-emerald-400{color:#9e6f8e!important}
-.text-emerald-200,.text-emerald-300{color:#bf9db4!important}
+.text-emerald-400{color:#6bc7cc!important}
+.text-emerald-200,.text-emerald-300{color:#a8e2e5!important}
 .bg-emerald-50{background:var(--op-light)!important}
 .bg-odoo-500,.bg-odoo-600{background:var(--op)!important}
-.border-emerald-200,.border-emerald-500{border-color:#d8c4d0!important}
+.border-emerald-200,.border-emerald-500{border-color:var(--op-light)!important}
 /* Kept for status badges (green = positive/received) */
 .badge-green,.badge.bg-emerald-50{background:#d4edda!important;color:#155724!important;border-color:#c3e6cb!important}
 
 /* Invoice product search */
-#inv-product-search{background:var(--op-light)!important;border-color:#d8c4d0!important}
+#inv-product-search{background:var(--op-light)!important;border-color:var(--op-light)!important}
 #inv-product-search:focus{background:#fff!important;border-color:var(--op)!important}
 
 /* Daybook border-left stat cards */
@@ -380,7 +406,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 .tbl tr:hover td{background:#f9f0f4!important}
 
 /* Settings hover border */
-.card[onclick*="openSettingsModal"]:hover{border-color:#bf9db4!important;box-shadow:0 2px 8px rgba(11,99,119,.12)!important}
+.card[onclick*="openSettingsModal"]:hover{border-color:#5fb8bd!important;box-shadow:0 2px 8px rgba(11,99,119,.12)!important}
 
 /* Invoice items wrapper */
 #invoice-items-wrapper{background:#fff;border:1px solid var(--ob);border-radius:var(--radius)}
@@ -392,7 +418,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
 #pin-lock .btn-primary{background:var(--op)!important;border-color:var(--op)!important}
 
 /* Sidebar user avatar */
-#user-avatar{background:#ede4e9!important;color:var(--op)!important}
+#user-avatar{background:var(--op-light)!important;color:var(--op)!important}
 
 /* Acc icon default bg for settings cards */
 .card .acc-icon.bg-emerald-50,.acc-icon[class*="bg-emerald"]{background:var(--op-light)!important}
@@ -408,13 +434,13 @@ input:focus,select:focus,textarea:focus{outline:none}
 
 
 /* Tailwind odoo-* shims */
-.text-odoo-500,.text-odoo-600{color:#0b6377}.text-odoo-400{color:#9e6f8e}
-.text-odoo-200,.text-odoo-300{color:#bf9db4}
-.bg-odoo-50{background:#e7f4f6!important}.bg-odoo-500{background:#0b6377!important}
-.bg-odoo-600{background:#084a5c!important}
-.border-odoo-200{border-color:#d8c4d0}.border-odoo-500{border-color:#0b6377}
+.text-odoo-500,.text-odoo-600{color:var(--op)}.text-odoo-400{color:#6bc7cc}
+.text-odoo-200,.text-odoo-300{color:#a8e2e5}
+.bg-odoo-50{background:var(--op-light)!important}.bg-odoo-500{background:var(--op)!important}
+.bg-odoo-600{background:var(--op-dark)!important}
+.border-odoo-200{border-color:var(--op-light)}.border-odoo-500{border-color:var(--op)}
 .from-odoo-500{--tw-gradient-from:var(--op)}.to-odoo-700{--tw-gradient-to:var(--op-dark)}
-.hover\:bg-purple-50:hover{background:#e7f4f6}
+.hover\:bg-purple-50:hover{background:var(--op-light)}
 
 /* Pull o-cp flush to tab edges (cancels p-4 / p-6 padding including top) */
 .tab .o-cp{
@@ -431,19 +457,19 @@ input:focus,select:focus,textarea:focus{outline:none}
 }
 
 /* Daybook border-left */
-.card.border-l-4.border-emerald-500{border-left-color:#0b6377!important}
+.card.border-l-4.border-emerald-500{border-left-color:var(--op)!important}
 .card.border-l-4.border-red-500{border-left-color:#dc3545!important}
 .card.border-l-4.border-blue-500{border-left-color:var(--op)!important}
 
 /* Records gradient banner */
 #view-records .rounded-xl[style*="linear-gradient"]{
-  background:linear-gradient(135deg,#0b6377,#084a5c)!important;border-radius:4px!important}
+  background:linear-gradient(135deg,var(--op),var(--op-dark))!important;border-radius:4px!important}
 
-/* Global emerald → purple catch-all */
-[class*="text-emerald-6"],[class*="text-emerald-7"]{color:#0b6377!important}
-[class*="text-emerald-5"]{color:#0b6377!important}
-[class*="bg-emerald-5"],[class*="bg-emerald-6"]{background:#e7f4f6!important}
-[class*="border-emerald-"]{border-color:#d8c4d0!important}
+/* Global emerald → single brand color catch-all */
+[class*="text-emerald-6"],[class*="text-emerald-7"]{color:var(--op)!important}
+[class*="text-emerald-5"]{color:var(--op)!important}
+[class*="bg-emerald-5"],[class*="bg-emerald-6"]{background:var(--op-light)!important}
+[class*="border-emerald-"]{border-color:var(--op-light)!important}
 /* Keep badge-green truly green */
 .badge-green{background:#d4edda!important;color:#155724!important;border-color:#c3e6cb!important}
 [class*="badge"][class*="bg-emerald"]{background:#d4edda!important;color:#155724!important;border-color:#c3e6cb!important}
@@ -460,7 +486,7 @@ input:focus,select:focus,textarea:focus{outline:none}
 
 /* Sidebar text */
 #sidebar-biz-name{color:#212529!important}
-#user-avatar{background:#ede4e9!important;color:#0b6377!important}
+#user-avatar{background:var(--op-light)!important;color:#0b6377!important}
 
 /* ─── DRAWER TABS (dtab-btn) ─── */
 .dtab-btn{
@@ -603,6 +629,134 @@ body.fullscreen-page-open #dash-fab-row{
 </style>
 </head>
 <body>
+<script>
+// ── Real desktop/laptop detection (NOT just a wide viewport) ──
+// A wide-screen phone/tablet browser should still behave like mobile.
+// Only a device with a fine pointer (mouse), hover capability, no touch,
+// and a reasonably large window counts as "desktop".
+(function(){
+  function isRealDesktop(){
+    try{
+      var fine = window.matchMedia && window.matchMedia('(pointer:fine)').matches;
+      var hover = window.matchMedia && window.matchMedia('(hover:hover)').matches;
+      var noTouch = !('ontouchstart' in window) && (navigator.maxTouchPoints||0) === 0;
+      var wide = window.innerWidth >= 900;
+      return !!(fine && hover && noTouch && wide);
+    }catch(e){ return false; }
+  }
+  function applyDesktopClass(){
+    if(!document.body) return;
+    document.body.classList.toggle('is-desktop-device', isRealDesktop());
+  }
+  window._isRealDesktop = isRealDesktop;
+  window._applyDesktopClass = applyDesktopClass;
+  applyDesktopClass();
+  window.addEventListener('resize', applyDesktopClass);
+  document.addEventListener('DOMContentLoaded', applyDesktopClass);
+})();
+</script>
+<script>
+// ── Desktop-only: minimize button on floating panels/modals ──
+// Lets a mouse/keyboard user shrink an open floating module (drawer, account
+// panel, settings panel, or any .modal like Financial Reports) down to a
+// small chip in the topbar instead of closing it, then restore it later.
+(function(){
+  var HEADER_SELECTORS = ['.modal-head', '.drawer-head', '#acct-hero', '#sp-header'];
+  var LIGHT_HEADERS = {'acct-hero':1, 'sp-header':1};
+  var minimized = {}; // panelId -> label
+
+  function findPanelForHeader(header){
+    var p = header.closest('.modal, .drawer');
+    if(p) return p;
+    if(header.id === 'acct-hero') return document.getElementById('acct-panel');
+    if(header.id === 'sp-header') return document.getElementById('settings-panel');
+    return null;
+  }
+  function findOverlayForPanel(panel){
+    if(!panel || !panel.id) return null;
+    if(panel.id === 'acct-panel') return document.getElementById('acct-overlay');
+    if(panel.id === 'settings-panel') return document.getElementById('settings-overlay');
+    if(panel.id === 'ufs-sheet') return document.getElementById('ufs-overlay');
+    var prev = panel.previousElementSibling;
+    if(prev && prev.classList && (prev.classList.contains('drawer-bg') || prev.classList.contains('ufs-overlay'))) return prev;
+    return null;
+  }
+  function findLabel(panel, header){
+    var h = header.querySelector('h1,h2,h3,#acct-biz-display,#sp-title,.font-bold');
+    var t = (h && h.textContent && h.textContent.trim()) || panel.getAttribute('aria-label');
+    return t || 'Panel';
+  }
+  function updateBar(){
+    var bar = document.getElementById('desktop-minimized-bar');
+    if(!bar) return;
+    var ids = Object.keys(minimized);
+    bar.classList.toggle('has-items', ids.length > 0);
+    bar.innerHTML = '';
+    ids.forEach(function(id){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'desktop-min-chip';
+      chip.title = 'Restore ' + minimized[id];
+      chip.textContent = minimized[id];
+      chip.onclick = function(){ restorePanel(id); };
+      bar.appendChild(chip);
+    });
+  }
+  function minimizePanel(panel, header){
+    if(!panel || !panel.id) return;
+    var overlay = findOverlayForPanel(panel);
+    minimized[panel.id] = findLabel(panel, header || panel);
+    // Toggle both class vocabularies: standard drawers/modals use 'open',
+    // the Universal Filter Sheet uses 'show' — harmless no-op on whichever doesn't apply.
+    panel.classList.remove('open'); panel.classList.remove('show');
+    if(overlay){ overlay.classList.remove('open'); overlay.classList.remove('show'); }
+    updateBar();
+  }
+  function restorePanel(id){
+    var panel = document.getElementById(id);
+    if(!panel) return;
+    var overlay = findOverlayForPanel(panel);
+    panel.classList.add(panel.classList.contains('ufs-sheet') ? 'show' : 'open');
+    if(overlay) overlay.classList.add(overlay.classList.contains('ufs-overlay') ? 'show' : 'open');
+    delete minimized[id];
+    updateBar();
+  }
+  window._minimizeDesktopPanel = minimizePanel;
+  window._restoreDesktopPanel = restorePanel;
+
+  function makeBtn(){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'drawer-minimize-btn';
+    b.title = 'Minimize';
+    b.setAttribute('aria-label', 'Minimize');
+    b.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    return b;
+  }
+  function injectButtons(){
+    if(!document.body || !document.body.classList.contains('is-desktop-device')) return;
+    HEADER_SELECTORS.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(header){
+        if(header.querySelector('.drawer-minimize-btn')) return;
+        var panel = findPanelForHeader(header);
+        if(!panel || !panel.id) return;
+        var btn = makeBtn();
+        if(LIGHT_HEADERS[header.id]) btn.classList.add('light');
+        btn.onclick = function(e){ e.stopPropagation(); minimizePanel(panel, header); };
+        if(header.lastElementChild) header.insertBefore(btn, header.lastElementChild);
+        else header.appendChild(btn);
+      });
+    });
+  }
+  window._injectDesktopMinimizeButtons = injectButtons;
+  document.addEventListener('DOMContentLoaded', function(){
+    injectButtons();
+    var mo = new MutationObserver(function(){ injectButtons(); });
+    mo.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+  });
+  window.addEventListener('resize', injectButtons);
+})();
+</script>
 
 <!-- SPLASH -->
 <div id="splash" class="fixed inset-0 z-[300] flex flex-col items-center justify-center" style="background:linear-gradient(135deg,#052e38 0%,#0d1117 60%,#073e4d 100%)">
@@ -742,7 +896,7 @@ body.fullscreen-page-open #dash-fab-row{
           <div id="ob-step-1">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
               <div style="width:44px;height:44px;background:rgba(11,99,119,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a0bc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <div><div style="font-size:20px;font-weight:800;color:#fff;">About You</div></div>
             </div>
@@ -784,7 +938,7 @@ body.fullscreen-page-open #dash-fab-row{
           <div id="ob-step-2" style="display:none;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
               <div style="width:44px;height:44px;background:rgba(11,99,119,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a0bc" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               </div>
               <div><div style="font-size:20px;font-weight:800;color:#fff;">Your Business</div></div>
             </div>
@@ -838,7 +992,7 @@ body.fullscreen-page-open #dash-fab-row{
           <div id="ob-step-3" style="display:none;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
               <div style="width:44px;height:44px;background:rgba(11,99,119,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a0bc" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               </div>
               <div><div style="font-size:20px;font-weight:800;color:#fff;">Legal Info</div></div>
             </div>
@@ -916,7 +1070,7 @@ body.fullscreen-page-open #dash-fab-row{
           <div id="ob-step-4" style="display:none;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
               <div style="width:44px;height:44px;background:rgba(11,99,119,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a0bc" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
               </div>
               <div><div style="font-size:20px;font-weight:800;color:#fff;">Brand & Visuals</div></div>
             </div>
@@ -970,7 +1124,7 @@ body.fullscreen-page-open #dash-fab-row{
           <div id="ob-step-5" style="display:none;">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
               <div style="width:44px;height:44px;background:rgba(11,99,119,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a0bc" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </div>
               <div><div style="font-size:20px;font-weight:800;color:#fff;">Setup ERP</div></div>
             </div>
@@ -1304,7 +1458,7 @@ body.fullscreen-page-open #dash-fab-row{
       </div>
       <!-- User row -->
       <div class="flex items-center gap-2 mb-2">
-        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" id="user-avatar" style="background:#ede4e9;color:#0b6377;">U</div>
+        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" id="user-avatar" style="background:var(--op-light);color:#0b6377;">U</div>
         <div class="min-w-0 flex-1">
           <div style="font-size:9px;color:#adb5bd;text-transform:uppercase;letter-spacing:.06em;">Signed in</div>
           <div class="text-xs font-semibold truncate" id="user-email" style="color:#495057;">...</div>
@@ -1356,6 +1510,8 @@ body.fullscreen-page-open #dash-fab-row{
       <span id="topbar-spacer" class="flex-1 sm:hidden"></span>
       <!-- Right side actions -->
       <div class="flex items-center gap-1">
+        <!-- Minimized floating-panel chips (desktop only) -->
+        <div id="desktop-minimized-bar"></div>
         <!-- Live indicator -->
         <div id="topbar-connectivity-pill" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded transition-all">
           <span id="topbar-live-dot" class="live-dot"></span>
@@ -1365,10 +1521,10 @@ body.fullscreen-page-open #dash-fab-row{
         <button onclick="window.openTrashModal&&openTrashModal()" class="btn btn-icon relative" title="Recycle Bin">
           <i data-lucide="trash-2" class="w-4 h-4"></i>
         </button>
-        <!-- Stock alert -->
-        <button onclick="window.switchTab&&window.switchTab('inventory')" class="btn btn-icon relative" title="Low Stock Alert">
-          <i data-lucide="package" class="w-4 h-4"></i>
-          <span id="stock-alert-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full items-center justify-center hidden">0</span>
+        <!-- Drafts (local-only, IndexedDB) -->
+        <button onclick="window.openDraftsPage&&openDraftsPage()" class="btn btn-icon relative" title="Drafts">
+          <i data-lucide="file-clock" class="w-4 h-4"></i>
+          <span id="drafts-count-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-[9px] font-black rounded-full items-center justify-center hidden">0</span>
         </button>
         <!-- Reports -->
         <button onclick="window.openFinancialReports&&openFinancialReports()" class="btn btn-icon" title="Reports">
@@ -1407,7 +1563,7 @@ body.fullscreen-page-open #dash-fab-row{
 <!-- ===== DASHBOARD ===== -->
 <div id="view-dashboard" class="tab">
   <!-- Header bar — improved design -->
-  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0 16px;color:#fff;flex-shrink:0;border-radius:16px 16px 0 0;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 0 16px;color:#fff;flex-shrink:0;border-radius:0;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Overview</div>
@@ -1423,7 +1579,10 @@ body.fullscreen-page-open #dash-fab-row{
           <option value="all">All Time</option>
           <option value="this_month">This Month</option>
           <option value="last_month">Last Month</option>
+          <option value="custom">Custom</option>
         </select>
+        <input type="date" id="dash-date-start" style="display:none;">
+        <input type="date" id="dash-date-end" style="display:none;">
       </div>
     </div>
     <!-- Search row — inside header, above the curve -->
@@ -2031,7 +2190,7 @@ body.fullscreen-page-open #dash-fab-row{
 
 <div id="view-records" class="tab">
   <!-- Header bar — matches Clients tab style -->
-  <div style="background:var(--op);padding:16px 16px 0;color:#fff;flex-shrink:0;border-radius:16px 16px 0 0;">
+  <div style="background:var(--op);padding:16px 16px 0;color:#fff;flex-shrink:0;border-radius:0;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div>
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Billing</div>
@@ -2320,6 +2479,36 @@ body.fullscreen-page-open #dash-fab-row{
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New Invoice for <span id="cdp-new-inv-name">Client</span>
     </button>
+  </div>
+</div>
+
+<!-- ===== DRAFTS PAGE (local-only, IndexedDB — not synced to Firebase) ===== -->
+<div id="drafts-page" style="display:none;position:fixed;inset:0;height:100dvh;z-index:220;background:#f8f9fa;flex-direction:column;overflow:hidden;">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px;flex-shrink:0;padding-top:calc(16px + env(safe-area-inset-top,0px));">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="window.closeDraftsPage()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2;">Drafts</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7);">Saved on this device only · not synced</div>
+      </div>
+      <button onclick="window.openNewDraftForm()" style="background:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:800;color:var(--op);display:flex;align-items:center;gap:5px;font-family:inherit;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New
+      </button>
+    </div>
+    <!-- Type tabs -->
+    <div style="display:flex;gap:6px;margin-top:14px;">
+      <button class="drafts-tab active" id="drafts-tab-invoice" onclick="window.switchDraftsTab('invoice')" style="flex:1;padding:9px 4px;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;background:#fff;color:var(--op);">Invoices</button>
+      <button class="drafts-tab" id="drafts-tab-po" onclick="window.switchDraftsTab('po')" style="flex:1;padding:9px 4px;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;background:rgba(255,255,255,.15);color:#fff;">Purchase Orders</button>
+      <button class="drafts-tab" id="drafts-tab-inventory" onclick="window.switchDraftsTab('inventory')" style="flex:1;padding:9px 4px;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;background:rgba(255,255,255,.15);color:#fff;">Archived Stock</button>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div id="drafts-list" style="flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));">
+    <!-- Filled by JS -->
   </div>
 </div>
 
@@ -3233,6 +3422,7 @@ body.fullscreen-page-open #dash-fab-row{
       <div class="font-bold text-slate-800" id="svc-drawer-title">Add Service</div>
       <div class="text-xs text-slate-400" id="svc-drawer-sub">New service entry</div>
     </div>
+    <button onclick="window.closeServiceDrawer&&closeServiceDrawer()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
   </div>
   <div class="drawer-body space-y-4">
     <div>
@@ -3334,6 +3524,7 @@ body.fullscreen-page-open #dash-fab-row{
       <div class="font-bold text-slate-800" id="emp-drawer-title">Add Employee</div>
       <div class="text-xs text-slate-400" id="emp-drawer-sub">New staff member</div>
     </div>
+    <button onclick="window.closeEmployeeDrawer&&closeEmployeeDrawer()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
   </div>
 
   <!-- Drawer Tabs -->
@@ -3545,7 +3736,7 @@ body.fullscreen-page-open #dash-fab-row{
   </div>
   <div class="fab-qc-item">
     <span class="fab-qc-label">New Invoice</span>
-    <button class="fab-qc-icon" style="background:#ede4e9;" onclick="closeFabMenu();window.switchTab&&switchTab('invoice');" title="New Invoice">
+    <button class="fab-qc-icon" style="background:var(--op-light);" onclick="closeFabMenu();window.switchTab&&switchTab('invoice');" title="New Invoice">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
     </button>
   </div>
@@ -3597,6 +3788,15 @@ body.fullscreen-page-open #dash-fab-row{
 </nav>
 
 <!-- ===== CUSTOM CONFIRM DIALOG ===== -->
+<style>
+body.is-desktop-device #app-confirm-overlay{align-items:center;}
+body.is-desktop-device #app-confirm-sheet{
+  border-radius:16px!important;width:min(400px,92vw)!important;
+  transform:scale(.94)!important;opacity:0;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s!important;
+}
+body.is-desktop-device #app-confirm-sheet.ac-open{transform:scale(1)!important;opacity:1;}
+</style>
 <div id="app-confirm-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;" onclick="window._confirmReject&&window._confirmReject()">
   <div id="app-confirm-sheet" onclick="event.stopPropagation()" style="background:#fff;border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,16px);width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.46,1);box-shadow:0 -8px 40px rgba(0,0,0,.18);">
     <div style="width:36px;height:4px;background:rgba(0,0,0,.1);border-radius:4px;margin:12px auto 0;"></div>
@@ -3647,11 +3847,12 @@ window.showConfirm = function(opts) {
 
         function close(){
             sheet.style.transform = 'translateY(100%)';
+            sheet.classList.remove('ac-open');
             setTimeout(function(){ overlay.style.display = 'none'; }, 320);
         }
 
         overlay.style.display = 'flex';
-        requestAnimationFrame(function(){ sheet.style.transform = 'translateY(0)'; });
+        requestAnimationFrame(function(){ sheet.style.transform = 'translateY(0)'; sheet.classList.add('ac-open'); });
     });
 };
 
@@ -3840,6 +4041,12 @@ function hideFqmLabel(wrap) {}
         <span style="font-size:9px;font-weight:700;background:#7c3aed;color:#fff;padding:2px 7px;border-radius:10px;margin-right:6px;">Beta</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ced4da" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
+      <button class="more-nav-row" onclick="window.openCAPortalModal&&openCAPortalModal();closeMobileMoreSheet()">
+        <div class="more-nav-icon" style="background:var(--op-light);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <span class="more-nav-label">CA Portal</span>
+        <span style="font-size:9px;font-weight:700;background:var(--op);color:#fff;padding:2px 7px;border-radius:10px;margin-right:6px;">New</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ced4da" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
     <!-- CONFIGURATION -->
     <div style="font-size:10px;font-weight:700;color:#adb5bd;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;padding:0 4px;">Configuration</div>
@@ -3862,7 +4069,7 @@ function hideFqmLabel(wrap) {}
       <!-- Logged in state -->
       <div id="more-account-loggedin">
         <div style="padding:12px 16px;border-bottom:1px solid #f8f9fa;display:flex;align-items:center;gap:12px;">
-          <div id="more-user-avatar" style="width:36px;height:36px;border-radius:50%;background:#ede4e9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#0b6377;flex-shrink:0;">U</div>
+          <div id="more-user-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--op-light);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#0b6377;flex-shrink:0;">U</div>
           <div style="flex:1;min-width:0;">
             <div id="more-user-name" style="font-size:13px;font-weight:600;color:#212529;line-height:1.2;">Owner</div>
             <div id="more-user-email" style="font-size:11px;color:#6c757d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
@@ -4303,6 +4510,7 @@ window.addEventListener('resize', function(){
   <div class="drawer-head">
     <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 flex-shrink-0"><i data-lucide="package" class="w-5 h-5"></i></div>
     <div class="flex-1"><div class="font-bold text-slate-800" id="prod-drawer-title">Add Product</div><div class="text-xs text-slate-400" id="prod-drawer-sub">New Item</div></div>
+    <button onclick="window.closeProductDrawer&&closeProductDrawer()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
   </div>
   <div class="flex gap-0 border-b border-slate-200 px-5">
     <button onclick="switchProdTab('general')" id="ptab-general" class="dtab-btn active">General</button>
@@ -4379,6 +4587,7 @@ window.addEventListener('resize', function(){
   <div class="drawer-head">
     <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 flex-shrink-0"><i data-lucide="user" class="w-5 h-5"></i></div>
     <div class="flex-1"><div class="font-bold text-slate-800" id="cl-drawer-title">Add Client</div><div class="text-xs text-slate-400" id="cl-drawer-sub">New Profile</div></div>
+    <button onclick="window.closeClientDrawer&&closeClientDrawer()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><i data-lucide="x" class="w-4 h-4"></i></button>
   </div>
   <div class="flex gap-0 border-b border-slate-200 px-5">
     <button onclick="switchClTab('info')" id="cltab-info" class="dtab-btn active">General</button>
@@ -6825,13 +7034,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 dBtn.className = `nav-item ${isActive ? 'active' : ''}`;
                 dBtn.setAttribute('data-tab', item.id);
                 dBtn.innerHTML = `<i data-lucide="${item.icon}" class="w-4 h-4"></i> <span>${item.label}</span> ${badge}`;
-                dBtn.onclick = () => window.switchTab(item.id); desktopNav.appendChild(dBtn);
+                dBtn.onclick = () => { window.switchTab(item.id); window.updateBnav && window.updateBnav(item.id); }; desktopNav.appendChild(dBtn);
 
                 const mBtn = document.createElement('button');
                 mBtn.className = `mobile-nav-item ${isActive ? 'active' : ''}`;
                 mBtn.setAttribute('data-tab', item.id);
                 mBtn.innerHTML = `<i data-lucide="${item.icon}" class="w-5 h-5"></i><span>${item.label.split(' ')[0]}</span>${lowStockCount > 0 && item.id === 'inventory' ? '<span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>' : ''}`;
-                if(!item.mobileHidden) { mBtn.onclick = () => window.switchTab(item.id); mobileNav.appendChild(mBtn); }
+                if(!item.mobileHidden) { mBtn.onclick = () => { window.switchTab(item.id); window.updateBnav && window.updateBnav(item.id); }; mobileNav.appendChild(mBtn); }
             });
             if (typeof lucide !== 'undefined') lucide.createIcons();
             // Re-apply employee nav restrictions after every render
@@ -6922,24 +7131,36 @@ document.addEventListener('DOMContentLoaded', function() {
             if(window.innerWidth < 768) { typeof closeSidebar === 'function' && closeSidebar(); }
         }
 
-        window.updateDashboard = function() {
+        // ── Shared: resolve the active Dashboard date range (all / this_month / last_month / custom) ──
+window._getDashDateRange = function(){
+    var filterEl = document.getElementById('dash-date-filter');
+    var filter = filterEl ? filterEl.value : 'all';
+    if(filter === 'all' || !filter) return null;
+    if(filter === 'custom'){
+        var sEl = document.getElementById('dash-date-start');
+        var eEl = document.getElementById('dash-date-end');
+        var s = sEl && sEl.value ? sEl.value : '0000-01-01';
+        var e = eEl && eEl.value ? eEl.value : '9999-12-31';
+        return {start:s, end:e};
+    }
+    var now = new Date();
+    var fm = now.getMonth(), fy = now.getFullYear();
+    if(filter === 'last_month'){ fm -= 1; if(fm < 0){ fm = 11; fy -= 1; } }
+    var start = fy+'-'+String(fm+1).padStart(2,'0')+'-01';
+    var lastDay = new Date(fy, fm+1, 0).getDate();
+    var end = fy+'-'+String(fm+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
+    return {start:start, end:end};
+};
+
+window.updateDashboard = function() {
             let invoices = window.AppState.invoices || []; 
             let expenses = window.AppState.expenses || [];
             const products = window.AppState.products || []; 
             
-            const filterEl = document.getElementById('dash-date-filter');
-            const filter = filterEl ? filterEl.value : 'all';
-            if (filter !== 'all') {
-                const now = new Date();
-                let filterMonth = now.getMonth();
-                let filterYear = now.getFullYear();
-                if (filter === 'last_month') {
-                    filterMonth -= 1;
-                    if (filterMonth < 0) { filterMonth = 11; filterYear -= 1; }
-                }
-                const filterPrefix = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}`;
-                invoices = invoices.filter(i => i.date && i.date.startsWith(filterPrefix));
-                expenses = expenses.filter(e => e.date && e.date.startsWith(filterPrefix));
+            const dashRange = window._getDashDateRange();
+            if (dashRange) {
+                invoices = invoices.filter(i => i.date && i.date >= dashRange.start && i.date <= dashRange.end);
+                expenses = expenses.filter(e => e.date && e.date >= dashRange.start && e.date <= dashRange.end);
             }
 
             const finalized = invoices.filter(i => i.status === 'final' && i.status !== 'void' && i.docType !== 'Quotation' && i.docType !== 'Proforma Invoice');
@@ -11275,17 +11496,12 @@ window.updateCashFlowForecast = function() {
 // ── FEATURE 10: GST Summary ───────────────────────────────────
 window.updateGSTSummary = function() {
     // Respect the same date filter as the main dashboard
-    var filterEl = document.getElementById('dash-date-filter');
-    var filter = filterEl ? filterEl.value : 'all';
     var allInvs = (window.AppState.invoices||[]).filter(function(i){ return i.status==='final'; });
     var allExps = (window.AppState.expenses)||[];
-    if(filter !== 'all') {
-        var now = new Date();
-        var fm = now.getMonth(), fy = now.getFullYear();
-        if(filter === 'last_month') { fm -= 1; if(fm < 0){ fm = 11; fy -= 1; } }
-        var prefix = fy + '-' + String(fm+1).padStart(2,'0');
-        allInvs = allInvs.filter(function(i){ return i.date && i.date.startsWith(prefix); });
-        allExps = allExps.filter(function(e){ return e.date && e.date.startsWith(prefix); });
+    var range = window._getDashDateRange();
+    if(range) {
+        allInvs = allInvs.filter(function(i){ return i.date && i.date >= range.start && i.date <= range.end; });
+        allExps = allExps.filter(function(e){ return e.date && e.date >= range.start && e.date <= range.end; });
     }
     var invs = allInvs;
     var exps = allExps;
@@ -16341,7 +16557,7 @@ document.addEventListener('click', function(e){
 });
 // ════════════════════════════════════════════════════════
 (function(){
-var tabs = ['dashboard','records','clients'];
+var tabs = ['dashboard','records','inventory','clients'];
 var swipeStartX = 0, swipeStartY = 0, swipeTarget = null;
 var MIN_SWIPE = 110, MAX_VERTICAL = 35;
 
@@ -16443,7 +16659,7 @@ if(moreSheetEl) {
 }
 
 // Swipe right to go back on fullscreen pages
-['client-detail-page','invoice-detail-page'].forEach(function(pgId){
+['client-detail-page','invoice-detail-page','drafts-page'].forEach(function(pgId){
     var pg = document.getElementById(pgId);
     if(!pg) return;
     var pgStartX = 0;
@@ -16454,6 +16670,7 @@ if(moreSheetEl) {
         pgStartX = 0;
         if(dx > 70) {
             if(pgId==='client-detail-page') window.closeClientDetailPage && window.closeClientDetailPage();
+            else if(pgId==='drafts-page') window.closeDraftsPage && window.closeDraftsPage();
             else window.closeInvoiceDetailPage && window.closeInvoiceDetailPage();
         }
     }, {passive:true});
@@ -20215,7 +20432,7 @@ if(_origOpenPreview){
       '<div class="apm-sheet">'+
         '<div style="width:40px;height:4px;background:#e2e8f0;border-radius:4px;margin:0 auto 20px;"></div>'+
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">'+
-          '<div id="apm-avatar" style="width:56px;height:56px;border-radius:50%;background:#ede4e9;color:#0b6377;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">U</div>'+
+          '<div id="apm-avatar" style="width:56px;height:56px;border-radius:50%;background:var(--op-light);color:#0b6377;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">U</div>'+
           '<div>'+
             '<div id="apm-name" style="font-weight:800;font-size:16px;color:#0f172a">User</div>'+
             '<div id="apm-email" style="font-size:12px;color:#64748b;margin-top:2px"></div>'+
@@ -20390,6 +20607,22 @@ body.fab-menu-open #vc-fab{display:none!important;}
   touch-action:pan-y;
 }
 #vc-panel.vc-open{transform:translateY(0);}
+/* Real desktop / laptop only: floating centered window, like Financial Reports */
+body.is-desktop-device #vc-panel{
+  top:0;bottom:0;right:0;left:0;margin:auto;
+  width:min(400px,92vw);height:fit-content;max-height:82vh;
+  border-radius:16px;transform:scale(.94);opacity:0;visibility:hidden;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s;
+}
+body.is-desktop-device #vc-panel.vc-open{transform:scale(1);opacity:1;visibility:visible;}
+body.is-desktop-device #vc-drag-handle{display:none;}
+#vc-close-btn{display:none;}
+body.is-desktop-device #vc-close-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:8px;border:none;cursor:pointer;
+  color:#64748b;background:rgba(11,99,119,.08);flex-shrink:0;
+}
+body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,119,.18);}
 
 /* drag handle */
 #vc-drag-handle{
@@ -20681,6 +20914,7 @@ body.fab-menu-open #vc-fab{display:none!important;}
     <div id="vc-status-dot"></div>
     <span id="vc-status-label">Ready</span>
     <button id="vc-lang-btn" title="Language">HI</button>
+    <button id="vc-close-btn" title="Close" aria-label="Close" onclick="window.dispatchEvent(new CustomEvent('vc-close-click'))"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
 
   <div id="vc-wave">
@@ -21669,6 +21903,7 @@ FAB.addEventListener('touchend',function(){clearTimeout(fabTimer);},{passive:tru
 
 // Overlay click = close
 OVERLAY.addEventListener('click',closePanel);
+window.addEventListener('vc-close-click',closePanel);
 
 // Input row mic = start listening
 MICBTN.addEventListener('click',function(){startListening();});
@@ -21729,16 +21964,17 @@ window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcod
 }
 #acct-panel.open{transform:translateY(0);}
 
-@media(min-width:768px){
-  #acct-panel{
-    top:0;bottom:0;right:0;left:auto;width:400px;
-    border-radius:0;transform:translateX(110%);
-    max-height:100vh;border-left:1px solid #e2e8f0;
-    box-shadow:-8px 0 48px rgba(0,0,0,.12);
-  }
-  #acct-panel.open{transform:translateX(0);}
-  #acct-drag{display:none;}
+/* Real desktop / laptop only: floating centered modal, like Financial Reports */
+body.is-desktop-device #acct-panel{
+  top:0;bottom:0;right:0;left:0;margin:auto;
+  width:min(460px,92vw);height:fit-content;max-height:88vh;
+  border-radius:16px;transform:scale(.94);opacity:0;visibility:hidden;
+  border-left:none;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s;
 }
+body.is-desktop-device #acct-panel.open{transform:scale(1);opacity:1;visibility:visible;}
+body.is-desktop-device #acct-drag{display:none;}
 
 /* ── Drag handle ── */
 #acct-drag{width:40px;height:4px;border-radius:4px;background:#e2e8f0;margin:10px auto 2px;flex-shrink:0;cursor:grab;}
@@ -21767,7 +22003,7 @@ window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcod
 .acct-hero-info{flex:1;min-width:0;}
 .acct-hero-info h3{font-size:15px;font-weight:700;color:#1e293b;margin:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acct-hero-info p{font-size:11px;color:#94a3b8;margin:2px 0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.acct-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:#ede4e9;color:#0b6377;font-size:10px;font-weight:700;}
+.acct-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:var(--op-light);color:#0b6377;font-size:10px;font-weight:700;}
 #acct-close{
   width:30px;height:30px;border-radius:50%;border:none;
   background:#f1f5f9;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -21810,16 +22046,17 @@ window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcod
   will-change:transform;visibility:hidden;
 }
 #settings-panel.open{transform:translateY(0);visibility:visible;}
-@media(min-width:768px){
-  #settings-panel{
-    top:0;bottom:0;right:0;left:auto;width:420px;
-    border-radius:0;transform:translateX(110%);
-    max-height:100vh;border-left:1px solid #e2e8f0;
-    box-shadow:-8px 0 48px rgba(0,0,0,.12);
-  }
-  #settings-panel.open{transform:translateX(0);visibility:visible;}
-  #sp-drag{display:none;}
+/* Real desktop / laptop only: floating centered modal, like Financial Reports */
+body.is-desktop-device #settings-panel{
+  top:0;bottom:0;right:0;left:0;margin:auto;
+  width:min(460px,92vw);height:fit-content;max-height:88vh;
+  border-radius:16px;transform:scale(.94);opacity:0;
+  border-left:none;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s;
 }
+body.is-desktop-device #settings-panel.open{transform:scale(1);opacity:1;visibility:visible;}
+body.is-desktop-device #sp-drag{display:none;}
 #sp-drag{width:40px;height:4px;border-radius:4px;background:#e2e8f0;margin:10px auto 4px;flex-shrink:0;cursor:grab;}
 #sp-header{
   padding:12px 16px 10px;display:flex;align-items:center;gap:12px;
@@ -21852,7 +22089,7 @@ window.VoiceERP={VC:VC,processText:processText,addBubble:addBubble,processBarcod
   padding:12px;border-radius:12px;border:1.5px solid #f1f5f9;
   background:#fff;cursor:pointer;transition:all .15s;
 }
-.ap-card:hover{border-color:#c4a4b8;background:#faf5f8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,99,119,.1);}
+.ap-card:hover{border-color:rgba(15,122,128,.4);background:var(--op-light);transform:translateY(-1px);box-shadow:0 4px 12px rgba(11,99,119,.1);}
 .ap-card:active{transform:scale(.97);}
 .ap-card-icon{
   width:34px;height:34px;border-radius:9px;
@@ -21923,7 +22160,7 @@ textarea.ap-input{resize:vertical;min-height:70px;}
   border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;
   margin-bottom:8px;transition:all .15s;cursor:pointer;
 }
-.ap-acc-item:hover{border-color:#c4a4b8;background:#e7f4f6;}
+.ap-acc-item:hover{border-color:rgba(15,122,128,.4);background:#e7f4f6;}
 .ap-acc-item.current-acc{border-color:#0b6377;background:#e7f4f6;}
 .ap-acc-avatar{
   width:36px;height:36px;border-radius:50%;
@@ -21939,11 +22176,11 @@ textarea.ap-input{resize:vertical;min-height:70px;}
   cursor:pointer;transition:all .15s;font-family:inherit;text-align:left;width:100%;
   margin-bottom:6px;
 }
-.ap-quick-row:hover{border-color:#c4a4b8;background:#f9f0f4;}
+.ap-quick-row:hover{border-color:rgba(15,122,128,.4);background:#f9f0f4;}
 .ap-quick-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
 /* ── Info card ── */
-.ap-info-card{background:linear-gradient(135deg,#e7f4f6,#ede4e9);border-radius:12px;padding:14px;margin-bottom:14px;}
+.ap-info-card{background:linear-gradient(135deg,#e7f4f6,var(--op-light));border-radius:12px;padding:14px;margin-bottom:14px;}
 
 /* ── Topbar avatar animation ── */
 #topbar-avatar{transition:transform .15s,box-shadow .15s;}
@@ -22012,7 +22249,7 @@ textarea.ap-input{resize:vertical;min-height:70px;}
       <div style="margin-bottom:14px;">
         <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Quick Access</div>
         <button class="ap-quick-row" onclick="openSettingsModal('profile')">
-          <div class="ap-quick-icon" style="background:#ede4e9;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+          <div class="ap-quick-icon" style="background:var(--op-light);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
           <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#1e293b;">Business Profile</div><div style="font-size:11px;color:#94a3b8;">Name, GSTIN, address</div></div>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
@@ -22094,11 +22331,11 @@ textarea.ap-input{resize:vertical;min-height:70px;}
           <div id="ap-cur-name" style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">My Business</div>
           <div id="ap-cur-email" style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">...</div>
         </div>
-        <span style="font-size:10px;font-weight:700;color:#0b6377;background:#ede4e9;padding:2px 8px;border-radius:20px;flex-shrink:0;">Active</span>
+        <span style="font-size:10px;font-weight:700;color:#0b6377;background:var(--op-light);padding:2px 8px;border-radius:20px;flex-shrink:0;">Active</span>
       </div>
       <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Saved Accounts</div>
       <div id="ap-saved-list"></div>
-      <button onclick="closeAccountPanel();setTimeout(function(){window.openAddAccountModal&&openAddAccountModal();},250)" style="width:100%;margin-top:4px;padding:11px;border-radius:10px;border:2px dashed #c4a4b8;background:#faf5f8;color:#0b6377;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;" onmouseover="this.style.background='#e7f4f6'" onmouseout="this.style.background='#faf5f8'">
+      <button onclick="closeAccountPanel();setTimeout(function(){window.openAddAccountModal&&openAddAccountModal();},250)" style="width:100%;margin-top:4px;padding:11px;border-radius:10px;border:2px dashed rgba(15,122,128,.4);background:var(--op-light);color:#0b6377;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;" onmouseover="this.style.background='#e7f4f6'" onmouseout="this.style.background='var(--op-light)'">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Another Account
       </button>
@@ -22680,81 +22917,144 @@ document.addEventListener('DOMContentLoaded',function(){
   function _injectFilterSheets(){
     if(document.getElementById('rec-filter-sheet')) return;
 
-    // Records filter sheet
-    var rs = document.createElement('div');
-    rs.id = 'rec-filter-sheet';
-    rs.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:600;background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,16px);box-shadow:0 -4px 30px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .28s cubic-bezier(.32,1,.46,1);';
-    rs.innerHTML = [
-      '<div style="width:36px;height:4px;background:rgba(0,0,0,.12);border-radius:4px;margin:12px auto 4px;"></div>',
-      '<div style="padding:12px 20px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0;">',
-        '<span style="font-size:15px;font-weight:700;color:#212529;">Filter Records</span>',
-        '<button onclick="window.closeRecFilterSheet()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#6c757d;font-family:inherit;">Done</button>',
-      '</div>',
-      '<div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">',
-        ['all','unpaid','overdue','paid','confirmed','draft'].map(function(f){
-          var label = f.charAt(0).toUpperCase()+f.slice(1);
-          var color = f==='overdue'?'#dc3545':f==='paid'?'#28a745':f==='unpaid'?'#fd7e14':'#495057';
-          return '<button id="rfs-'+f+'" onclick="window.setRecFilter(\''+f+'\');window.closeRecFilterSheet()" style="padding:12px 8px;border-radius:12px;border:1.5px solid #dee2e6;background:#fff;color:'+color+';font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">'+label+'</button>';
-        }).join(''),
-      '</div>'
-    ].join('');
-    document.body.appendChild(rs);
-
-    // Records filter backdrop
+    // Records filter backdrop (must precede sheet in DOM for desktop-minimize overlay lookup)
     var rb = document.createElement('div');
     rb.id = 'rec-filter-bg';
-    rb.style.cssText = 'display:none;position:fixed;inset:0;z-index:599;background:rgba(0,0,0,.4);';
+    rb.className = 'drawer-bg';
     rb.onclick = function(){ window.closeRecFilterSheet(); };
     document.body.appendChild(rb);
 
-    // Clients filter sheet
-    var cs = document.createElement('div');
-    cs.id = 'cl-filter-sheet';
-    cs.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:600;background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,16px);box-shadow:0 -4px 30px rgba(0,0,0,.15);transform:translateY(100%);transition:transform .28s cubic-bezier(.32,1,.46,1);';
-    cs.innerHTML = [
-      '<div style="width:36px;height:4px;background:rgba(0,0,0,.12);border-radius:4px;margin:12px auto 4px;"></div>',
-      '<div style="padding:12px 20px 8px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0;">',
-        '<span style="font-size:15px;font-weight:700;color:#212529;">Filter Clients</span>',
-        '<button onclick="window.closeClientFilterSheet()" style="background:#f0f0f0;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;color:#6c757d;font-family:inherit;">Done</button>',
+    // Records filter sheet
+    var rs = document.createElement('div');
+    rs.id = 'rec-filter-sheet';
+    rs.className = 'drawer';
+    rs.innerHTML = [
+      '<div class="drawer-head">',
+        '<div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg></div>',
+        '<div class="flex-1"><div class="font-bold text-slate-800">Filter Records</div><div class="text-xs text-slate-400">Status &amp; date range</div></div>',
+        '<button onclick="window.closeRecFilterSheet()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
       '</div>',
-      '<div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">',
-        [['all','All','#495057'],['outstanding','Outstanding','#dc3545'],['clear','Paid/Clear','#28a745'],['high-value','High Value','#7c3aed']].map(function(f){
-          return '<button id="cfs-'+f[0]+'" onclick="window.setClientFilter(\''+f[0]+'\');window.closeClientFilterSheet()" style="padding:12px 8px;border-radius:12px;border:1.5px solid #dee2e6;background:#fff;color:'+f[2]+';font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">'+f[1]+'</button>';
-        }).join(''),
+      '<div class="drawer-body">',
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Status</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">',
+          ['all','unpaid','overdue','paid','confirmed','draft'].map(function(f){
+            var label = f.charAt(0).toUpperCase()+f.slice(1);
+            var color = f==='overdue'?'#dc3545':f==='paid'?'#28a745':f==='unpaid'?'#fd7e14':'#495057';
+            return '<button id="rfs-'+f+'" onclick="window.setRecFilter(\''+f+'\');window.closeRecFilterSheet()" style="padding:12px 8px;border-radius:12px;border:1.5px solid #dee2e6;background:#fff;color:'+color+';font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">'+label+'</button>';
+          }).join(''),
+        '</div>',
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Date Range</div>',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">',
+          [['all','All Time'],['this_month','This Month'],['last_month','Last Month'],['custom','📅 Custom']].map(function(f){
+            return '<button id="rfs-date-'+f[0]+'" onclick="window.setRecDateFilter(\''+f[0]+'\')" style="padding:12px 8px;border-radius:12px;border:1.5px solid #dee2e6;background:#fff;color:#495057;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">'+f[1]+'</button>';
+          }).join(''),
+        '</div>',
       '</div>'
     ].join('');
-    document.body.appendChild(cs);
+    document.body.appendChild(rs);
+    if(window.addDrawerSwipeGlobal) window.addDrawerSwipeGlobal(rs, window.closeRecFilterSheet);
 
     // Clients filter backdrop
     var cb = document.createElement('div');
     cb.id = 'cl-filter-bg';
-    cb.style.cssText = 'display:none;position:fixed;inset:0;z-index:599;background:rgba(0,0,0,.4);';
+    cb.className = 'drawer-bg';
     cb.onclick = function(){ window.closeClientFilterSheet(); };
     document.body.appendChild(cb);
+
+    // Clients filter sheet
+    var cs = document.createElement('div');
+    cs.id = 'cl-filter-sheet';
+    cs.className = 'drawer';
+    cs.innerHTML = [
+      '<div class="drawer-head">',
+        '<div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg></div>',
+        '<div class="flex-1"><div class="font-bold text-slate-800">Filter Clients</div><div class="text-xs text-slate-400">Balance status</div></div>',
+        '<button onclick="window.closeClientFilterSheet()" class="btn btn-icon btn-ghost" title="Close" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>',
+      '</div>',
+      '<div class="drawer-body">',
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">',
+          [['all','All','#495057'],['outstanding','Outstanding','#dc3545'],['clear','Paid/Clear','#28a745'],['high-value','High Value','#7c3aed']].map(function(f){
+            return '<button id="cfs-'+f[0]+'" onclick="window.setClientFilter(\''+f[0]+'\');window.closeClientFilterSheet()" style="padding:12px 8px;border-radius:12px;border:1.5px solid #dee2e6;background:#fff;color:'+f[2]+';font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;">'+f[1]+'</button>';
+          }).join(''),
+        '</div>',
+      '</div>'
+    ].join('');
+    document.body.appendChild(cs);
+    if(window.addDrawerSwipeGlobal) window.addDrawerSwipeGlobal(cs, window.closeClientFilterSheet);
   }
 
   window.openRecFilterSheet = function(){
     _injectFilterSheets();
     var sh = document.getElementById('rec-filter-sheet'), bg = document.getElementById('rec-filter-bg');
     if(!sh) return;
-    sh.style.display = 'block'; bg.style.display = 'block';
-    requestAnimationFrame(function(){ sh.style.transform = 'translateY(0)'; });
-    // Highlight active filter
+    sh.classList.add('open'); bg.classList.add('open');
+    if(window._injectDesktopMinimizeButtons) window._injectDesktopMinimizeButtons();
+    // Highlight active status filter
     var cur = window._recActiveFilter || 'all';
     ['all','unpaid','overdue','paid','confirmed','draft'].forEach(function(f){
       var btn = document.getElementById('rfs-'+f);
       if(btn) btn.style.background = f===cur?'#212529':'#fff', btn.style.color = f===cur?'#fff': (f==='overdue'?'#dc3545':f==='paid'?'#28a745':f==='unpaid'?'#fd7e14':'#495057'), btn.style.borderColor = f===cur?'#212529':'#dee2e6';
     });
+    window._highlightRecDateChips(window._recDateFilter || 'all');
   };
   window.closeRecFilterSheet = function(){
     var sh = document.getElementById('rec-filter-sheet'), bg = document.getElementById('rec-filter-bg');
     if(!sh) return;
-    sh.style.transform = 'translateY(100%)';
-    setTimeout(function(){ sh.style.display='none'; bg.style.display='none'; }, 300);
-    // Update filter label
+    sh.classList.remove('open'); bg.classList.remove('open');
+    window._updateRecFilterLabel();
+  };
+
+  window._updateRecFilterLabel = function(){
     var lbl = document.getElementById('rec-filter-label');
-    var cur = window._recActiveFilter || 'all';
-    if(lbl) lbl.textContent = cur.charAt(0).toUpperCase()+cur.slice(1);
+    if(!lbl) return;
+    var status = window._recActiveFilter || 'all';
+    var dateF = window._recDateFilter || 'all';
+    var dateLabels = {all:'All Time', this_month:'This Month', last_month:'Last Month', custom:'Custom'};
+    var parts = [];
+    if(status !== 'all') parts.push(status.charAt(0).toUpperCase()+status.slice(1));
+    if(dateF !== 'all') parts.push(dateLabels[dateF] || 'Custom');
+    lbl.textContent = parts.length === 0 ? 'All' : parts.length === 1 ? parts[0] : parts.length + ' Filters';
+  };
+
+  window._highlightRecDateChips = function(cur){
+    ['all','this_month','last_month','custom'].forEach(function(f){
+      var btn = document.getElementById('rfs-date-'+f);
+      if(btn) btn.style.background = f===cur?'#212529':'#fff', btn.style.color = f===cur?'#fff':'#495057', btn.style.borderColor = f===cur?'#212529':'#dee2e6';
+    });
+  };
+
+  window._recDateFilter = 'all';
+  window.setRecDateFilter = function(preset){
+    if(preset === 'custom'){
+      window.closeRecFilterSheet();
+      window.openCustomRangePicker({
+        title:'Custom Date Range', startId:'filter-start', endId:'filter-end',
+        onApply:function(){
+          window._recDateFilter = 'custom';
+          window._highlightRecDateChips('custom');
+          window.renderRecords && window.renderRecords();
+          window._updateRecFilterLabel();
+        }
+      });
+      return;
+    }
+    window._recDateFilter = preset;
+    var sEl = document.getElementById('filter-start'), eEl = document.getElementById('filter-end');
+    if(preset === 'all'){
+      if(sEl) sEl.value = ''; if(eEl) eEl.value = '';
+    } else {
+      var now = new Date();
+      var m = now.getMonth(), y = now.getFullYear();
+      if(preset === 'last_month'){ m -= 1; if(m < 0){ m = 11; y -= 1; } }
+      var start = y+'-'+String(m+1).padStart(2,'0')+'-01';
+      var lastDay = new Date(y, m+1, 0).getDate();
+      var end = y+'-'+String(m+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
+      if(sEl) sEl.value = start; if(eEl) eEl.value = end;
+    }
+    window._highlightRecDateChips(preset);
+    window.renderRecords && window.renderRecords();
+    window._updateRecFilterLabel();
+    window.closeRecFilterSheet();
   };
 
   window._clientActiveFilter = 'all';
@@ -22768,14 +23068,13 @@ document.addEventListener('DOMContentLoaded',function(){
     _injectFilterSheets();
     var sh = document.getElementById('cl-filter-sheet'), bg = document.getElementById('cl-filter-bg');
     if(!sh) return;
-    sh.style.display = 'block'; bg.style.display = 'block';
-    requestAnimationFrame(function(){ sh.style.transform = 'translateY(0)'; });
+    sh.classList.add('open'); bg.classList.add('open');
+    if(window._injectDesktopMinimizeButtons) window._injectDesktopMinimizeButtons();
   };
   window.closeClientFilterSheet = function(){
     var sh = document.getElementById('cl-filter-sheet'), bg = document.getElementById('cl-filter-bg');
     if(!sh) return;
-    sh.style.transform = 'translateY(100%)';
-    setTimeout(function(){ sh.style.display='none'; bg.style.display='none'; }, 300);
+    sh.classList.remove('open'); bg.classList.remove('open');
   };
 
   document.addEventListener('DOMContentLoaded', _injectFilterSheets);
@@ -22808,7 +23107,16 @@ document.addEventListener('DOMContentLoaded',function(){
     '.filt-trigger.filt-active{border-color:var(--op)!important;background:var(--op-light)!important;color:var(--op)!important;}',
     '.filt-trigger{position:relative;}',
     '.filt-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#dc2626;border:2px solid #fff;display:none;}',
-    '.filt-trigger.filt-active .filt-dot{display:block;}'
+    '.filt-trigger.filt-active .filt-dot{display:block;}',
+    /* Real desktop/laptop only: UFS becomes a floating centered window, not a bottom sheet */
+    'body.is-desktop-device .ufs-sheet{top:0;left:0;right:0;bottom:0;margin:auto;width:min(440px,92vw);height:fit-content;max-height:82vh;border-radius:16px;transform:scale(.94);opacity:0;visibility:hidden;transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .22s;}',
+    'body.is-desktop-device .ufs-sheet.show{transform:scale(1);opacity:1;visibility:visible;}',
+    'body.is-desktop-device .ufs-handle{display:none;}',
+    'body.is-desktop-device .ufs-head{border-radius:16px 16px 0 0;}',
+    '.ufs-head-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}',
+    '.ufs-desktop-btn{display:none;}',
+    'body.is-desktop-device .ufs-desktop-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;color:#64748b;background:rgba(11,99,119,.08);flex-shrink:0;}',
+    'body.is-desktop-device .ufs-desktop-btn:hover{color:#0b6377;background:rgba(11,99,119,.18);}'
   ].join('\n');
   document.head.appendChild(style);
 
@@ -22822,6 +23130,7 @@ document.addEventListener('DOMContentLoaded',function(){
     ov.onclick = window.closeUFS;
     var sh = document.createElement('div');
     sh.className = 'ufs-sheet'; sh.id = 'ufs-sheet';
+    sh.setAttribute('aria-label', cfg.title || 'Filter');
     var groupsHtml = cfg.groups.map(function(g){
       var hiddenEl = document.getElementById(g.hiddenId);
       var curVal = hiddenEl ? hiddenEl.value : '';
@@ -22836,7 +23145,11 @@ document.addEventListener('DOMContentLoaded',function(){
       '<div class="ufs-handle"></div>'+
       '<div class="ufs-head">'+
         '<div class="ufs-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>'+cfg.title+'</div>'+
-        '<button class="ufs-reset" onclick="window._ufsReset(\''+cfg.id+'\')">Reset</button>'+
+        '<div class="ufs-head-actions">'+
+          '<button class="ufs-reset" onclick="window._ufsReset(\''+cfg.id+'\')">Reset</button>'+
+          '<button type="button" class="ufs-desktop-btn" title="Minimize" aria-label="Minimize" onclick="window._minimizeDesktopPanel&&window._minimizeDesktopPanel(document.getElementById(\'ufs-sheet\'),document.getElementById(\'ufs-sheet\').querySelector(\'.ufs-head\'))"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>'+
+          '<button type="button" class="ufs-desktop-btn" title="Close" aria-label="Close" onclick="window.closeUFS()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'+
+        '</div>'+
       '</div>'+
       '<div class="ufs-body">'+groupsHtml+'</div>'+
       '<div class="ufs-foot"><button class="ufs-apply" onclick="window.closeUFS()">Done</button></div>';
@@ -22871,6 +23184,297 @@ document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){ if(ov && ov.parentNode) ov.remove(); if(sh && sh.parentNode) sh.remove(); }, 260);
   };
 
+  // ── DRAFTS (local-only, IndexedDB — never touches Firebase) ──────
+  window.DraftDB = (function(){
+    var DB_NAME = 'erp_local_drafts', DB_VERSION = 1, dbPromise = null;
+    function open(){
+      if(dbPromise) return dbPromise;
+      dbPromise = new Promise(function(resolve, reject){
+        if(!window.indexedDB){ reject(new Error('IndexedDB not supported')); return; }
+        var req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function(e){
+          var db = e.target.result;
+          if(!db.objectStoreNames.contains('drafts')){
+            var store = db.createObjectStore('drafts', {keyPath:'id'});
+            store.createIndex('type', 'type', {unique:false});
+          }
+        };
+        req.onsuccess = function(e){ resolve(e.target.result); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+      return dbPromise;
+    }
+    function put(draft){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('drafts', 'readwrite');
+          tx.objectStore('drafts').put(draft);
+          tx.oncomplete = function(){ resolve(draft); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    function getAll(type){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('drafts', 'readonly');
+          var store = tx.objectStore('drafts');
+          var req = type ? store.index('type').getAll(type) : store.getAll();
+          req.onsuccess = function(){ resolve(req.result || []); };
+          req.onerror = function(){ reject(req.error); };
+        });
+      });
+    }
+    function remove(id){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('drafts', 'readwrite');
+          tx.objectStore('drafts').delete(id);
+          tx.oncomplete = function(){ resolve(); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    return { put:put, getAll:getAll, remove:remove };
+  })();
+
+  window._draftsActiveTab = 'invoice';
+
+  window.openDraftsPage = function(){
+    var pg = document.getElementById('drafts-page');
+    if(!pg) return;
+    pg.style.display = 'flex';
+    window._markFullscreenPageOpen && window._markFullscreenPageOpen('drafts-page');
+    window.switchDraftsTab(window._draftsActiveTab || 'invoice');
+  };
+  window.closeDraftsPage = function(){
+    var pg = document.getElementById('drafts-page');
+    if(!pg) return;
+    pg.style.display = 'none';
+    window._markFullscreenPageClosed && window._markFullscreenPageClosed('drafts-page');
+  };
+
+  window.switchDraftsTab = function(type){
+    window._draftsActiveTab = type;
+    ['invoice','po','inventory'].forEach(function(t){
+      var btn = document.getElementById('drafts-tab-'+t);
+      if(!btn) return;
+      var active = t === type;
+      btn.style.background = active ? '#fff' : 'rgba(255,255,255,.15)';
+      btn.style.color = active ? 'var(--op)' : '#fff';
+    });
+    window.renderDraftsList(type);
+  };
+
+  window.renderDraftsList = function(type){
+    var list = document.getElementById('drafts-list');
+    if(!list) return;
+    list.innerHTML = '<div style="text-align:center;padding:40px 0;color:#94a3b8;font-size:13px;">Loading…</div>';
+
+    if(type === 'inventory'){
+      // Archived stock is already loaded in-memory (no extra Firebase reads triggered by this feature)
+      var archived = (window.AppState && window.AppState.products || []).filter(function(p){ return p.isHidden; });
+      if(archived.length === 0){
+        list.innerHTML = window._draftsEmptyState('No archived products', 'Products you archive from Inventory will show up here.');
+        return;
+      }
+      list.innerHTML = archived.map(function(p){
+        return '<div class="card" style="padding:14px;border-radius:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">'+
+          '<div style="width:44px;height:44px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="package" style="width:20px;height:20px;color:#94a3b8;"></i></div>'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-weight:700;color:#334155;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.name+'</div>'+
+            '<div style="font-size:11.5px;color:#94a3b8;">₹'+(p.rate||0)+' · Stock '+(p.stock||0)+'</div>'+
+          '</div>'+
+          '<button onclick="window.toggleHideProduct(\''+p.id+'\',true);window.renderDraftsList(\'inventory\')" style="background:var(--op-light);color:var(--op-dark);border:none;border-radius:9px;padding:7px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;">Unhide</button>'+
+        '</div>';
+      }).join('');
+      if(typeof lucide !== 'undefined') lucide.createIcons({node:list});
+      return;
+    }
+
+    window.DraftDB.getAll(type).then(function(items){
+      items.sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
+      if(items.length === 0){
+        list.innerHTML = window._draftsEmptyState(
+          type==='invoice' ? 'No draft invoices' : 'No draft purchase orders',
+          'Tap "New" above to save a quick draft on this device.'
+        );
+        return;
+      }
+      list.innerHTML = items.map(function(d){
+        var when = d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+        return '<div class="card" style="padding:14px;border-radius:14px;margin-bottom:10px;">'+
+          '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'+
+            '<div style="flex:1;min-width:0;">'+
+              '<div style="font-weight:700;color:#334155;font-size:14px;">'+(d.title||'Untitled')+'</div>'+
+              (d.party ? '<div style="font-size:12px;color:#64748b;margin-top:2px;">'+d.party+'</div>' : '')+
+            '</div>'+
+            (d.amount ? '<div style="font-weight:800;color:#1e293b;font-size:14px;flex-shrink:0;">₹'+d.amount+'</div>' : '')+
+          '</div>'+
+          (d.notes ? '<div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.5;">'+d.notes+'</div>' : '')+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9;">'+
+            '<span style="font-size:10.5px;color:#94a3b8;">'+when+' · Local draft</span>'+
+            '<button onclick="window.deleteDraft(\''+d.id+'\',\''+type+'\')" style="background:#fef2f2;color:#ef4444;border:1px solid #fee2e2;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">Delete</button>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }).catch(function(err){
+      list.innerHTML = window._draftsEmptyState('Could not load drafts', (err && err.message) || 'IndexedDB error');
+    });
+  };
+
+  window._draftsEmptyState = function(title, sub){
+    return '<div style="text-align:center;padding:60px 20px;">'+
+      '<div style="width:56px;height:56px;border-radius:16px;background:var(--op-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><i data-lucide="file-clock" style="width:26px;height:26px;color:var(--op);"></i></div>'+
+      '<div style="font-weight:700;color:#334155;font-size:14px;margin-bottom:4px;">'+title+'</div>'+
+      '<div style="font-size:12px;color:#94a3b8;">'+sub+'</div>'+
+    '</div>';
+  };
+
+  window.deleteDraft = function(id, type){
+    window.DraftDB.remove(id).then(function(){ window.renderDraftsList(type); });
+  };
+
+  window.openNewDraftForm = function(){
+    var type = window._draftsActiveTab || 'invoice';
+    if(type === 'inventory'){ window.showToast && window.showToast('Archive a product from Inventory to see it here'); return; }
+    var existing = document.getElementById('new-draft-overlay');
+    if(existing) existing.remove();
+    var typeLabel = type === 'invoice' ? 'Draft Invoice' : 'Draft Purchase Order';
+    var ov = document.createElement('div');
+    ov.id = 'new-draft-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1400;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.onclick = function(){ ov.remove(); };
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:22px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:85vh;overflow-y:auto;" onclick="event.stopPropagation()">'+
+        '<div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:14px;">New '+typeLabel+'</div>'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Title</label>'+
+        '<input id="nd-title" type="text" placeholder="'+(type==='invoice'?'e.g. Rajesh Kumar — pending items':'e.g. Reorder Ashwagandha stock')+'" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin:6px 0 12px;font-family:inherit;box-sizing:border-box;">'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">'+(type==='invoice'?'Client':'Supplier')+' (optional)</label>'+
+        '<input id="nd-party" type="text" placeholder="Name" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin:6px 0 12px;font-family:inherit;box-sizing:border-box;">'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Amount (optional)</label>'+
+        '<input id="nd-amount" type="number" placeholder="0" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin:6px 0 12px;font-family:inherit;box-sizing:border-box;">'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Notes</label>'+
+        '<textarea id="nd-notes" rows="3" placeholder="Items, quantities, reminders…" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:13.5px;margin:6px 0 16px;font-family:inherit;box-sizing:border-box;resize:vertical;"></textarea>'+
+        '<div style="display:flex;gap:10px;">'+
+          '<button onclick="document.getElementById(\'new-draft-overlay\').remove()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>'+
+          '<button id="nd-save-btn" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--op),var(--op-dark));color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;">Save Draft</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('nd-save-btn').onclick = function(){
+      var title = document.getElementById('nd-title').value.trim();
+      if(!title){ window.showToast && window.showToast('Please enter a title'); return; }
+      var draft = {
+        id: 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+        type: type,
+        title: title,
+        party: document.getElementById('nd-party').value.trim(),
+        amount: document.getElementById('nd-amount').value.trim(),
+        notes: document.getElementById('nd-notes').value.trim(),
+        createdAt: Date.now()
+      };
+      window.DraftDB.put(draft).then(function(){
+        ov.remove();
+        window.renderDraftsList(type);
+        window.showToast && window.showToast('Draft saved on this device');
+      });
+    };
+  };
+
+  // ── CA Portal — generate a shareable read-access link for the accountant ──
+  window.openCAPortalModal = function(){
+    var uid = (window.AppState && window.AppState.user && window.AppState.user.uid) || '';
+    var biz = (window.AppState && window.AppState.settings && window.AppState.settings.businessName) || 'My Business';
+    if(!uid){ window.showToast && window.showToast('Please sign in first'); return; }
+    var link = 'https://nj1637.github.io/my-invoice/?uid=' + encodeURIComponent(uid) + '&biz=' + encodeURIComponent(biz);
+    var existing = document.getElementById('ca-portal-overlay');
+    if(existing) existing.remove();
+    var ov = document.createElement('div');
+    ov.id = 'ca-portal-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1400;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.onclick = function(){ ov.remove(); };
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3);" onclick="event.stopPropagation()">'+
+        '<div style="width:48px;height:48px;border-radius:14px;background:var(--op-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>'+
+        '<div style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px;">CA Portal Link</div>'+
+        '<div style="font-size:12.5px;color:#64748b;margin-bottom:16px;line-height:1.5;">Share this link with your CA / accountant to give them access to your business records.</div>'+
+        '<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 12px;font-size:11.5px;color:#334155;word-break:break-all;margin-bottom:14px;font-family:monospace;line-height:1.5;">'+link+'</div>'+
+        '<div style="display:flex;gap:10px;">'+
+          '<button id="ca-copy-btn" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">'+
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy'+
+          '</button>'+
+          '<button onclick="window.open(\''+link+'\',\'_blank\')" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--op),var(--op-dark));color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;">'+
+            'Open <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'+
+          '</button>'+
+        '</div>'+
+        '<button onclick="document.getElementById(\'ca-portal-overlay\').remove()" style="width:100%;margin-top:10px;padding:10px;border-radius:12px;border:none;background:none;color:#94a3b8;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;">Close</button>'+
+      '</div>';
+    document.body.appendChild(ov);
+    var copyBtn = document.getElementById('ca-copy-btn');
+    if(copyBtn) copyBtn.onclick = function(){
+      var onCopied = function(){
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+        copyBtn.style.borderColor = '#bbf7d0'; copyBtn.style.color = '#16a34a'; copyBtn.style.background = '#f0fdf4';
+        setTimeout(function(){
+          copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+          copyBtn.style.borderColor='#e2e8f0'; copyBtn.style.color='#475569'; copyBtn.style.background='#fff';
+        }, 1600);
+      };
+      var fallbackCopy = function(){
+        var ta=document.createElement('textarea'); ta.value=link; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); }catch(e){}
+        ta.remove(); onCopied();
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(link).then(onCopied).catch(fallbackCopy);
+      } else { fallbackCopy(); }
+    };
+  };
+
+  // ── Reusable Custom Date-Range Picker (From / To) ──
+  window.openCustomRangePicker = function(opts){
+    window.closeCustomRangePicker();
+    var sEl = document.getElementById(opts.startId);
+    var eEl = document.getElementById(opts.endId);
+    var sVal = sEl ? sEl.value : '';
+    var eVal = eEl ? eEl.value : '';
+    var ov = document.createElement('div');
+    ov.id = 'custom-range-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1400;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:22px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3);" onclick="event.stopPropagation()">'+
+        '<div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:16px;">'+(opts.title||'Custom Date Range')+'</div>'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">From</label>'+
+        '<input type="date" id="crp-start" value="'+sVal+'" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin:6px 0 14px;font-family:inherit;box-sizing:border-box;">'+
+        '<label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">To</label>'+
+        '<input type="date" id="crp-end" value="'+eVal+'" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:14px;margin:6px 0 18px;font-family:inherit;box-sizing:border-box;">'+
+        '<div style="display:flex;gap:10px;">'+
+          '<button onclick="window.closeCustomRangePicker()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>'+
+          '<button id="crp-apply" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--op),var(--op-dark));color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;">Apply</button>'+
+        '</div>'+
+      '</div>';
+    ov.onclick = function(){ window.closeCustomRangePicker(); };
+    document.body.appendChild(ov);
+    document.getElementById('crp-apply').onclick = function(){
+      var sv = document.getElementById('crp-start').value;
+      var ev = document.getElementById('crp-end').value;
+      if(!sv || !ev){ window.showToast && window.showToast('Please pick both dates'); return; }
+      if(sv > ev){ window.showToast && window.showToast('From date must be before To date'); return; }
+      var sTarget = document.getElementById(opts.startId);
+      var eTarget = document.getElementById(opts.endId);
+      if(sTarget) sTarget.value = sv;
+      if(eTarget) eTarget.value = ev;
+      window.closeCustomRangePicker();
+      if(opts.onApply) opts.onApply(sv, ev);
+    };
+  };
+  window.closeCustomRangePicker = function(){
+    var ov = document.getElementById('custom-range-overlay');
+    if(ov && ov.parentNode) ov.remove();
+  };
+
   window._ufsUpdateTrigger = function(cfg){
     var activeCount = 0, singleLabel = null;
     cfg.groups.forEach(function(g){
@@ -22898,6 +23502,19 @@ document.addEventListener('DOMContentLoaded',function(){
     });
     if(cfg.renderFn) cfg.renderFn();
     window._ufsUpdateTrigger(cfg);
+    // Special-case: a "custom" date range needs a follow-up From/To picker
+    if(value === 'custom' && group.customRange){
+      window.closeUFS();
+      window.openCustomRangePicker({
+        title: group.customRange.title || 'Custom Date Range',
+        startId: group.customRange.startId,
+        endId: group.customRange.endId,
+        onApply: function(){
+          if(cfg.renderFn) cfg.renderFn();
+          window._ufsUpdateTrigger(cfg);
+        }
+      });
+    }
   };
 
   window._ufsReset = function(cfgId){
@@ -22957,10 +23574,12 @@ document.addEventListener('DOMContentLoaded',function(){
   window.openDashboardFilterSheet = function(){
     window.openUFS({
       id:'dash', title:'Filter Dashboard', labelId:'dash-filter-label', btnId:'dash-filter-btn', allLabel:'All Time',
-      groups:[{key:'range', label:'Date Range', hiddenId:'dash-date-filter', emptyValue:'all', options:[
-        {value:'all',label:'All Time'},{value:'this_month',label:'This Month'},{value:'last_month',label:'Last Month'}
-      ]}],
-      renderFn:function(){ window.updateDashboard && window.updateDashboard(); }
+      groups:[{key:'range', label:'Date Range', hiddenId:'dash-date-filter', emptyValue:'all',
+        customRange:{title:'Custom Dashboard Range', startId:'dash-date-start', endId:'dash-date-end'},
+        options:[
+          {value:'all',label:'All Time'},{value:'this_month',label:'This Month'},{value:'last_month',label:'Last Month'},{value:'custom',label:'📅 Custom'}
+        ]}],
+      renderFn:function(){ window.updateDashboard && window.updateDashboard(); window.updateGSTSummary && window.updateGSTSummary(); }
     });
   };
 })();
