@@ -1588,7 +1588,7 @@ body.fullscreen-page-open #dash-fab-row{
     <!-- Search row — inside header, above the curve -->
     <div style="position:relative;margin-bottom:-1px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="dash-search" placeholder="Search dashboard..." style="width:100%;padding:11px 14px 11px 38px;border:none;border-radius:12px 12px 0 0;font-size:13px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);color:#fff;outline:none;font-family:inherit;border:1px solid rgba(255,255,255,.2);border-bottom:none;" oninput="" placeholder-color="rgba(255,255,255,.5)">
+      <input type="text" id="dash-search" placeholder="Search dashboard..." readonly style="width:100%;padding:11px 14px 11px 38px;border:none;border-radius:12px 12px 0 0;font-size:13px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);color:#fff;outline:none;font-family:inherit;border:1px solid rgba(255,255,255,.2);border-bottom:none;cursor:pointer;" onclick="window.openGlobalSearch&&openGlobalSearch()" placeholder-color="rgba(255,255,255,.5)">
       <style>#dash-search::placeholder{color:rgba(255,255,255,.55);}</style>
     </div>
   </div>
@@ -2987,36 +2987,35 @@ body.fullscreen-page-open #dash-fab-row{
   </div>
 
   <!-- Beta notice -->
-  <div class="card p-4 mb-5 border-purple-200 bg-purple-50/50">
-    <div class="flex gap-3">
-      <i data-lucide="sparkles" class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5"></i>
-      <div>
-        <div class="font-bold text-purple-800 text-sm">Beta Feature</div>
-        <p class="text-purple-700 text-xs mt-0.5">Generates a self-contained HTML file with embedded JSON data, animated charts, and detailed business insights. No external dependencies — open anywhere.</p>
-      </div>
+  <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:16px;padding:14px;margin-bottom:20px;display:flex;gap:11px;">
+    <div style="width:32px;height:32px;border-radius:9px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="sparkles" style="width:16px;height:16px;color:#7e22ce;"></i></div>
+    <div>
+      <div style="font-weight:700;color:#6b21a8;font-size:13px;">Beta Feature</div>
+      <p style="color:#7e22ce;font-size:11.5px;margin-top:3px;line-height:1.5;">Generates a self-contained HTML file with embedded JSON data, animated charts, and detailed business insights. No external dependencies — open anywhere.</p>
     </div>
   </div>
 
   <!-- Config card -->
-  <div class="card p-5 mb-5">
-    <div class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-      <i data-lucide="settings-2" class="w-4 h-4 text-purple-600"></i> Report Configuration
+  <div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px;">
+      <div style="width:30px;height:30px;border-radius:9px;background:#faf5ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i data-lucide="settings-2" style="width:15px;height:15px;color:#7e22ce;"></i></div>
+      <div style="font-weight:800;font-size:14px;color:#0f172a;">Report Configuration</div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div>
-        <label class="lbl">Report Type</label>
-        <select id="ai-report-type" class="inp text-sm bg-white">
+        <label style="display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Report Type</label>
+        <select id="ai-report-type" style="width:100%;padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:#1e293b;">
           <option value="weekly">Weekly Report</option>
           <option value="monthly" selected>Monthly Report</option>
         </select>
       </div>
       <div>
-        <label class="lbl">Period</label>
-        <input type="month" id="ai-report-month" class="inp text-sm">
+        <label style="display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Period</label>
+        <input type="month" id="ai-report-month" style="width:100%;padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:#1e293b;">
       </div>
       <div>
-        <label class="lbl">Week (if weekly)</label>
-        <select id="ai-report-week" class="inp text-sm bg-white">
+        <label style="display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Week (if weekly)</label>
+        <select id="ai-report-week" style="width:100%;padding:11px 12px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:#1e293b;">
           <option value="1">Week 1 (1–7)</option>
           <option value="2">Week 2 (8–14)</option>
           <option value="3">Week 3 (15–21)</option>
@@ -3027,15 +3026,31 @@ body.fullscreen-page-open #dash-fab-row{
   </div>
 
   <!-- Stats preview -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5" id="ai-report-preview-stats">
-    <div class="stat text-center"><div class="text-2xl font-black text-emerald-600" id="airp-revenue">₹0</div><div class="text-xs text-slate-400 mt-1">Revenue</div></div>
-    <div class="stat text-center"><div class="text-2xl font-black text-red-500" id="airp-expenses">₹0</div><div class="text-xs text-slate-400 mt-1">Expenses</div></div>
-    <div class="stat text-center"><div class="text-2xl font-black text-blue-600" id="airp-invoices">0</div><div class="text-xs text-slate-400 mt-1">Invoices</div></div>
-    <div class="stat text-center"><div class="text-2xl font-black text-amber-600" id="airp-clients">0</div><div class="text-xs text-slate-400 mt-1">Unique Clients</div></div>
+  <div class="grid grid-cols-2 gap-3 mb-5" id="ai-report-preview-stats">
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;">
+      <div style="width:32px;height:32px;border-radius:9px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;margin-bottom:9px;"><i data-lucide="trending-up" style="width:16px;height:16px;color:#059669;"></i></div>
+      <div id="airp-revenue" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;">₹0</div>
+      <div style="font-size:10.5px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Revenue</div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;">
+      <div style="width:32px;height:32px;border-radius:9px;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin-bottom:9px;"><i data-lucide="trending-down" style="width:16px;height:16px;color:#dc2626;"></i></div>
+      <div id="airp-expenses" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;">₹0</div>
+      <div style="font-size:10.5px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Expenses</div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;">
+      <div style="width:32px;height:32px;border-radius:9px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin-bottom:9px;"><i data-lucide="file-text" style="width:16px;height:16px;color:#1d4ed8;"></i></div>
+      <div id="airp-invoices" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;">0</div>
+      <div style="font-size:10.5px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Invoices</div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;">
+      <div style="width:32px;height:32px;border-radius:9px;background:#fffbeb;display:flex;align-items:center;justify-content:center;margin-bottom:9px;"><i data-lucide="users" style="width:16px;height:16px;color:#d97706;"></i></div>
+      <div id="airp-clients" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;">0</div>
+      <div style="font-size:10.5px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">Unique Clients</div>
+    </div>
   </div>
 
-  <button onclick="window.generateAIReport&&generateAIReport()" class="btn btn-primary w-full justify-center py-3 text-base">
-    <i data-lucide="sparkles" class="w-5 h-5"></i> Generate & Download HTML Report
+  <button onclick="window.generateAIReport&&generateAIReport()" style="width:100%;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;border-radius:14px;padding:15px;cursor:pointer;font-size:14.5px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;box-shadow:0 4px 14px rgba(11,99,119,.3);">
+    <i data-lucide="sparkles" style="width:18px;height:18px;"></i> Generate &amp; Download HTML Report
   </button>
 </div>
 
@@ -5971,6 +5986,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         await _uploadFile(folderId, fileName, payload);
                         await _pruneOldFiles(folderId);
                         localStorage.setItem('ayur_gdrive_last_backup', new Date().toISOString());
+                        // Mark that the user has explicitly connected/authorised Drive at
+                        // least once — auto-backup checks require this flag before ever
+                        // triggering silently in the background.
+                        if (!silent) localStorage.setItem('ayur_gdrive_connected', '1');
                         _logBackup(fileName, true);
                         if (!silent) window.showToast && window.showToast('✅ Backed up to Google Drive: ' + fileName);
                     } catch(e) {
@@ -5987,15 +6006,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             };
             // ─── AUTO DAILY BACKUP ────────────────────────────────────────
+            // IMPORTANT: this must NEVER show a Google sign-in popup/redirect on
+            // its own. Previously, if no lastBackup timestamp existed yet, it
+            // called the non-silent backupToGDrive() directly — which forced a
+            // Google account chooser on every fresh login as soon as a Client ID
+            // was configured, regardless of whether the user had ever connected
+            // or authorised Drive access. Now it only runs (silently) once the
+            // user has explicitly connected Drive at least one time before
+            // (tracked via 'ayur_gdrive_connected', set on first manual backup).
             window._checkAutoDriveBackup = function() {
                 var s = window.AppState && window.AppState.settings;
                 if (!s || !window.ERP_CONFIG.googleClientId || s.gdriveAutoBackup === false) return;
+                if (!localStorage.getItem('ayur_gdrive_connected')) return; // never connected — do nothing, no popup
                 var lastRaw = localStorage.getItem('ayur_gdrive_last_backup');
-                if (!lastRaw) { window.backupToGDrive(); return; }
+                if (!lastRaw) { window.backupToGDrive(true); return; } // silent only
                 var last = new Date(lastRaw);
                 var now  = new Date();
                 var daysSince = (now - last) / (1000 * 60 * 60 * 24);
-                if (daysSince >= 1) window.backupToGDrive();
+                if (daysSince >= 1) window.backupToGDrive(true); // silent only
             };
 
             // Initialise when GIS library is ready (may load async)
@@ -6949,6 +6977,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.AppState.settings = { ...window.AppState.settings, ...docSnap.data() }; 
                     safeLocalSave();
                     if(window.AppState.activeTab === 'settings') window.populateSettingsUI(); 
+                    // Topbar profile pic/logo should reflect saved data as soon as it
+                    // arrives from Firestore — not only when the Settings tab happens
+                    // to be open. Previously this only fired via a patched
+                    // populateSettingsUI(), so the topbar icon stayed blank until the
+                    // user manually opened the account panel and hit Save.
+                    if(window.updateTopbarAvatar) window.updateTopbarAvatar();
                     
                     const lockScreen = document.getElementById('pin-lock');
                     if(window.AppState.settings.pinEnabled && !sessionStorage.getItem('ayur_unlocked') && lockScreen) {
@@ -7861,7 +7895,7 @@ try {
                 const deleteBtnHtml = window.isFeatureEnabled('deleteBtn')
                     ? `<button onclick="window.softDeleteProduct('${p.id}')" title="Delete" style="width:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;cursor:pointer;"><i data-lucide="trash-2" style="width:14px;height:14px;color:#ef4444;"></i></button>`
                     : '';
-                return `<div class="card card-hover ${p.isHidden ? 'opacity-50' : ''}" style="padding:15px;border-radius:18px;position:relative;overflow:hidden;">
+                return `<div class="card card-hover ${p.isHidden ? 'opacity-50' : ''}" onclick="window.openProductDetailPage&&openProductDetailPage('${p.id}')" style="padding:15px;border-radius:18px;position:relative;overflow:hidden;cursor:pointer;">
                     ${isOut ? `<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:9.5px;font-weight:800;padding:4px 14px 4px 18px;border-radius:0 0 0 14px;letter-spacing:.04em;">OUT OF STOCK</div>` : isLow ? `<div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:9.5px;font-weight:800;padding:4px 14px 4px 18px;border-radius:0 0 0 14px;letter-spacing:.04em;">LOW STOCK</div>` : ''}
                     <div style="display:flex;gap:12px;">
                         ${imgHtml}
@@ -7887,7 +7921,7 @@ try {
                             <div style="height:100%;width:${stockPct}%;background:${stockBarColor};border-radius:3px;transition:width .3s;"></div>
                         </div>
                     </div>
-                    <div style="display:flex;gap:6px;margin-top:12px;">
+                    <div style="display:flex;gap:6px;margin-top:12px;" onclick="event.stopPropagation()">
                         <button onclick="openProductDrawer('${p.id}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--op-light);color:var(--op-dark);border:none;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit
                         </button>
@@ -8469,6 +8503,59 @@ try {
             delete window._openFullscreenPages[key];
             if(!Object.keys(window._openFullscreenPages).length) document.body.classList.remove('fullscreen-page-open');
         };
+
+        // ── NX FIX: Hardware/mobile back button should close an open fullscreen
+        //    page (client detail, invoice detail, product detail, search, drafts)
+        //    ONE STEP AT A TIME instead of exiting the app or jumping tabs. ──
+        window._fsPageCloseFns = window._fsPageCloseFns || {};
+        window._fsPageCloseFns['client-detail-page']  = function(){ window.closeClientDetailPage && window.closeClientDetailPage(); };
+        window._fsPageCloseFns['invoice-detail-page'] = function(){ window.closeInvoiceDetailPage && window.closeInvoiceDetailPage(); };
+        window._fsPageCloseFns['drafts-page']         = function(){ window.closeDraftsPage && window.closeDraftsPage(); };
+        window._fsPageCloseFns['product-detail-page'] = function(){ window.closeProductDetailPage && window.closeProductDetailPage(); };
+        window._fsPageCloseFns['global-search-page']  = function(){ window.closeGlobalSearch && window.closeGlobalSearch(); };
+
+        (function(){
+            var _origMarkOpen = window._markFullscreenPageOpen;
+            window._markFullscreenPageOpen = function(key){
+                _origMarkOpen(key);
+                try{ history.pushState({nxFsPage:key}, '', ''); }catch(e){}
+            };
+        })();
+
+        window._closeTopFullscreenPage = function(){
+            var keys = Object.keys(window._openFullscreenPages||{});
+            if(!keys.length) return false;
+            var key = keys[keys.length-1];
+            var fn = window._fsPageCloseFns[key];
+            if(fn) fn();
+            else { var el=document.getElementById(key); if(el) el.style.display='none'; window._markFullscreenPageClosed(key); }
+            return true;
+        };
+
+        // Registered here (earlier in the document than the older tab-history /
+        // modal-closing popstate listeners further below) so it always runs FIRST
+        // on a back-press and can short-circuit them via stopImmediatePropagation.
+        window.addEventListener('popstate', function(e){
+            if(window._closeTopFullscreenPage()){
+                try{ history.pushState(null,'',location.href); }catch(err){}
+                if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+            }
+        });
+
+        // Native app (Capacitor/Ionic) hardware back — higher priority (20) wins
+        // over the app's existing dashboard/exit handler (priority 10).
+        document.addEventListener('ionBackButton', function(ev){
+            if(!ev.detail || !ev.detail.register) return;
+            ev.detail.register(20, function(){
+                if(window._closeTopFullscreenPage()) return;
+                var activeTab = window.AppState && window.AppState.activeTab;
+                if(activeTab && activeTab !== 'dashboard'){
+                    window.switchTab('dashboard');
+                } else if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
+                    window.Capacitor.Plugins.App.exitApp();
+                }
+            });
+        });
 
         window._idpTemplatesList = ['modern','classic','minimal','compact','elegant','bold','nature','corporate','ayurveda','premium','tricolor','grunge','sidebar-red','waterwave','vintage'];
 
@@ -9515,7 +9602,10 @@ try {
                 });
                 s.shortcutsConfig = currentScConfig;
 
-                await setDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'config', 'settings'), s); 
+                // merge:true added as a safety net — even if some hidden field is
+                // ever out of sync again, this prevents a full-document overwrite
+                // from silently wiping other saved settings fields.
+                await setDoc(doc(db, 'artifacts', appId, 'users', window.AppState.user.uid, 'config', 'settings'), s, { merge: true }); 
                 window.showToast("Settings saved securely!");
                 setVal('set-pin-current', ''); setVal('set-pin-new', '');
                 
@@ -13951,15 +14041,25 @@ window.renderEmployees=function(){
     var totalPerms=Object.keys(window.EMP_PERMISSIONS).length;
     listEl.innerHTML=pendHTML+emps.map(function(emp){
         var pc=Object.values(emp.permissions||{}).filter(Boolean).length;
-        return'<div class="card p-4 '+(emp.active===false?'opacity-60':'')+'">'
-        +'<div class="flex items-start gap-3 mb-3"><div class="w-11 h-11 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-base flex-shrink-0">'+emp.name.charAt(0).toUpperCase()+'</div>'
-        +'<div class="flex-1 min-w-0"><h4 class="font-bold text-slate-800 text-sm">'+emp.name+'</h4><div class="text-xs text-slate-400">'+emp.designation+(emp.dept?' · '+emp.dept:'')+'</div><div class="text-xs text-slate-400">✉️ '+emp.email+'</div></div>'
-        +'<span class="badge '+(emp.active!==false?'badge-green':'badge-red')+' text-[10px]">'+(emp.active!==false?'Active':'Off')+'</span></div>'
-        +'<div class="grid grid-cols-2 gap-2 mb-3 text-xs"><div class="bg-slate-50 p-2 rounded-lg"><span class="text-slate-400">Salary</span><div class="font-bold text-slate-800">₹'+Number(emp.salary||0).toLocaleString('en-IN')+'</div></div>'
-        +'<div class="bg-blue-50 p-2 rounded-lg"><span class="text-slate-400">Permissions</span><div class="font-bold text-blue-700">'+pc+'/'+totalPerms+'</div></div></div>'
-        +'<div class="flex gap-2 pt-3 border-t border-slate-100"><button onclick="window.openEmployeeDrawer(\''+emp.id+'\')" class="btn btn-ghost btn-sm flex-1 justify-center text-xs">Edit</button>'
-        +'<button onclick="window.openRoleDrawer(\''+emp.id+'\')" class="btn btn-sm flex-1 justify-center text-xs" style="background:var(--op);color:white;border-color:var(--op);"><i data-lucide="shield" class="w-3 h-3"></i> Roles</button></div></div>';
+        var avatarColors=['#0b6377','#8a5d80','#017e84','#084a5c','#a17c4f','#3d6e6a','#6d5a9e'];
+        var avColor=avatarColors[emp.name.charCodeAt(0)%avatarColors.length];
+        var isActive=emp.active!==false;
+        return '<div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;border-left:3px solid '+(isActive?'#22c55e':'#cbd5e1')+';'+(isActive?'':'opacity:.7;')+'">'
+        +'<div style="display:flex;align-items:center;gap:12px;">'
+        +'<div style="width:44px;height:44px;border-radius:50%;background:'+avColor+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex-shrink:0;">'+emp.name.charAt(0).toUpperCase()+'</div>'
+        +'<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#212529;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+emp.name+'</div>'
+        +'<div style="font-size:11.5px;color:#94a3b8;">'+(emp.designation||'')+(emp.dept?' · '+emp.dept:'')+'</div></div>'
+        +'<span style="font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;background:'+(isActive?'#dcfce7':'#f1f5f9')+';color:'+(isActive?'#166534':'#64748b')+';flex-shrink:0;">'+(isActive?'ACTIVE':'OFF')+'</span></div>'
+        +'<div style="display:flex;margin-top:12px;padding-top:11px;border-top:1px solid #f8f9fa;gap:0;">'
+        +'<div style="flex:1;text-align:center;"><div style="font-weight:700;font-size:13px;color:#212529;">₹'+Number(emp.salary||0).toLocaleString('en-IN')+'</div><div style="font-size:10px;color:#adb5bd;font-weight:600;">Salary/mo</div></div>'
+        +'<div style="width:1px;background:#f0f0f0;"></div>'
+        +'<div style="flex:1;text-align:center;"><div style="font-weight:700;font-size:13px;color:#0b6377;">'+pc+'/'+totalPerms+'</div><div style="font-size:10px;color:#adb5bd;font-weight:600;">Permissions</div></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;margin-top:12px;">'
+        +'<button onclick="window.openEmployeeDrawer(\''+emp.id+'\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#f8fafc;color:#475569;border:1px solid #eef1f5;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">Edit</button>'
+        +'<button onclick="window.openRoleDrawer(\''+emp.id+'\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--op-light);color:var(--op-dark);border:none;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;"><i data-lucide="shield" style="width:13px;height:13px;"></i> Roles</button></div></div>';
     }).join('');
+    listEl.className='space-y-3';
     if(typeof lucide!=='undefined')lucide.createIcons({node:listEl});
 };
 
@@ -15996,8 +16096,9 @@ window.renderGSTModule = function() {
 window.switchGSTTab = function(tab) {
     window._gstActiveTab = tab;
     document.querySelectorAll('.gst-tab-btn').forEach(function(b){
-        b.className = 'gst-tab-btn flex-shrink-0 px-3 py-2 rounded-xl text-xs font-bold ' +
-            (b.id === 'gsttab-'+tab ? 'bg-white text-slate-800 shadow' : 'text-slate-500 hover:bg-white/50');
+        var active = (b.id === 'gsttab-'+tab);
+        b.style.cssText = 'flex-shrink:0;padding:8px 14px;border-radius:11px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;' +
+            (active ? 'background:linear-gradient(135deg,var(--op),var(--op-dark));color:#fff;box-shadow:0 2px 8px rgba(11,99,119,.3);' : 'background:transparent;color:#6c757d;');
     });
     var area = document.getElementById('gst-content-area');
     if(!area) return;
@@ -16058,16 +16159,20 @@ window.renderGSTDashboard = function(inv, bd, p, fmt) {
         + '<span>Output Tax: '+fmt(totalTax)+'</span><span>ITC Claimed: '+fmt(itcTotal)+'</span>'
         + (growth !== '—' ? '<span>vs Last Month: '+(growth > 0 ? '+':'')+growth+'%</span>' : '')
         + '</div></div>'
-        // Breakup table — with horizontal scroll wrapper
-        + '<div class="card overflow-hidden"><div class="p-4 font-bold text-slate-800 border-b border-slate-100">Tax Breakup ('+p.label+')</div>'
-        + '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'
-        + '<table class="text-sm" style="width:100%;min-width:400px;"><thead class="bg-slate-50"><tr><th class="p-3 text-left">Tax Type</th><th class="p-3 text-right">Taxable</th><th class="p-3 text-right">Tax</th><th class="p-3 text-right">Rate</th></tr></thead>'
-        + '<tbody>'
-        + '<tr class="border-b border-slate-50"><td class="p-3 font-medium">CGST</td><td class="p-3 text-right">'+fmt(bd.taxable/2)+'</td><td class="p-3 text-right font-bold text-emerald-700">'+fmt(bd.cgst)+'</td><td class="p-3 text-right text-slate-500">'+(bd.taxable>0?(bd.cgst/bd.taxable*100).toFixed(1)+'%':'—')+'</td></tr>'
-        + '<tr class="border-b border-slate-50"><td class="p-3 font-medium">SGST</td><td class="p-3 text-right">'+fmt(bd.taxable/2)+'</td><td class="p-3 text-right font-bold text-blue-700">'+fmt(bd.sgst)+'</td><td class="p-3 text-right text-slate-500">'+(bd.taxable>0?(bd.sgst/bd.taxable*100).toFixed(1)+'%':'—')+'</td></tr>'
-        + '<tr class="border-b border-slate-50"><td class="p-3 font-medium">IGST</td><td class="p-3 text-right">'+fmt(bd.taxable)+'</td><td class="p-3 text-right font-bold text-purple-700">'+fmt(bd.igst)+'</td><td class="p-3 text-right text-slate-500">'+(bd.taxable>0?(bd.igst/bd.taxable*100).toFixed(1)+'%':'—')+'</td></tr>'
-        + '<tr class="bg-slate-50 font-bold"><td class="p-3">Total</td><td class="p-3 text-right">'+fmt(bd.taxable)+'</td><td class="p-3 text-right text-orange-700">'+fmt(totalTax)+'</td><td class="p-3 text-right">—</td></tr>'
-        + '</tbody></table></div></div>'
+        // Breakup — modern card-row list (replaces plain HTML table)
+        + '<div class="card" style="padding:16px;border-radius:16px;">'
+        + '<div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:6px;">Tax Breakup ('+p.label+')</div>'
+        + [['CGST', bd.taxable/2, bd.cgst, '#059669'],['SGST', bd.taxable/2, bd.sgst, '#1d4ed8'],['IGST', bd.taxable, bd.igst, '#7e22ce']].map(function(r){
+            var pct = bd.taxable>0 ? (r[2]/(r[1]||1)*100).toFixed(1)+'%' : '—';
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f1f5f9;">'
+                + '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;color:#334155;">'+r[0]+'</div><div style="font-size:11px;color:#94a3b8;margin-top:1px;">Taxable '+fmt(r[1])+'</div></div>'
+                + '<div style="text-align:right;flex-shrink:0;"><div style="font-weight:800;font-size:13.5px;color:'+r[3]+';">'+fmt(r[2])+'</div><div style="font-size:11px;color:#94a3b8;margin-top:1px;">'+pct+' rate</div></div>'
+                + '</div>';
+        }).join('')
+        + '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;">'
+        + '<div style="font-weight:800;font-size:13.5px;color:#0f172a;">Total Tax</div>'
+        + '<div style="font-weight:900;font-size:16px;color:#c2410c;">'+fmt(totalTax)+'</div>'
+        + '</div></div>'
         // Invoice summary — 2 cols only (no 3-col that causes blank space)
         + '<div class="grid grid-cols-2 gap-3">'
         + _gstStatCard('B2B Invoices', bd.b2b.length+' invoices', 'bg-slate-50 text-slate-700', 'building-2')
@@ -16077,9 +16182,16 @@ window.renderGSTDashboard = function(inv, bd, p, fmt) {
 };
 
 function _gstStatCard(label, value, colorClass, icon) {
-    return '<div class="card p-4 '+colorClass+'">'
-        + '<div class="flex items-center gap-2 mb-1 opacity-70"><i data-lucide="'+icon+'" class="w-4 h-4"></i><span class="text-xs font-bold uppercase tracking-wide">'+label+'</span></div>'
-        + '<div class="text-lg font-black">'+value+'</div>'
+    var iconBg = '#eef2ff', iconColor = '#4338ca';
+    if(colorClass.indexOf('blue')>-1){ iconBg='#eff6ff'; iconColor='#1d4ed8'; }
+    else if(colorClass.indexOf('emerald')>-1){ iconBg='#ecfdf5'; iconColor='#059669'; }
+    else if(colorClass.indexOf('orange')>-1){ iconBg='#fff7ed'; iconColor='#c2410c'; }
+    else if(colorClass.indexOf('purple')>-1){ iconBg='#faf5ff'; iconColor='#7e22ce'; }
+    else if(colorClass.indexOf('slate')>-1){ iconBg='#f8fafc'; iconColor='#475569'; }
+    return '<div class="card" style="padding:14px;border-radius:16px;">'
+        + '<div style="width:32px;height:32px;border-radius:9px;background:'+iconBg+';display:flex;align-items:center;justify-content:center;margin-bottom:9px;"><i data-lucide="'+icon+'" style="width:16px;height:16px;color:'+iconColor+';"></i></div>'
+        + '<div style="font-size:16px;font-weight:800;color:#0f172a;line-height:1.2;">'+value+'</div>'
+        + '<div style="font-size:10.5px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:3px;">'+label+'</div>'
         + '</div>';
 }
 
@@ -19922,27 +20034,45 @@ window.renderPurchaseOrders = function() {
   }
 
   var html=pos.map(function(po){
-    var sc={pending:'background:#dbeafe;color:#1e40af',partial:'background:#fef3c7;color:#92400e',received:'background:#dcfce7;color:#166534'};
-    var sc2=sc[po.status]||'background:#f1f5f9;color:#475569';
-    var auditBadge=po.audit?'<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:#fef3c7;color:#92400e;margin-left:4px">✓ Audited</span>':'';
-    return '<div class="card p-4 card-hover">'+
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">'+
-        '<div><div style="font-weight:800;font-size:14px;color:#0f172a">'+po.vendor+'</div>'+
-        '<div style="font-size:11px;color:#94a3b8;margin-top:1px">'+po.date+' · PO-'+po.id+'</div></div>'+
-        '<span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;'+sc2+'">'+po.status.toUpperCase()+'</span>'+
+    var sc={pending:{bg:'#dbeafe',fg:'#1e40af',border:'#3b82f6'},partial:{bg:'#fef3c7',fg:'#92400e',border:'#f59e0b'},received:{bg:'#dcfce7',fg:'#166534',border:'#22c55e'}};
+    var s2=sc[po.status]||{bg:'#f1f5f9',fg:'#475569',border:'#cbd5e1'};
+    var auditBadge=po.audit?'<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:#fef3c7;color:#92400e;margin-left:6px">✓ Audited</span>':'';
+    var avatarColors=['#0b6377','#8a5d80','#017e84','#084a5c','#a17c4f','#3d6e6a','#6d5a9e'];
+    var vName=po.vendor||'Vendor';
+    var avColor=avatarColors[vName.charCodeAt(0)%avatarColors.length];
+    var itemCount=(po.items||[]).length;
+    var amtDisp=(window.isFeatureEnabled && window.isFeatureEnabled('poCostVisible') && po.totalAmount)?fmt(po.totalAmount):'—';
+    return '<div style="background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f0f0f0;border-left:3px solid '+s2.border+';">'+
+      '<div style="display:flex;align-items:center;gap:12px;">'+
+        '<div style="width:44px;height:44px;border-radius:50%;background:'+avColor+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex-shrink:0;">'+vName.charAt(0).toUpperCase()+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-weight:700;font-size:14px;color:#212529;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+vName+'</div>'+
+          '<div style="font-size:11.5px;color:#94a3b8;">'+po.date+' · PO-'+po.id+'</div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;background:'+s2.bg+';color:'+s2.fg+';flex-shrink:0;">'+po.status.toUpperCase()+'</span>'+
       '</div>'+
-      '<div style="font-size:12px;color:#64748b;margin-bottom:4px">'+(po.items||[]).length+' item(s)'+auditBadge+'</div>'+
-      (window.isFeatureEnabled && window.isFeatureEnabled('poCostVisible') && po.totalAmount?'<div style="font-size:14px;font-weight:800;color:#0b6377;margin-bottom:10px">'+fmt(po.totalAmount)+'</div>':'<div style="margin-bottom:10px"></div>')+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
-        (po.status!=='received'?'<button onclick="window.receivePO(\''+po.id+'\')" class="btn btn-primary btn-sm" style="flex:1;justify-content:center;font-size:11px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Receive GRN</button>':'<span style="font-size:12px;color:#0b6377;font-weight:700;display:inline-flex;align-items:center;gap:4px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/><circle cx="12" cy="12" r="10"/></svg>Received</span>')+
-        '<button onclick="window.openAuditModal(\''+po.id+'\')" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Audit</button>'+
-        '<button onclick="window._downloadPOPDF(\''+po.id+'\')" class="btn btn-icon btn-ghost btn-sm" title="Download PO PDF"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>'+
-        '<button onclick="window._sharePOWA(\''+po.id+'\')" class="btn btn-icon btn-ghost btn-sm" title="Share on WhatsApp" style="color:#25d366"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>'+
-        '<button onclick="window.deletePO(\''+po.id+'\')" class="btn btn-icon btn-ghost btn-sm text-red-400" title="Delete PO"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'+
+      '<div style="display:flex;margin-top:12px;padding-top:11px;border-top:1px solid #f8f9fa;gap:0;">'+
+        '<div style="flex:1;text-align:center;">'+
+          '<div style="font-weight:700;font-size:13px;color:#212529;">'+itemCount+'</div>'+
+          '<div style="font-size:10px;color:#adb5bd;font-weight:600;">Item(s)'+auditBadge+'</div>'+
+        '</div>'+
+        '<div style="width:1px;background:#f0f0f0;"></div>'+
+        '<div style="flex:1;text-align:center;">'+
+          '<div style="font-weight:700;font-size:13px;color:#0b6377;">'+amtDisp+'</div>'+
+          '<div style="font-size:10px;color:#adb5bd;font-weight:600;">Amount</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px;">'+
+        (po.status!=='received'?'<button onclick="window.receivePO(\''+po.id+'\')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--op-light);color:var(--op-dark);border:none;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Receive GRN</button>':'<span style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#ecfdf5;color:#15803d;border-radius:10px;padding:9px;font-size:12.5px;font-weight:700;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Received</span>')+
+        '<button onclick="window.openAuditModal(\''+po.id+'\')" style="display:flex;align-items:center;justify-content:center;gap:5px;background:#fef3c7;color:#92400e;border:none;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Audit</button>'+
+        '<button onclick="window._downloadPOPDF(\''+po.id+'\')" title="Download PO PDF" style="background:#f8fafc;color:#475569;border:1px solid #eef1f5;border-radius:10px;padding:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>'+
+        '<button onclick="window._sharePOWA(\''+po.id+'\')" title="Share on WhatsApp" style="background:#ecfdf5;color:#25d366;border:1px solid #d1fae5;border-radius:10px;padding:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button>'+
+        '<button onclick="window.deletePO(\''+po.id+'\')" title="Delete PO" style="background:#fef2f2;color:#dc3545;border:1px solid #fee2e2;border-radius:10px;padding:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>'+
       '</div>'+
     '</div>';
   }).join('');
   listEl.innerHTML=html;
+  listEl.className='space-y-3';
 };
 
 // ═══════════════════════════════════════════════════
@@ -22568,8 +22698,14 @@ window.apSaveBusiness = function() {
   var p=document.getElementById('ap-biz-phone');   if(p) s.phone=p.value.trim();
   var a=document.getElementById('ap-biz-address'); if(a) s.address=a.value.trim();
   window.AppState.settings = s;
-  if(window.saveSettings)      window.saveSettings();
+  // IMPORTANT: sync the legacy hidden settings inputs FIRST, since
+  // window.saveSettings() reads business fields from those hidden
+  // inputs (set-biz-name etc.), not from the ap-biz-* fields above.
+  // Old order (save first, populate after) caused saveSettings() to
+  // read stale/blank values and overwrite Firestore with them —
+  // silently erasing business details on every save.
   if(window.populateSettingsUI) window.populateSettingsUI();
+  if(window.saveSettings)      window.saveSettings();
   window.updateTopbarAvatar();
   // Also sync sidebar biz name
   var sbn=document.getElementById('sidebar-biz-name'); if(sbn) sbn.textContent=s.businessName||'My Business';
@@ -23587,6 +23723,474 @@ document.addEventListener('DOMContentLoaded',function(){
 })(); // end gestures IIFE
 </script>
 
+
+<!-- ══════════════════════════════════════════════════════════════
+     NX UPGRADE BLOCK — Advanced Dashboard Search + Product Detail Page
+     ══════════════════════════════════════════════════════════════ -->
+<style id="nx-upgrade-styles">
+#global-search-page{position:fixed;inset:0;height:100dvh;z-index:300;background:#f8f9fa;display:none;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);}
+#global-search-page.nx-open{transform:translateY(0);}
+.nx-gs-input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid rgba(255,255,255,.3);border-radius:14px;font-size:14px;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);outline:none;font-family:inherit;color:#fff;}
+.nx-gs-input::placeholder{color:rgba(255,255,255,.65);}
+.nx-gs-section-title{font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:16px 2px 8px;}
+.nx-gs-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:11px 12px;margin-bottom:8px;cursor:pointer;transition:transform .1s;-webkit-tap-highlight-color:transparent;}
+.nx-gs-row:active{transform:scale(.98);}
+.nx-gs-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nx-quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px;}
+.nx-quick-card{background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.nx-quick-card:active{transform:scale(.97);}
+#product-detail-page{position:fixed;inset:0;height:100dvh;z-index:200;background:#f8f9fa;display:none;flex-direction:column;overflow:hidden;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);}
+#product-detail-page.nx-open{transform:translateX(0);}
+.nx-pdp-tabbtn.active{color:var(--op)!important;border-bottom:2.5px solid var(--op)!important;}
+.nx-buyer-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #f0f0f0;border-radius:13px;padding:11px 12px;margin-bottom:8px;}
+.nx-buyer-rank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.nx-insight-card{background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:14px;margin-bottom:10px;}
+.nx-sale-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #f0f0f0;border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+</style>
+
+<div id="global-search-page">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:14px 16px 16px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="window.closeGlobalSearch&&closeGlobalSearch()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="position:relative;flex:1;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="gs-input" class="nx-gs-input" placeholder="Search invoices, clients, products, settings..." oninput="window._gsRender(this.value)">
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:14px 16px 24px;" id="gs-results"></div>
+</div>
+
+<div id="product-detail-page">
+  <div id="pdp-header" style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="window.closeProductDetailPage&&closeProductDetailPage()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div id="pdp-avatar" style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div id="pdp-name" style="font-size:17px;font-weight:700;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Product</div>
+        <div id="pdp-tag" style="font-size:11px;color:rgba(255,255,255,.7);">Category</div>
+      </div>
+      <button onclick="window._pdpEdit&&window._pdpEdit()" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px;cursor:pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:0;margin-top:16px;background:rgba(255,255,255,.1);border-radius:12px;overflow:hidden;">
+      <div style="flex:1;text-align:center;padding:10px 4px;">
+        <div id="pdp-total-sold" style="font-size:16px;font-weight:800;color:#fff;">0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;">Units Sold</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,.2);"></div>
+      <div style="flex:1;text-align:center;padding:10px 4px;">
+        <div id="pdp-total-revenue" style="font-size:16px;font-weight:800;color:#fff;">₹0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;">Revenue</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,.2);"></div>
+      <div style="flex:1;text-align:center;padding:10px 4px;">
+        <div id="pdp-stock-now" style="font-size:16px;font-weight:800;color:#fff;">0</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);font-weight:600;text-transform:uppercase;">In Stock</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;background:#fff;border-bottom:2px solid #f0f0f0;flex-shrink:0;">
+    <button onclick="window.switchPdpTab('overview')" id="pdptab-overview" class="nx-pdp-tabbtn active" style="flex:1;padding:12px 4px;border:none;background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:#94a3b8;border-bottom:2.5px solid transparent;font-family:inherit;">Overview</button>
+    <button onclick="window.switchPdpTab('sales')" id="pdptab-sales" class="nx-pdp-tabbtn" style="flex:1;padding:12px 4px;border:none;background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:#94a3b8;border-bottom:2.5px solid transparent;font-family:inherit;">Sales</button>
+    <button onclick="window.switchPdpTab('buyers')" id="pdptab-buyers" class="nx-pdp-tabbtn" style="flex:1;padding:12px 4px;border:none;background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:#94a3b8;border-bottom:2.5px solid transparent;font-family:inherit;">Buyers</button>
+    <button onclick="window.switchPdpTab('insights')" id="pdptab-insights" class="nx-pdp-tabbtn" style="flex:1;padding:12px 4px;border:none;background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:#94a3b8;border-bottom:2.5px solid transparent;font-family:inherit;">Insights</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));" id="pdp-tab-content"></div>
+</div>
+
+<script>
+(function(){
+  function nxFmt(n){ try{ return window.formatCurrency ? window.formatCurrency(Number(n||0),'INR') : ('₹'+Math.round(Number(n||0)).toLocaleString('en-IN')); }catch(e){ return '₹'+Math.round(Number(n||0)); } }
+  function nxEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function nxSetText(id,v){ var el=document.getElementById(id); if(el) el.textContent = v; }
+  function nxSetHTML(id,v){ var el=document.getElementById(id); if(el) el.innerHTML = v; }
+
+  /* ═══════════════════ FEATURE 1 — ADVANCED GLOBAL SEARCH ═══════════════════ */
+
+  var NX_TABS = [
+    {label:'Dashboard',   sub:'Overview & business health',  tab:'dashboard'},
+    {label:'Inventory',   sub:'Products & stock',            tab:'inventory'},
+    {label:'Clients',     sub:'Customer directory',          tab:'clients'},
+    {label:'Records',     sub:'All invoices',                tab:'records'},
+    {label:'Daybook',     sub:'Cash inflow / outflow',        tab:'daybook'},
+    {label:'Expenses',    sub:'Business expenses',            tab:'expenses'},
+    {label:'Services',    sub:'Service items',                tab:'services'},
+    {label:'Purchase Orders', sub:'Vendor purchase orders',   tab:'purchase-orders'},
+    {label:'Appointments', sub:'Scheduled appointments',      tab:'appointments'},
+    {label:'GST Filing Center', sub:'GST returns & filing',   tab:'gst'},
+    {label:'AI Report',   sub:'AI generated business report', tab:'ai-report'},
+    {label:'Multi-Branch', sub:'Manage branches',             tab:'branches'},
+    {label:'Employees',   sub:'Staff & permissions',          tab:'employees'},
+    {label:'Settings',    sub:'App configuration',            tab:'settings'}
+  ];
+
+  var NX_SETTINGS = [
+    {label:'Business Profile',   sub:'Name, logo, address', modal:'profile'},
+    {label:'Invoice Display',    sub:'GST inclusive/exclusive', modal:'invoice-display'},
+    {label:'Invoice & PDF Templates', sub:'Templates & footer', modal:'invoice-pdf'},
+    {label:'Invoice Numbering',  sub:'Prefix & numbering scheme', modal:'inv-numbering'},
+    {label:'GST Calc Method',    sub:'GST calculation method', modal:'gst-calc'},
+    {label:'Visual Branding',    sub:'Colors & branding',    modal:'branding'},
+    {label:'Bank Configuration', sub:'Payout & UPI details', modal:'bank'},
+    {label:'Security & PIN',     sub:'Auth and access locks', modal:'security'},
+    {label:'Keyboard Hotkeys',   sub:'Shortcuts',            modal:'hotkeys'},
+    {label:'Google Drive Backup', sub:'Cloud backup',        modal:'gdrive-backup'},
+    {label:'Google Sheets Sync', sub:'Sync data to Sheets',  modal:'sheets-sync'}
+  ];
+
+  var NX_ACTIONS = [
+    {label:'+ Add New Client',  sub:'Create a client profile', fn:function(){ window.openClientDrawer && window.openClientDrawer(null,true); }},
+    {label:'+ Add New Product', sub:'Add to inventory',        fn:function(){ window.openProductDrawer && window.openProductDrawer(null); }},
+    {label:'+ Create New Invoice', sub:'Bill a client',        fn:function(){ window.switchTab && window.switchTab('invoice'); }},
+    {label:'+ Add Expense',     sub:'Log a business expense',  fn:function(){ window.switchTab && window.switchTab('expenses'); }},
+    {label:'Download Backup',   sub:'Save a local backup now', fn:function(){ window.downloadLocalBackup && window.downloadLocalBackup(); }}
+  ];
+
+  function nxIconWrap(bg, svg){ return '<div class="nx-gs-icon" style="background:'+bg+';">'+svg+'</div>'; }
+  var ICON_NAV      = nxIconWrap('#eef2ff','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>');
+  var ICON_SETTINGS = nxIconWrap('#f1f5f9','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>');
+  var ICON_ACTION   = nxIconWrap('#ecfdf5','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>');
+  var ICON_CLIENT   = nxIconWrap('#e7f4f6','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>');
+  var ICON_PRODUCT  = nxIconWrap('var(--op-light)','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--op)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>');
+  var ICON_INVOICE  = nxIconWrap('#fff7ed','<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c2410c" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>');
+
+  function nxRow(icon, label, sub, onclickJs){
+    return '<div class="nx-gs-row" onclick="'+onclickJs+'">'+icon+
+      '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13.5px;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nxEsc(label)+'</div>'+
+      (sub?'<div style="font-size:11.5px;color:#94a3b8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nxEsc(sub)+'</div>':'')+'</div>'+
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg></div>';
+  }
+
+  window._nxActionRegistry = window._nxActionRegistry || {};
+  var nxActionSeq = 0;
+  function nxRegisterAction(fn){ var id = 'a'+(nxActionSeq++); window._nxActionRegistry[id] = fn; return id; }
+  window._nxRunAction = function(id){ var fn = window._nxActionRegistry[id]; window.closeGlobalSearch && window.closeGlobalSearch(); if(fn) setTimeout(fn, 320); };
+
+  window.openGlobalSearch = function(){
+    var page = document.getElementById('global-search-page');
+    if(!page) return;
+    page.style.display = 'flex';
+    window._markFullscreenPageOpen && window._markFullscreenPageOpen('global-search-page');
+    void page.offsetHeight;
+    page.classList.add('nx-open');
+    var inp = document.getElementById('gs-input');
+    if(inp){ inp.value=''; setTimeout(function(){ inp.focus(); }, 260); }
+    window._gsRender('');
+  };
+
+  window.closeGlobalSearch = function(){
+    var page = document.getElementById('global-search-page');
+    if(!page) return;
+    page.classList.remove('nx-open');
+    setTimeout(function(){ page.style.display = 'none'; }, 300);
+    window._markFullscreenPageClosed && window._markFullscreenPageClosed('global-search-page');
+    var inp = document.getElementById('gs-input');
+    if(inp) inp.blur();
+  };
+
+  window._gsRender = function(query){
+    query = (query||'').trim().toLowerCase();
+    var out = '';
+
+    if(!query){
+      out += '<div class="nx-gs-section-title">Quick Actions</div><div class="nx-quick-grid">';
+      NX_ACTIONS.forEach(function(a){
+        var id = nxRegisterAction(a.fn);
+        out += '<div class="nx-quick-card" onclick="window._nxRunAction(\''+id+'\')"><div style="font-weight:700;font-size:12.5px;color:#1e293b;">'+nxEsc(a.label)+'</div><div style="font-size:10.5px;color:#94a3b8;margin-top:3px;">'+nxEsc(a.sub)+'</div></div>';
+      });
+      out += '</div>';
+      out += '<div class="nx-gs-section-title">Go To</div>';
+      NX_TABS.slice(0,6).forEach(function(t){
+        out += nxRow(ICON_NAV, t.label, t.sub, 'window.closeGlobalSearch();setTimeout(function(){window.switchTab&&window.switchTab(\''+t.tab+'\');},320);');
+      });
+      nxSetHTML('gs-results', out);
+      if(typeof lucide!=='undefined') lucide.createIcons();
+      return;
+    }
+
+    var results = { nav:[], settings:[], client:[], product:[], invoice:[], action:[] };
+
+    NX_TABS.forEach(function(t){ if((t.label+' '+t.sub).toLowerCase().indexOf(query)>-1) results.nav.push(t); });
+    NX_SETTINGS.forEach(function(s){ if((s.label+' '+s.sub).toLowerCase().indexOf(query)>-1) results.settings.push(s); });
+    NX_ACTIONS.forEach(function(a){ if((a.label+' '+a.sub).toLowerCase().indexOf(query)>-1) results.action.push(a); });
+
+    var clients = (window.AppState && window.AppState.clients) || [];
+    clients.forEach(function(c){
+      var hay = (c.name+' '+(c.mobile||'')+' '+(c.address||'')).toLowerCase();
+      if(hay.indexOf(query)>-1) results.client.push(c);
+    });
+    var products = (window.AppState && window.AppState.products) || [];
+    products.forEach(function(p){
+      var hay = (p.name+' '+(p.category||'')+' '+(p.hsn||'')).toLowerCase();
+      if(hay.indexOf(query)>-1) results.product.push(p);
+    });
+    var invoices = (window.AppState && window.AppState.invoices) || [];
+    invoices.forEach(function(i){
+      var hay = ((i.id||'')+' '+(i.client&&i.client.name||'')).toLowerCase();
+      if(hay.indexOf(query)>-1 && i.status!=='void') results.invoice.push(i);
+    });
+
+    function cap(arr,n){ return arr.slice(0,n); }
+
+    if(results.client.length){
+      out += '<div class="nx-gs-section-title">Clients</div>';
+      cap(results.client,6).forEach(function(c){
+        out += nxRow(ICON_CLIENT, c.name, c.mobile||c.address||'', 'window.closeGlobalSearch();setTimeout(function(){window.openClientDetailPage&&openClientDetailPage(\''+c.id+'\');},320);');
+      });
+    }
+    if(results.product.length){
+      out += '<div class="nx-gs-section-title">Products</div>';
+      cap(results.product,6).forEach(function(p){
+        out += nxRow(ICON_PRODUCT, p.name, (p.category||'Item')+' • ₹'+p.rate+' • Stock '+(p.stock||0), 'window.closeGlobalSearch();setTimeout(function(){window.openProductDetailPage&&openProductDetailPage(\''+p.id+'\');},320);');
+      });
+    }
+    if(results.invoice.length){
+      out += '<div class="nx-gs-section-title">Invoices</div>';
+      cap(results.invoice,6).forEach(function(i){
+        out += nxRow(ICON_INVOICE, 'Invoice #'+i.id+' • '+(i.client&&i.client.name||''), (i.date||'')+' • '+nxFmt(i.grandTotal), 'window.closeGlobalSearch();setTimeout(function(){window.openInvoiceDetailPage&&openInvoiceDetailPage(\''+i.id+'\');},320);');
+      });
+    }
+    if(results.nav.length){
+      out += '<div class="nx-gs-section-title">Go To</div>';
+      cap(results.nav,6).forEach(function(t){
+        out += nxRow(ICON_NAV, t.label, t.sub, 'window.closeGlobalSearch();setTimeout(function(){window.switchTab&&window.switchTab(\''+t.tab+'\');},320);');
+      });
+    }
+    if(results.settings.length){
+      out += '<div class="nx-gs-section-title">Settings</div>';
+      cap(results.settings,6).forEach(function(s){
+        out += nxRow(ICON_SETTINGS, s.label, s.sub, 'window.closeGlobalSearch();setTimeout(function(){window.switchTab&&window.switchTab(\'settings\');setTimeout(function(){window.openSettingsModal&&openSettingsModal(\''+s.modal+'\');},250);},320);');
+      });
+    }
+    if(results.action.length){
+      out += '<div class="nx-gs-section-title">Actions</div>';
+      cap(results.action,4).forEach(function(a){
+        var id = nxRegisterAction(a.fn);
+        out += nxRow(ICON_ACTION, a.label, a.sub, 'window._nxRunAction(\''+id+'\')');
+      });
+    }
+
+    var total = results.client.length+results.product.length+results.invoice.length+results.nav.length+results.settings.length+results.action.length;
+    if(!total){
+      out = '<div style="text-align:center;padding:48px 16px;">'+
+        '<div style="width:60px;height:60px;background:#f1f5f9;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>'+
+        '<div style="font-weight:700;color:#334155;font-size:14px;">No results for "'+nxEsc(query)+'"</div>'+
+        '<div style="font-size:12.5px;color:#94a3b8;margin-top:4px;">Try a client name, product, invoice # or setting</div></div>';
+    }
+
+    nxSetHTML('gs-results', out);
+    if(typeof lucide!=='undefined') lucide.createIcons();
+  };
+
+  /* ═══════════════════ FEATURE 2 — PRODUCT DETAIL PAGE ═══════════════════ */
+
+  window._pdpProductId = null;
+  window._pdpActiveTab = 'overview';
+
+  function nxProductStats(p){
+    var invoices = (window.AppState && window.AppState.invoices) || [];
+    var finalized = invoices.filter(function(i){ return i.status==='final' && i.status!=='void'; });
+    var lines = []; // {date, clientName, qty, rate, total, invId}
+    finalized.forEach(function(inv){
+      (inv.items||[]).forEach(function(it){
+        if(it.productId===p.id){
+          var qty = Number(it.qty||0);
+          var total = qty * Number(it.rate||0);
+          lines.push({date:inv.date, clientName:(inv.client&&inv.client.name)||'Unknown', qty:qty, rate:Number(it.rate||0), total:total, invId:inv.id});
+        }
+      });
+    });
+    lines.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+
+    var totalQty = lines.reduce(function(s,l){ return s+l.qty; },0);
+    var totalRevenue = lines.reduce(function(s,l){ return s+l.total; },0);
+
+    var buyers = {};
+    lines.forEach(function(l){
+      if(!buyers[l.clientName]) buyers[l.clientName] = {name:l.clientName, qty:0, revenue:0, count:0, lastDate:l.date};
+      buyers[l.clientName].qty += l.qty;
+      buyers[l.clientName].revenue += l.total;
+      buyers[l.clientName].count += 1;
+      if((l.date||'') > (buyers[l.clientName].lastDate||'')) buyers[l.clientName].lastDate = l.date;
+    });
+    var buyerList = Object.keys(buyers).map(function(k){ return buyers[k]; }).sort(function(a,b){ return b.revenue - a.revenue; });
+
+    // Insights: last 30 days vs previous 30 days
+    var now = new Date();
+    function daysAgo(n){ var d = new Date(now); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; }
+    var d30 = daysAgo(30), d60 = daysAgo(60);
+    var qtyLast30 = 0, qtyPrev30 = 0;
+    lines.forEach(function(l){
+      if(!l.date) return;
+      if(l.date >= d30) qtyLast30 += l.qty;
+      else if(l.date >= d60 && l.date < d30) qtyPrev30 += l.qty;
+    });
+    var trendPct = qtyPrev30>0 ? Math.round(((qtyLast30-qtyPrev30)/qtyPrev30)*100) : (qtyLast30>0 ? 100 : 0);
+
+    // overall velocity: units per day since first sale (min 1 day span)
+    var firstDate = lines.length ? lines[lines.length-1].date : null;
+    var spanDays = firstDate ? Math.max(1, Math.round((now - new Date(firstDate))/86400000)) : 1;
+    var velocityPerDay = totalQty / spanDays;
+    var projectedNext30 = Math.round(velocityPerDay * 30);
+    var stock = Number(p.stock||0);
+    var daysOfStockLeft = velocityPerDay > 0.01 ? Math.round(stock / velocityPerDay) : null;
+
+    return {lines:lines, totalQty:totalQty, totalRevenue:totalRevenue, buyerList:buyerList,
+      qtyLast30:qtyLast30, qtyPrev30:qtyPrev30, trendPct:trendPct,
+      velocityPerDay:velocityPerDay, projectedNext30:projectedNext30, daysOfStockLeft:daysOfStockLeft};
+  }
+
+  window.openProductDetailPage = function(id){
+    var p = (window.AppState && window.AppState.products || []).find(function(x){ return x.id===id; });
+    if(!p) return;
+    window._pdpProductId = id;
+
+    var av = document.getElementById('pdp-avatar');
+    if(av){
+      if(p.productImage){ av.innerHTML = '<img src="'+p.productImage+'" style="width:100%;height:100%;object-fit:cover;">'; }
+      else{ av.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';}
+    }
+    nxSetText('pdp-name', p.name);
+    nxSetText('pdp-tag', (p.category||'Item')+' • GST '+(p.gst||0)+'%');
+    nxSetText('pdp-stock-now', p.stock||0);
+
+    var stats = nxProductStats(p);
+    nxSetText('pdp-total-sold', stats.totalQty);
+    nxSetText('pdp-total-revenue', nxFmt(stats.totalRevenue));
+
+    window._pdpEdit = function(){ window.openProductDrawer && window.openProductDrawer(p.id); };
+
+    var page = document.getElementById('product-detail-page');
+    page.style.display = 'flex';
+    window._markFullscreenPageOpen && window._markFullscreenPageOpen('product-detail-page');
+    void page.offsetHeight;
+    page.classList.add('nx-open');
+
+    window.switchPdpTab('overview');
+  };
+
+  window.closeProductDetailPage = function(){
+    var page = document.getElementById('product-detail-page');
+    if(!page) return;
+    page.classList.remove('nx-open');
+    setTimeout(function(){ page.style.display = 'none'; }, 260);
+    window._markFullscreenPageClosed && window._markFullscreenPageClosed('product-detail-page');
+    window._pdpProductId = null;
+  };
+
+  window.switchPdpTab = function(tab){
+    window._pdpActiveTab = tab;
+    ['overview','sales','buyers','insights'].forEach(function(t){
+      var btn = document.getElementById('pdptab-'+t);
+      if(btn) btn.classList.toggle('active', t===tab);
+    });
+    var p = (window.AppState && window.AppState.products || []).find(function(x){ return x.id===window._pdpProductId; });
+    if(!p) return;
+    var stats = nxProductStats(p);
+    var html = '';
+
+    if(tab==='overview'){
+      var margin = (p.cost && p.rate) ? (((p.rate-p.cost)/p.cost)*100).toFixed(0) : null;
+      var lowThresh = p.lowStockAlert||10;
+      var stock = Number(p.stock||0);
+      var isOut = stock<=0, isLow = stock<=lowThresh && !isOut;
+      var stockPct = Math.max(4, Math.min(100, Math.round((stock/(lowThresh*2||20))*100)));
+      var stockColor = isOut?'#ef4444':isLow?'#f59e0b':'#22c55e';
+      html += '<div class="nx-insight-card">'+
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
+          '<span style="font-size:22px;font-weight:800;color:#0f172a;">₹'+p.rate+'</span>'+
+          (margin?'<span style="font-size:11px;font-weight:700;color:#15803d;background:#ecfdf5;padding:3px 9px;border-radius:7px;">↑ '+margin+'% margin</span>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
+          '<span style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:3px 9px;border-radius:7px;">Cost ₹'+(p.cost||0)+'</span>'+
+          '<span style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:3px 9px;border-radius:7px;">GST '+(p.gst||0)+'%</span>'+
+          (p.hsn?'<span style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:3px 9px;border-radius:7px;">HSN '+p.hsn+'</span>':'')+
+          (p.batch?'<span style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:3px 9px;border-radius:7px;">Batch '+p.batch+'</span>':'')+
+          (p.expiry?'<span style="font-size:11px;color:#64748b;background:#f8fafc;border:1px solid #eef1f5;padding:3px 9px;border-radius:7px;">Exp '+p.expiry+'</span>':'')+
+        '</div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+          '<span style="font-size:11.5px;font-weight:700;color:'+(isOut?'#dc2626':isLow?'#d97706':'#16a34a')+';">'+(isOut?'⚠ Out of Stock':isLow?'⚠ Low Stock':'✓ In Stock')+'</span>'+
+          '<span style="font-size:12.5px;font-weight:800;color:#334155;">'+stock+' units</span>'+
+        '</div>'+
+        '<div style="height:6px;background:#eef1f5;border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+stockPct+'%;background:'+stockColor+';border-radius:3px;"></div></div>'+
+      '</div>';
+      if(!stats.lines.length){
+        html += '<div style="text-align:center;padding:30px 16px;color:#94a3b8;font-size:13px;">No sales recorded yet for this product</div>';
+      }
+    }
+    else if(tab==='sales'){
+      if(!stats.lines.length){
+        html = '<div style="text-align:center;padding:40px 16px;color:#94a3b8;font-size:13px;">No sales history yet</div>';
+      } else {
+        stats.lines.slice(0,60).forEach(function(l){
+          html += '<div class="nx-sale-row">'+
+            '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nxEsc(l.clientName)+'</div>'+
+            '<div style="font-size:11px;color:#94a3b8;">'+nxEsc(l.date||'')+' • Qty '+l.qty+' × ₹'+l.rate+'</div></div>'+
+            '<div style="font-weight:800;font-size:13px;color:#0f172a;flex-shrink:0;">'+nxFmt(l.total)+'</div>'+
+          '</div>';
+        });
+      }
+    }
+    else if(tab==='buyers'){
+      if(!stats.buyerList.length){
+        html = '<div style="text-align:center;padding:40px 16px;color:#94a3b8;font-size:13px;">No buyers yet</div>';
+      } else {
+        var medalColors = ['#f59e0b','#94a3b8','#b45309'];
+        stats.buyerList.slice(0,30).forEach(function(b, idx){
+          html += '<div class="nx-buyer-row">'+
+            '<div class="nx-buyer-rank" style="background:'+(idx<3?medalColors[idx]:'#f1f5f9')+';color:'+(idx<3?'#fff':'#64748b')+';">'+(idx+1)+'</div>'+
+            '<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+nxEsc(b.name)+'</div>'+
+            '<div style="font-size:11px;color:#94a3b8;">'+b.qty+' units • '+b.count+' orders • last '+nxEsc(b.lastDate||'')+'</div></div>'+
+            '<div style="font-weight:800;font-size:13px;color:#0f172a;flex-shrink:0;">'+nxFmt(b.revenue)+'</div>'+
+          '</div>';
+        });
+      }
+    }
+    else if(tab==='insights'){
+      var trendUp = stats.trendPct >= 0;
+      html += '<div class="nx-insight-card">'+
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Sales Trend (30 days)</div>'+
+        '<div style="display:flex;align-items:baseline;gap:8px;">'+
+          '<span style="font-size:24px;font-weight:800;color:#0f172a;">'+stats.qtyLast30+'</span><span style="font-size:12px;color:#94a3b8;">units this month</span>'+
+        '</div>'+
+        '<div style="margin-top:4px;font-size:12.5px;font-weight:700;color:'+(trendUp?'#16a34a':'#dc2626')+';">'+(trendUp?'▲':'▼')+' '+Math.abs(stats.trendPct)+'% vs previous 30 days ('+stats.qtyPrev30+' units)</div>'+
+      '</div>'+
+      '<div class="nx-insight-card">'+
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Next 30-Day Projection</div>'+
+        '<div style="font-size:22px;font-weight:800;color:#0f172a;">≈ '+stats.projectedNext30+' units</div>'+
+        '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">Based on average daily sales velocity of '+stats.velocityPerDay.toFixed(2)+' units/day</div>'+
+      '</div>'+
+      '<div class="nx-insight-card">'+
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Stock Runway</div>'+
+        (stats.daysOfStockLeft!=null ?
+          ('<div style="font-size:22px;font-weight:800;color:'+(stats.daysOfStockLeft<14?'#dc2626':'#0f172a')+';">'+stats.daysOfStockLeft+' days</div>'+
+           '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">of stock left at current sales pace</div>'+
+           (stats.daysOfStockLeft<14 ? '<div style="margin-top:10px;background:#fef2f2;border:1px solid #fee2e2;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:#dc2626;">⚠ Reorder soon — running low</div>' : '<div style="margin-top:10px;background:#ecfdf5;border:1px solid #d1fae5;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:#15803d;">✓ Stock level healthy</div>'))
+          : '<div style="font-size:13px;color:#94a3b8;">Not enough sales history yet to estimate</div>') +
+      '</div>'+
+      '<div class="nx-insight-card">'+
+        '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">All-Time Performance</div>'+
+        '<div style="display:flex;gap:16px;">'+
+          '<div><div style="font-size:18px;font-weight:800;color:#0f172a;">'+stats.totalQty+'</div><div style="font-size:11px;color:#94a3b8;">units sold</div></div>'+
+          '<div><div style="font-size:18px;font-weight:800;color:#0f172a;">'+nxFmt(stats.totalRevenue)+'</div><div style="font-size:11px;color:#94a3b8;">revenue</div></div>'+
+          '<div><div style="font-size:18px;font-weight:800;color:#0f172a;">'+stats.buyerList.length+'</div><div style="font-size:11px;color:#94a3b8;">buyers</div></div>'+
+        '</div>'+
+      '</div>';
+    }
+
+    nxSetHTML('pdp-tab-content', html);
+    if(typeof lucide!=='undefined') lucide.createIcons();
+  };
+})();
+</script>
 
 </body>
 </html>
