@@ -3623,7 +3623,14 @@ body.fullscreen-page-open #dash-fab-row{
       </div>
       <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
         <div class="font-bold text-amber-800 text-sm mb-1">⚠️ Note</div>
-        <p class="text-xs text-amber-700">Employee will login using the "Employee Login" toggle on the login screen. The email/password here is stored locally. For full Firebase Auth integration, use Firebase Console to create the user account.</p>
+        <p class="text-xs text-amber-700">Employee will login using the "Employee Login" toggle on the login screen. Passwords are stored as a secure one-way hash, not in plain text.</p>
+      </div>
+      <!-- Employee Login Link — solves cross-device login: employee opens this link on
+           THEIR OWN phone and the business is auto-selected, no manual search needed -->
+      <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+        <div class="font-bold text-emerald-800 text-sm mb-1">🔗 Employee Login Link</div>
+        <p class="text-xs text-emerald-700 mb-2">Send this link to the employee (WhatsApp/SMS). Opening it on their own phone auto-selects your business, so they only need to enter their email & password — no searching required.</p>
+        <button type="button" onclick="window.shareEmployeeLoginLink && window.shareEmployeeLoginLink()" class="btn w-full justify-center py-2 text-xs font-bold" style="background:#059669;color:white;border-color:#059669;"><i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Employee Login Link</button>
       </div>
       <!-- Forgot password request -->
       <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
@@ -5567,7 +5574,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const defaultAppId = 'dev-ayurveda-pro-auth';
         const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
@@ -5598,6 +5605,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window._appId = appId;
             window._fsDoc = doc;
             window._fsSetDoc = setDoc;
+            window._fsGetDoc = getDoc;
             window._sendPasswordResetEmail = (email) => sendPasswordResetEmail(auth, email);
             window._signInForPinReset = (email, pw) => signInWithEmailAndPassword(auth, email, pw);
             window._signInAnonymously = () => signInAnonymously(auth);
@@ -6731,15 +6739,41 @@ document.addEventListener('DOMContentLoaded', function() {
             else if(mode === 'signup') { showSignup && showSignup(); }
         }
 
+        // Map raw Firebase Auth error codes to clear, actionable Hindi+English messages
+        // so the user always knows EXACTLY why login failed instead of a generic error.
+        window._friendlyAuthError = function(error) {
+            var code = error && error.code || '';
+            var map = {
+                'auth/invalid-credential': 'Email ya password galat hai. Kripya dobara check karein. (Wrong email or password)',
+                'auth/wrong-password': 'Password galat hai. (Incorrect password)',
+                'auth/user-not-found': 'Is email se koi account nahi mila. Kya aapne Sign Up kiya tha? (No account found with this email)',
+                'auth/invalid-email': 'Email format sahi nahi hai. (Invalid email address)',
+                'auth/user-disabled': 'Yeh account disable kar diya gaya hai. Support se sampark karein. (This account has been disabled)',
+                'auth/too-many-requests': 'Bahut zyada galat attempts ho gaye hain. Kuch der baad try karein ya password reset karein. (Too many failed attempts — try again later)',
+                'auth/network-request-failed': 'Internet connection check karein aur dobara try karein. (Network error — check your internet connection)',
+                'auth/unauthorized-domain': 'Domain authorize nahi hai! Firebase Console > Authentication > Settings > Authorized Domains mein yeh URL add karein.',
+                'auth/missing-password': 'Password daalna zaruri hai. (Password is required)'
+            };
+            return map[code] || (error && error.message) || 'Login fail ho gaya. Dobara try karein.';
+        };
+
         window.handleLogin = async function(e) {
             e.preventDefault();
             const btn = document.getElementById('login-btn'); if(btn) btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons();
+            var emailEl = document.getElementById('login-email');
+            var pwEl = document.getElementById('login-password');
+            var email = (emailEl && emailEl.value || '').trim().toLowerCase();
+            var password = pwEl && pwEl.value || '';
+            if(!email || !password) {
+                window.showToast(!email ? "Email daalein" : "Password daalein", "error");
+                if(btn){ btn.innerHTML = 'Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+                return;
+            }
             try { 
-                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); 
+                await signInWithEmailAndPassword(auth, email, password); 
             } catch (error) { 
-                let msg = error.message;
-                if(error.code === 'auth/unauthorized-domain') { msg = "Domain not authorized! You must add this URL to your Firebase Console > Authentication > Settings > Authorized Domains."; }
-                window.showToast("Login failed: " + msg, "error"); 
+                console.warn('Login error code:', error && error.code, error && error.message);
+                window.showToast(window._friendlyAuthError(error), "error"); 
             }
             finally { if(btn) btn.innerHTML = 'Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
         }
@@ -6787,9 +6821,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 window.showToast("Account Created Successfully!");
             } catch (error) { 
-                let msg = error.message;
-                if(error.code === 'auth/unauthorized-domain') { msg = "Domain not authorized! Add this domain to Firebase Console > Authentication > Settings > Authorized Domains."; }
-                window.showToast("Signup failed: " + msg, "error"); 
+                console.warn('Signup error code:', error && error.code, error && error.message);
+                window.showToast(window._friendlyAuthError(error), "error"); 
             }
             finally { if(btn) btn.innerHTML = 'Create Account <i data-lucide="user-plus" class="w-4 h-4"></i>'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
         }
@@ -13705,7 +13738,102 @@ window.setAuthMode=function(mode){
     }
 };
 
+// ── SECURITY: password hashing (SHA-256 via Web Crypto) ──────────────────────
+// Employee passwords used to be stored in plain text. From now on we hash them
+// before ever writing to localStorage or Firestore. Old plaintext passwords
+// already saved are auto-upgraded to a hash the next time they're used.
+window._sha256 = async function(str) {
+    try {
+        var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(str)));
+        return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    } catch(e) { return str; } // extremely old browser fallback
+};
+window._looksHashed = function(pw) { return typeof pw === 'string' && /^[a-f0-9]{64}$/i.test(pw); };
+window._normEmail = function(e) { return String(e || '').trim().toLowerCase(); };
+
+// ── CLOUD SYNC: employee credentials also saved to Firestore (not just this
+// device's localStorage) so an employee can log in from THEIR OWN phone, not
+// only from the device the owner used to create the account. ─────────────────
+window._syncEmployeesToCloud = async function(uid, emps) {
+    try {
+        if(!window._db || !window._fsDoc || !window._fsSetDoc || !uid) return;
+        var ref = window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'config', 'employees');
+        await window._fsSetDoc(ref, { list: emps || [], updatedAt: new Date().toISOString() });
+    } catch(e) { console.warn('Employee cloud sync skipped (offline?):', e && e.message); }
+};
+window._syncBizDirectory = async function(uid, businessName) {
+    try {
+        if(!window._db || !window._fsDoc || !window._fsSetDoc || !uid || !businessName) return;
+        var ref = window._fsDoc(window._db, 'artifacts', window._appId, 'publicBizDirectory', uid);
+        await window._fsSetDoc(ref, { businessName: businessName, updatedAt: new Date().toISOString() });
+    } catch(e) { console.warn('Business directory sync skipped:', e && e.message); }
+};
+// Fetch the employees list for a given business from the cloud (used when the
+// local device has no cached copy — e.g. employee's own phone).
+window._fetchEmployeesFromCloud = async function(uid) {
+    try {
+        if(!uid) return null;
+        if(!window._auth || !window._auth.currentUser) {
+            if(window._signInAnonymously) { try { await window._signInAnonymously(); } catch(e){} }
+        }
+        if(!window._db || !window._fsDoc || !window._fsGetDoc) return null;
+        var ref = window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'config', 'employees');
+        var snap = await window._fsGetDoc(ref);
+        if(snap && snap.exists && snap.exists()) {
+            var data = snap.data();
+            return (data && data.list) || [];
+        }
+        return null;
+    } catch(e) { console.warn('Employee cloud fetch failed:', e && e.message); return null; }
+};
+
+// ── EMPLOYEE LOGIN LINK ────────────────────────────────────────────────────
+// Generates a link like  <app-url>?emplogin=<uid>&biz=<name>  that, when opened,
+// auto-selects the business on the login screen so the employee never has to
+// rely on the (device-local) business search box — fixing the #1 cause of
+// "sahi password dene par bhi login nahi hota" when an employee uses their own phone.
+window.shareEmployeeLoginLink = function() {
+    var uid = window.AppState && window.AppState.user && window.AppState.user.uid;
+    if(!uid){ window.showToast && window.showToast('Pehle login karein', 'error'); return; }
+    var bizName = (window.AppState.settings && window.AppState.settings.businessName) || 'My Business';
+    var baseUrl = window.location.origin + window.location.pathname;
+    var link = baseUrl + '?emplogin=' + encodeURIComponent(uid) + '&biz=' + encodeURIComponent(bizName);
+    var msg = '🔑 *' + bizName + '* — Employee Login\n\nApna staff account access karne ke liye yeh link kholein:\n\n' + link + '\n\nApna email aur password daal kar sign in karein.';
+    if(navigator.share){
+        navigator.share({ title: bizName + ' — Employee Login', text: msg }).catch(function(){});
+    } else if(navigator.clipboard){
+        navigator.clipboard.writeText(link).then(function(){
+            window.showToast && window.showToast('Link copied! WhatsApp/SMS se employee ko bhej dein.');
+        }).catch(function(){
+            window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+        });
+    } else {
+        window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+};
+
 window._selectedEmpBizUid=null;
+
+// Bootstrap: if page opened via an Employee Login Link, auto-select business +
+// switch straight to the Employee Login tab so the user just types email/password.
+// (Runs AFTER the null default above so it doesn't get overwritten.)
+(function(){
+    try{
+        var params = new URLSearchParams(window.location.search);
+        var empUid = params.get('emplogin');
+        var bizName = params.get('biz');
+        if(!empUid) return;
+        window._selectedEmpBizUid = empUid;
+        var apply = function(){
+            if(window.setAuthMode) window.setAuthMode('employee');
+            var bizInp = document.getElementById('emp-login-biz');
+            if(bizInp){ bizInp.value = bizName || 'Your Business'; bizInp.setAttribute('readonly','readonly'); }
+        };
+        if(document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(apply, 300);
+        else document.addEventListener('DOMContentLoaded', function(){ setTimeout(apply, 300); });
+    }catch(e){ console.warn('Employee login link bootstrap failed:', e); }
+})();
+
 window.searchBusinessForEmployee=function(query){
     var sugg=document.getElementById('emp-biz-suggestions');
     if(!sugg||!query||query.length<2){if(sugg)sugg.classList.add('hidden');return;}
@@ -13729,23 +13857,107 @@ window.selectEmpBiz=function(uid,name){
     var sugg=document.getElementById('emp-biz-suggestions');if(sugg)sugg.classList.add('hidden');
 };
 
-window.handleEmployeeLogin=function(e){
+// ── LOGIN ATTEMPT LOCKOUT (basic brute-force protection, client-side) ────────
+window._empLoginLockCheck = function(key) {
+    var MAX_ATTEMPTS = 5, LOCK_MINUTES = 5;
+    var raw = null; try { raw = JSON.parse(localStorage.getItem('ayur_emp_login_attempts_'+key) || 'null'); } catch(e){}
+    if(!raw) return { locked:false };
+    if(raw.count >= MAX_ATTEMPTS) {
+        var elapsedMin = (Date.now() - raw.last) / 60000;
+        if(elapsedMin < LOCK_MINUTES) return { locked:true, minutesLeft: Math.ceil(LOCK_MINUTES - elapsedMin) };
+        localStorage.removeItem('ayur_emp_login_attempts_'+key); // lock expired, reset
+    }
+    return { locked:false };
+};
+window._empLoginRecordFail = function(key) {
+    var raw = null; try { raw = JSON.parse(localStorage.getItem('ayur_emp_login_attempts_'+key) || 'null'); } catch(e){}
+    var count = (raw && raw.count) ? raw.count + 1 : 1;
+    localStorage.setItem('ayur_emp_login_attempts_'+key, JSON.stringify({ count: count, last: Date.now() }));
+    return count;
+};
+window._empLoginClear = function(key) { try { localStorage.removeItem('ayur_emp_login_attempts_'+key); } catch(e){} };
+
+window.handleEmployeeLogin=async function(e){
     e.preventDefault();
     var bizUid=window._selectedEmpBizUid;
-    var email=(document.getElementById('emp-login-email')||{}).value||'';
+    var email=window._normEmail((document.getElementById('emp-login-email')||{}).value||'');
     var password=(document.getElementById('emp-login-password')||{}).value||'';
     var errEl=document.getElementById('emp-login-error');
     var btn=document.getElementById('emp-login-btn');
-    if(!bizUid){if(errEl){errEl.textContent='Pehle business select karo';errEl.classList.remove('hidden');}return;}
-    if(!email||!password){if(errEl){errEl.textContent='Email aur password zaruri hai';errEl.classList.remove('hidden');}return;}
+    var showErr=function(msg){ if(errEl){errEl.textContent=msg;errEl.classList.remove('hidden');} if(btn)btn.innerHTML='<i data-lucide="log-in" class="w-4 h-4"></i> Sign In as Employee'; if(typeof lucide!=='undefined')lucide.createIcons(); };
+    if(errEl) errEl.classList.add('hidden');
+
+    if(!bizUid){ showErr('Pehle apna business search karke list se select karein (business select nahi hua)'); return; }
+    if(!email){ showErr('Email daalna zaruri hai'); return; }
+    if(!password){ showErr('Password daalna zaruri hai'); return; }
+
+    var lockKey = bizUid+'|'+email;
+    var lock = window._empLoginLockCheck(lockKey);
+    if(lock.locked){ showErr('Bahut zyada galat attempts. Kripya '+lock.minutesLeft+' minute baad try karein, ya owner se password reset karwayein.'); return; }
+
     if(btn)btn.innerHTML='<i data-lucide="loader" class="w-4 h-4"></i> Signing in...';
-    var emps=[];try{emps=JSON.parse(localStorage.getItem('ayur_employees_'+bizUid)||'[]');}catch(ex){}
-    var emp=emps.find(function(e2){return e2.email===email&&e2.password===password&&e2.active!==false;});
-    if(!emp){
-        if(errEl){errEl.textContent='Invalid credentials ya account inactive hai';errEl.classList.remove('hidden');}
-        if(btn)btn.innerHTML='<i data-lucide="log-in" class="w-4 h-4"></i> Sign In as Employee';
+
+    // 1) Try local cache first (fast, works offline, works on owner's own device)
+    var emps=[]; try{ emps=JSON.parse(localStorage.getItem('ayur_employees_'+bizUid)||'[]'); }catch(ex){}
+
+    // 2) If not found locally (very common case: employee is on THEIR OWN phone,
+    //    which never had this business's data cached) — fetch fresh from cloud.
+    var foundLocally = emps.some(function(e2){ return window._normEmail(e2.email)===email; });
+    if(!foundLocally){
+        var cloudEmps = await window._fetchEmployeesFromCloud(bizUid);
+        if(cloudEmps && cloudEmps.length){
+            emps = cloudEmps;
+            try{ localStorage.setItem('ayur_employees_'+bizUid, JSON.stringify(cloudEmps)); }catch(ex){} // cache for next time (offline use)
+        }
+    }
+
+    if(!emps.length){
+        showErr('Is business ke liye koi employee account nahi mila. Owner se apna account banwayein, ya internet connection check karein.');
         return;
     }
+
+    var emp = emps.find(function(e2){ return window._normEmail(e2.email)===email; });
+    if(!emp){
+        showErr('Is email se koi employee account nahi mila is business mein. Email dobara check karein.');
+        return;
+    }
+    if(emp.active===false){
+        showErr('Yeh account owner ne deactivate kar diya hai. Owner se sampark karein.');
+        return;
+    }
+
+    // Password check — supports both new hashed passwords and old plaintext
+    // passwords saved before this update (auto-upgraded to a hash on success).
+    var passwordOk = false;
+    if(window._looksHashed(emp.password)){
+        var enteredHash = await window._sha256(password);
+        passwordOk = (enteredHash === emp.password);
+    } else {
+        passwordOk = (password === emp.password); // legacy plaintext record
+    }
+
+    if(!passwordOk){
+        var failCount = window._empLoginRecordFail(lockKey);
+        var remaining = 5 - failCount;
+        showErr('Password galat hai.' + (remaining>0 ? (' ('+remaining+' attempt(s) left)') : ' Ab kuch der ke liye account lock ho gaya hai.'));
+        return;
+    }
+
+    // Success — clear lockout
+    window._empLoginClear(lockKey);
+
+    // Auto-upgrade legacy plaintext password to a hash now that we've verified it.
+    // Written directly against bizUid (not via window.saveEmployees, since AppState.user
+    // isn't the employee's owner account yet at this point in the login flow).
+    if(!window._looksHashed(emp.password)){
+        try{
+            var upgradedHash = await window._sha256(password);
+            var allEmps = emps.map(function(e2){ return (window._normEmail(e2.email)===email) ? Object.assign({}, e2, {password: upgradedHash}) : e2; });
+            localStorage.setItem('ayur_employees_'+bizUid, JSON.stringify(allEmps));
+            window._syncEmployeesToCloud(bizUid, allEmps);
+        }catch(ex){}
+    }
+
     // Save session to localStorage for persistence across reloads
     var session={empId:emp.id,bizUid:bizUid,email:email,loginAt:new Date().toISOString()};
     localStorage.setItem('ayur_emp_session',JSON.stringify(session));
@@ -14012,12 +14224,24 @@ window._submitPermRequest=function(btn){
 
 window._editEmpId=null;window._currentEmpPermissions={};
 window.loadEmployees=function(){var uid=window.AppState&&window.AppState.user&&window.AppState.user.uid;if(!uid)return[];try{return JSON.parse(localStorage.getItem('ayur_employees_'+uid)||'[]');}catch(e){return[];}};
-window.saveEmployees=function(emps){
+window.saveEmployees=async function(emps){
     var uid=window.AppState&&window.AppState.user&&window.AppState.user.uid;if(!uid)return;
+    emps = emps || [];
+    // Normalize email + hash any plaintext password before persisting anywhere
+    for(var i=0;i<emps.length;i++){
+        if(emps[i] && emps[i].email) emps[i].email = window._normEmail(emps[i].email);
+        if(emps[i] && emps[i].password && !window._looksHashed(emps[i].password)){
+            emps[i].password = await window._sha256(emps[i].password);
+        }
+    }
     localStorage.setItem('ayur_employees_'+uid,JSON.stringify(emps));
     var s=window.AppState&&window.AppState.settings||{};
     localStorage.setItem('ayur_settings_cache_'+uid,JSON.stringify({businessName:s.businessName,gstin:s.gstin}));
     if(window.AppState&&window.AppState.user&&window.AppState.user.email)localStorage.setItem('ayur_owner_email_'+uid,window.AppState.user.email);
+    // Push to Firestore too — this is what makes login work from the employee's
+    // own device, not just the owner's browser.
+    window._syncEmployeesToCloud(uid, emps);
+    window._syncBizDirectory(uid, s.businessName||'');
 };
 
 window.renderEmployees=function(){
@@ -14076,11 +14300,15 @@ window.openEmployeeDrawer=function(id){
         if(emp){
             if(te)te.textContent='Edit Employee';if(se)se.textContent='#'+id.slice(-6).toUpperCase();if(db)db.classList.remove('hidden');
             var sv=function(fid,v){var el=document.getElementById(fid);if(el)el.value=v||'';};
-            sv('emp-name',emp.name);sv('emp-phone',emp.phone);sv('emp-designation',emp.designation);sv('emp-salary-input',emp.salary);sv('emp-join-date',emp.joinDate);sv('emp-address',emp.address);sv('emp-notes',emp.notes);sv('emp-email',emp.email);sv('emp-password',emp.password);
+            sv('emp-name',emp.name);sv('emp-phone',emp.phone);sv('emp-designation',emp.designation);sv('emp-salary-input',emp.salary);sv('emp-join-date',emp.joinDate);sv('emp-address',emp.address);sv('emp-notes',emp.notes);sv('emp-email',emp.email);
+            // Password is never shown/prefilled (it's stored as a one-way hash now, not readable).
+            // Leave the field blank; a blank field on save means "keep the existing password".
+            var pwEl=document.getElementById('emp-password');
+            if(pwEl){pwEl.value='';pwEl.placeholder='Leave blank to keep current password';}
             if(de)de.value=emp.dept||'billing';if(ae)ae.checked=emp.active!==false;
             window._currentEmpPermissions=Object.assign({},emp.permissions||{});
         }
-    }else{if(te)te.textContent='Add Employee';if(se)se.textContent='New staff member';if(db)db.classList.add('hidden');Object.keys(window.EMP_PERMISSIONS).forEach(function(k){window._currentEmpPermissions[k]=window.EMP_PERMISSIONS[k].defaultOn;});}
+    }else{if(te)te.textContent='Add Employee';if(se)se.textContent='New staff member';if(db)db.classList.add('hidden');var pwEl2=document.getElementById('emp-password');if(pwEl2)pwEl2.placeholder='Min. 6 characters';Object.keys(window.EMP_PERMISSIONS).forEach(function(k){window._currentEmpPermissions[k]=window.EMP_PERMISSIONS[k].defaultOn;});}
     window.switchEmpTab('info');
     var bg=document.getElementById('emp-drawer-bg');if(bg)bg.classList.add('open');
     setTimeout(function(){var d=document.getElementById('emp-drawer');if(d)d.classList.add('open');},10);
@@ -14115,18 +14343,27 @@ window.applyRoleTemplate=function(tpl){
     var nm={admin:'👑 Admin',billing:'🧾 Billing',receptionist:'📋 Receptionist',viewer:'👁 Viewer'};
     window.showToast&&window.showToast((nm[tpl]||tpl)+' applied!','info');
 };
-window.saveEmployee=function(){
+window.saveEmployee=async function(){
     var name=(document.getElementById('emp-name')||{}).value||'';
-    var email=(document.getElementById('emp-email')||{}).value||'';
+    var email=window._normEmail((document.getElementById('emp-email')||{}).value||'');
     if(!name){window.showToast&&window.showToast('Name required','error');return;}
     if(!email){window.showToast&&window.showToast('Login email required','warning');window.switchEmpTab('login');return;}
     var emps=window.loadEmployees();
-    var dup=emps.find(function(e){return e.email===email&&e.id!==window._editEmpId;});
-    if(dup){window.showToast&&window.showToast('Email already in use','error');return;}
-    var emp={id:window._editEmpId||Date.now().toString(),name:name,phone:(document.getElementById('emp-phone')||{}).value||'',dept:(document.getElementById('emp-dept')||{}).value||'billing',designation:(document.getElementById('emp-designation')||{}).value||'',salary:Number((document.getElementById('emp-salary-input')||{}).value||0),joinDate:(document.getElementById('emp-join-date')||{}).value||'',address:(document.getElementById('emp-address')||{}).value||'',notes:(document.getElementById('emp-notes')||{}).value||'',email:email,password:(document.getElementById('emp-password')||{}).value||'',active:(document.getElementById('emp-active')||{checked:true}).checked,permissions:Object.assign({},window._currentEmpPermissions)};
-    if(!window._editEmpId){emps.push(emp);window.showToast&&window.showToast('Employee added! ✅');}
-    else{emps=emps.map(function(e){return e.id===emp.id?Object.assign(e,emp):e;});window.showToast&&window.showToast('Updated! ✅');}
-    window.saveEmployees(emps);window.closeEmployeeDrawer();window.renderEmployees();
+    var dup=emps.find(function(e){return window._normEmail(e.email)===email&&e.id!==window._editEmpId;});
+    if(dup){window.showToast&&window.showToast('Yeh email pehle se ek dusre employee ke liye use ho rahi hai (Email already in use)','error');return;}
+    var pwField=(document.getElementById('emp-password')||{}).value||'';
+    var existingEmp = window._editEmpId ? emps.find(function(e){return e.id===window._editEmpId;}) : null;
+    // Blank password field while editing = keep the existing (hashed) password unchanged.
+    // Any non-blank value is a brand-new plaintext password to be hashed on save.
+    var passwordToStore = pwField ? pwField : (existingEmp ? existingEmp.password : '');
+    var emp={id:window._editEmpId||Date.now().toString(),name:name,phone:(document.getElementById('emp-phone')||{}).value||'',dept:(document.getElementById('emp-dept')||{}).value||'billing',designation:(document.getElementById('emp-designation')||{}).value||'',salary:Number((document.getElementById('emp-salary-input')||{}).value||0),joinDate:(document.getElementById('emp-join-date')||{}).value||'',address:(document.getElementById('emp-address')||{}).value||'',notes:(document.getElementById('emp-notes')||{}).value||'',email:email,password:passwordToStore,active:(document.getElementById('emp-active')||{checked:true}).checked,permissions:Object.assign({},window._currentEmpPermissions)};
+    if(!emp.password){window.showToast&&window.showToast('Login password zaruri hai (min 6 characters)','warning');window.switchEmpTab('login');return;}
+    if(pwField && pwField.length<6){window.showToast&&window.showToast('Password kam se kam 6 characters ka hona chahiye','warning');window.switchEmpTab('login');return;}
+    if(!window._editEmpId){emps.push(emp);}
+    else{emps=emps.map(function(e){return e.id===emp.id?Object.assign(e,emp):e;});}
+    await window.saveEmployees(emps);
+    window.showToast&&window.showToast(window._editEmpId?'Updated! ✅':'Employee added! ✅');
+    window.closeEmployeeDrawer();window.renderEmployees();
 };
 window.deleteEmployee=function(){if(!window._editEmpId)return;if(!confirm('Remove this employee?'))return;var emps=window.loadEmployees().filter(function(e){return e.id!==window._editEmpId;});window.saveEmployees(emps);window.closeEmployeeDrawer();window.renderEmployees();window.showToast&&window.showToast('Employee removed');};
 
@@ -14169,11 +14406,15 @@ window.saveRoleFromModal=function(){
     window.saveEmployees(emps);document.getElementById('emp-role-modal').classList.remove('open');
     window.renderEmployees();window.showToast&&window.showToast('Permissions saved! ✅');
 };
-window.handlePwResetRequest=function(email){
+window.handlePwResetRequest=async function(email){
     var uid=window.AppState&&window.AppState.user&&window.AppState.user.uid;
     var newPw=prompt('New password for '+email+' (min 6 chars):');
     if(!newPw||newPw.length<6){window.showToast&&window.showToast('Too short','error');return;}
-    var emps=window.loadEmployees().map(function(e){return e.email===email?Object.assign(e,{password:newPw}):e;});window.saveEmployees(emps);
+    var normEmail=window._normEmail(email);
+    var emps=window.loadEmployees().map(function(e){return window._normEmail(e.email)===normEmail?Object.assign(e,{password:newPw}):e;});
+    await window.saveEmployees(emps);
+    // Also clear any login lockout so the employee can try again immediately
+    try{ localStorage.removeItem('ayur_emp_login_attempts_'+uid+'|'+normEmail); }catch(ex){}
     var reqs=JSON.parse(localStorage.getItem('ayur_pw_requests_'+uid)||'[]').map(function(r){return r.email===email?Object.assign(r,{status:'resolved'}):r;});localStorage.setItem('ayur_pw_requests_'+uid,JSON.stringify(reqs));
     window.showToast&&window.showToast('Password reset for '+email+' ✅');window.renderEmployees();
 };
