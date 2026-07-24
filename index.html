@@ -3273,8 +3273,8 @@ body.fullscreen-page-open #dash-fab-row{
       <div class="flex items-center gap-3">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/><path d="M12 12v4m0-4-2 2m2-2 2 2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/></svg>
         <div class="flex-1">
-          <div class="font-bold text-green-800 text-sm">All data synced</div>
-          <div class="text-xs text-green-600" id="backup-last-time">Last backup: Today</div>
+          <div class="font-bold text-green-800 text-sm" id="backup-status-title">Checking status…</div>
+          <div class="text-xs text-green-600" id="backup-last-time">Last backup: —</div>
         </div>
         <button onclick="window.downloadLocalBackup&&downloadLocalBackup()" class="btn btn-sm font-bold" style="background:#16a34a;color:#fff;border:none;">Backup Now</button>
       </div>
@@ -5937,6 +5937,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 s.gdriveBackupLog.push({ ts: ts, file: fileName, ok: ok, err: err || '' });
                 if (s.gdriveBackupLog.length > 8) s.gdriveBackupLog = s.gdriveBackupLog.slice(-8);
                 _updateGDriveUI();
+                window.updateDataModuleBackupStatus && window.updateDataModuleBackupStatus();
             }
 
             function _updateGDriveUI() {
@@ -7008,6 +7009,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(window._incReads) window._incReads(1);
                 if (docSnap.exists()) { 
                     window.AppState.settings = { ...window.AppState.settings, ...docSnap.data() }; 
+                    // ── ADMIN CONTROL: block access if this business was disabled from the Admin Panel ──
+                    if(window.AppState.settings.adminDisabled === true) {
+                        window.showToast && window.showToast('Yeh account administrator dwara disable kar diya gaya hai. Sampark karein.', 'error');
+                        try { if(window.handleLogout) window.handleLogout(); else signOut(auth); } catch(e){}
+                        try { localStorage.removeItem('ayur_emp_session'); } catch(e){}
+                        return;
+                    }
                     safeLocalSave();
                     if(window.AppState.activeTab === 'settings') window.populateSettingsUI(); 
                     // Topbar profile pic/logo should reflect saved data as soon as it
@@ -11349,8 +11357,94 @@ window.updateStorageSummary = function() {
     setText2('ss-clients', cl.length+' records');
     setText2('ss-products', pr.length+' records');
     setText2('ss-expenses', ex.length+' records');
-    var now = new Date();
-    setText2('backup-last-time', 'Last backup: '+now.toLocaleDateString('en-IN'));
+    window.updateDataModuleBackupStatus && window.updateDataModuleBackupStatus();
+};
+
+// Reflect the REAL Google Drive backup status here — this used to be hardcoded
+// text ("All data synced" / "Last backup: Today") regardless of whether a
+// backup had ever actually run.
+window.updateDataModuleBackupStatus = function() {
+    var s = (window.AppState && window.AppState.settings) || {};
+    var hasCid = !!(window.ERP_CONFIG && window.ERP_CONFIG.googleClientId);
+    var log = s.gdriveBackupLog || [];
+    var lastOk = log.slice().reverse().find(function(e){ return e.ok; });
+    var lastLocalRaw = localStorage.getItem('ayur_gdrive_last_backup');
+
+    var titleEl = document.getElementById('backup-status-title');
+    var timeEl = document.getElementById('backup-last-time');
+    if(titleEl) {
+        if(!hasCid) titleEl.textContent = 'Google Drive not set up';
+        else if(lastOk || lastLocalRaw) titleEl.textContent = 'Backed up to Google Drive';
+        else titleEl.textContent = 'Not backed up yet';
+    }
+    if(timeEl){
+        if(lastOk) timeEl.textContent = 'Last backup: '+lastOk.ts;
+        else if(!hasCid) timeEl.textContent = 'Tap "Google Drive" below to connect';
+        else timeEl.textContent = 'No successful backup yet — tap Backup Now';
+    }
+
+    // Highlight whichever destination the user picked last (default: firebase, since that's automatic)
+    var dest = s.backupDestination || 'firebase';
+    var fb = document.getElementById('backup-dest-firebase');
+    var gd = document.getElementById('backup-dest-gdrive');
+    [[fb,'firebase'],[gd,'gdrive']].forEach(function(pair){
+        var el = pair[0], key = pair[1];
+        if(!el) return;
+        if(key===dest){
+            el.style.borderColor = key==='firebase' ? '#ea580c' : '#4285F4';
+            el.style.background = key==='firebase' ? '#fff7ed' : '#e8f0fe';
+            el.style.color = key==='firebase' ? '#c2410c' : '#1a73e8';
+        } else {
+            el.style.borderColor = '#e2e8f0'; el.style.background = '#f8fafc'; el.style.color = '#475569';
+        }
+    });
+};
+
+window.setBackupDest = function(dest) {
+    window.AppState.settings = window.AppState.settings || {};
+    window.AppState.settings.backupDestination = dest;
+    // persist the preference so it's remembered next time this tab is opened
+    try {
+        if(window._setDoc && window._doc && window._db && window._appId && window.AppState.user && !window._isDemoMode){
+            window._setDoc(window._doc(window._db,'artifacts',window._appId,'users',window.AppState.user.uid,'config','settings'), { backupDestination: dest }, { merge:true });
+        }
+    } catch(e) {}
+    window.updateDataModuleBackupStatus && window.updateDataModuleBackupStatus();
+    if(dest === 'firebase'){
+        window.showToast&&window.showToast('Firebase is your primary storage — data is already saved there automatically. Use "Backup Now" for a local copy.','info');
+    } else {
+        window.backupToGDrive && window.backupToGDrive();
+    }
+};
+
+// "Send to Email" — actually generates the export file first, then hands it
+// to the device share sheet (or mailto as a fallback) so it can be attached
+// to an email. Browsers can't attach files to a mailto: link directly.
+window.sendExportByEmail = async function() {
+    window.showToast&&window.showToast('Preparing export…','info');
+    try {
+        var inv = window.AppState.invoices||[], cl = window.AppState.clients||[], pr = window.AppState.products||[], ex = window.AppState.expenses||[];
+        var data = { exportedAt:new Date().toISOString(), invoices:inv, clients:cl, products:pr, expenses:ex };
+        var fname = 'MyBusinessERP_'+new Date().toISOString().split('T')[0]+'.json';
+        var blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+        var file = new File([blob], fname, {type:'application/json'});
+
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+            await navigator.share({ files:[file], title:'Business ERP Export', text:'ERP data export attached.' });
+            window.showToast&&window.showToast('Choose your email app from the share menu ✅');
+        } else {
+            // Fallback: download the file and open the mail app with instructions,
+            // since a plain mailto: link cannot carry an attachment.
+            var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+            var subject = encodeURIComponent('Business ERP Data Export');
+            var body = encodeURIComponent('Export file "'+fname+'" has been downloaded to your device. Please attach it manually from your Downloads folder before sending.');
+            window.location.href = 'mailto:?subject='+subject+'&body='+body;
+            window.showToast&&window.showToast('File downloaded — attach it manually in your email app','info');
+        }
+    } catch(err) {
+        if(err && err.name === 'AbortError') return; // user cancelled the share sheet
+        window.showToast&&window.showToast('Could not prepare email: '+err.message,'error');
+    }
 };
 
 window.renderDataModule = function() {
@@ -11444,34 +11538,201 @@ window.runDataExport = async function() {
     }
 };
 
-window.handleImportFile = function(event) {
-    var file = event.target.files[0]; if(!file) return;
-    window.showToast&&window.showToast('Reading file: '+file.name,'info');
-    var reader = new FileReader();
-    reader.onload = function(e){
-        try {
-            var ext = file.name.split('.').pop().toLowerCase();
-            var previewArea = document.getElementById('import-preview-area');
-            var previewTable = document.getElementById('import-preview-table');
-            if(ext==='json'){
-                var data = JSON.parse(e.target.result);
-                var html = '<div class="p-3 bg-green-50 rounded-xl text-xs text-green-700 font-semibold">✅ Valid JSON file detected. Ready to import.</div>';
-                html += '<pre class="mt-2 text-[10px] text-slate-500 overflow-x-auto max-h-32">'+JSON.stringify(data,null,2).slice(0,500)+'...</pre>';
-                if(previewTable) previewTable.innerHTML = html;
-                if(previewArea) previewArea.classList.remove('hidden');
-                window._importData = data;
-            } else {
-                if(previewTable) previewTable.innerHTML = '<div class="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 font-semibold">📄 File loaded: '+file.name+'<br>Ready to import with template format.</div>';
-                if(previewArea) previewArea.classList.remove('hidden');
-            }
-            window.showToast&&window.showToast('File loaded successfully ✅');
-        } catch(err){ window.showToast&&window.showToast('Error reading file: '+err.message,'error'); }
-    };
-    if(file.name.endsWith('.json')) reader.readAsText(file);
-    else reader.readAsBinaryString(file);
+// ── Simple CSV parser (handles quoted fields, commas inside quotes) ──
+function _parseCSVText(text) {
+    var lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(function(l){ return l.trim().length>0; });
+    if(!lines.length) return [];
+    function splitRow(row){
+        var out=[], cur='', inQ=false;
+        for(var i=0;i<row.length;i++){
+            var ch=row[i];
+            if(ch==='"'){
+                if(inQ && row[i+1]==='"'){ cur+='"'; i++; }
+                else inQ=!inQ;
+            } else if(ch===',' && !inQ){ out.push(cur); cur=''; }
+            else cur+=ch;
+        }
+        out.push(cur);
+        return out;
+    }
+    var headers = splitRow(lines[0]).map(function(h){ return h.trim(); });
+    var rows = [];
+    for(var i=1;i<lines.length;i++){
+        var cells = splitRow(lines[i]);
+        var obj = {};
+        headers.forEach(function(h,idx){ obj[h] = (cells[idx]!==undefined ? cells[idx].trim() : ''); });
+        rows.push(obj);
+    }
+    return rows;
+}
+
+// Field mappings: import-type -> { targetField: [possible header names...] }
+var _importFieldMap = {
+    clients:  { name:['Name'], mobile:['Mobile','Phone'], email:['Email'], gstin:['GSTIN'], address:['Address'], notes:['Notes'] },
+    products: { name:['Name'], category:['Category'], hsn:['HSN'], cost:['Cost Price','Cost'], rate:['Selling Rate','Rate'], gst:['GST%','GST'], stock:['Stock'] },
+    invoices: { id:['Invoice ID'], date:['Date'], clientName:['Client Name'], grandTotal:['Amount'], totalTax:['GST'], paymentStatus:['Status'] },
+    expenses: { date:['Date'], category:['Category'], desc:['Description'], amount:['Amount'], paymentMode:['Payment Mode'] },
+    stock:    { name:['Product Name','Name'], stock:['Opening Stock','Stock'], date:['Date'] }
 };
 
-window.confirmImport = function() { window.showToast&&window.showToast('Import feature — use Firebase data directly via backup restore','info'); };
+function _mapImportRow(row, type) {
+    var map = _importFieldMap[type] || {};
+    var out = {};
+    Object.keys(map).forEach(function(field){
+        var candidates = map[field];
+        for(var i=0;i<candidates.length;i++){
+            if(row[candidates[i]] !== undefined && row[candidates[i]] !== '') { out[field] = row[candidates[i]]; return; }
+        }
+        out[field] = '';
+    });
+    return out;
+}
+
+function _renderImportPreview(rows, type) {
+    var previewArea = document.getElementById('import-preview-area');
+    var previewTable = document.getElementById('import-preview-table');
+    if(!rows.length){
+        if(previewTable) previewTable.innerHTML = '<div class="p-3 bg-red-50 rounded-xl text-xs text-red-700 font-semibold">⚠️ No rows found in this file.</div>';
+        if(previewArea) previewArea.classList.remove('hidden');
+        return;
+    }
+    var mapped = rows.map(function(r){ return _mapImportRow(r, type); });
+    var cols = Object.keys(mapped[0]);
+    var html = '<div class="p-2 mb-2 bg-green-50 rounded-xl text-xs text-green-700 font-semibold">✅ '+rows.length+' row(s) detected. Showing first 5 below — check the columns matched correctly before confirming.</div>';
+    html += '<table class="w-full text-left"><thead><tr>'+cols.map(function(c){ return '<th class="px-2 py-1 bg-slate-50 border-b border-slate-200 font-bold text-slate-600 whitespace-nowrap">'+c+'</th>'; }).join('')+'</tr></thead><tbody>';
+    mapped.slice(0,5).forEach(function(r){
+        html += '<tr>'+cols.map(function(c){ return '<td class="px-2 py-1 border-b border-slate-100 text-slate-600 whitespace-nowrap">'+(r[c]||'-')+'</td>'; }).join('')+'</tr>';
+    });
+    html += '</tbody></table>';
+    if(previewTable) previewTable.innerHTML = html;
+    if(previewArea) previewArea.classList.remove('hidden');
+    window._importData = { type: type, rows: mapped };
+}
+
+window.handleImportFile = function(event) {
+    var file = event.target.files[0]; if(!file) return;
+    var typeRadio = document.querySelector('input[name="import-type"]:checked');
+    var type = typeRadio ? typeRadio.value : 'clients';
+    window.showToast&&window.showToast('Reading file: '+file.name,'info');
+    var ext = file.name.split('.').pop().toLowerCase();
+
+    var finish = function(rows){ _renderImportPreview(rows, type); window.showToast&&window.showToast('File loaded successfully ✅'); };
+    var fail = function(err){ window.showToast&&window.showToast('Error reading file: '+(err&&err.message||err),'error'); };
+
+    if(ext==='json'){
+        var reader = new FileReader();
+        reader.onload = function(e){
+            try {
+                var data = JSON.parse(e.target.result);
+                var rows = Array.isArray(data) ? data : (data[type] || data.rows || []);
+                finish(rows);
+            } catch(err){ fail(err); }
+        };
+        reader.readAsText(file);
+    } else if(ext==='csv'){
+        var reader2 = new FileReader();
+        reader2.onload = function(e){
+            try { finish(_parseCSVText(e.target.result)); } catch(err){ fail(err); }
+        };
+        reader2.readAsText(file);
+    } else if(ext==='xlsx' || ext==='xls'){
+        var reader3 = new FileReader();
+        reader3.onload = async function(e){
+            try {
+                var XLSXlib = window.XLSX;
+                if(!XLSXlib){
+                    await new Promise(function(res,rej){
+                        var s=document.createElement('script');
+                        s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+                        s.onload=res; s.onerror=rej; document.head.appendChild(s);
+                    });
+                    XLSXlib = window.XLSX;
+                }
+                var wb = XLSXlib.read(new Uint8Array(e.target.result), {type:'array'});
+                var firstSheet = wb.Sheets[wb.SheetNames[0]];
+                var rows = XLSXlib.utils.sheet_to_json(firstSheet, {defval:''});
+                finish(rows);
+            } catch(err){ fail(err); }
+        };
+        reader3.readAsArrayBuffer(file);
+    } else {
+        fail('Unsupported file type. Please use .xlsx, .csv or .json');
+    }
+};
+
+window.confirmImport = async function() {
+    var data = window._importData;
+    if(!data || !data.rows || !data.rows.length) { window.showToast&&window.showToast('Please choose a file first','warning'); return; }
+    var type = data.type;
+    var rows = data.rows;
+    var btn = document.querySelector('#import-preview-area button[onclick*="confirmImport"]');
+    if(btn){ btn.disabled = true; btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Importing…'; }
+
+    var collectionName = { clients:'clients', products:'products', invoices:'invoices', expenses:'expenses', stock:'products' }[type];
+    var uid = window.AppState && window.AppState.user && window.AppState.user.uid;
+    var canWriteFirestore = window._addDoc && window._collection && window._db && window._appId && uid && !window._isDemoMode;
+
+    var success = 0, skipped = 0;
+    try {
+        for(var i=0;i<rows.length;i++){
+            var r = rows[i];
+            var payload = null;
+
+            if(type==='clients'){
+                if(!r.name){ skipped++; continue; }
+                payload = { name:r.name, mobile:r.mobile||'', email:r.email||'', gstin:r.gstin||'', address:r.address||'', notes:r.notes||'', journal:[], isDeleted:false };
+            } else if(type==='products'){
+                if(!r.name){ skipped++; continue; }
+                payload = { name:r.name, category:r.category||'', hsn:r.hsn||'', cost:Number(r.cost||0), rate:Number(r.rate||0), gst:Number(r.gst||0), stock:Number(r.stock||0), isHidden:false, isDeleted:false };
+            } else if(type==='expenses'){
+                if(!r.amount){ skipped++; continue; }
+                payload = { date:r.date||new Date().toISOString().split('T')[0], category:r.category||'General', desc:r.desc||'', amount:Number(r.amount||0), paymentMode:r.paymentMode||'', isDeleted:false };
+            } else if(type==='invoices'){
+                if(!r.clientName && !r.grandTotal){ skipped++; continue; }
+                payload = { id:r.id||('IMP-'+Date.now()+'-'+i), date:r.date||new Date().toISOString().split('T')[0], client:{name:r.clientName||''}, grandTotal:Number(r.grandTotal||0), totalTax:Number(r.totalTax||0), paymentStatus:(r.paymentStatus||'unpaid').toLowerCase(), status:'final', items:[], imported:true };
+            } else if(type==='stock'){
+                // Opening stock updates an EXISTING product's stock by matching name, doesn't create a new product
+                var existing = (window.AppState.products||[]).find(function(p){ return (p.name||'').toLowerCase() === (r.name||'').toLowerCase(); });
+                if(!existing){ skipped++; continue; }
+                if(canWriteFirestore){
+                    await window._updateDoc(window._doc(window._db,'artifacts',window._appId,'users',uid,'products',existing.id), { stock: Number(r.stock||0) });
+                }
+                existing.stock = Number(r.stock||0);
+                success++;
+                continue;
+            }
+
+            if(!payload) { skipped++; continue; }
+
+            if(canWriteFirestore){
+                await window._addDoc(window._collection(window._db,'artifacts',window._appId,'users',uid,collectionName), Object.assign({}, payload, { createdAt: window._serverTimestamp ? window._serverTimestamp() : new Date().toISOString() }));
+            } else {
+                // Offline/demo fallback — write straight into local AppState + localStorage
+                payload.id = payload.id || ('local-'+Date.now()+'-'+i);
+                window.AppState[collectionName] = window.AppState[collectionName] || [];
+                window.AppState[collectionName].push(payload);
+            }
+            success++;
+        }
+
+        window.safeLocalSave && window.safeLocalSave();
+        window.updateExportPreview && window.updateExportPreview();
+        window.updateStorageSummary && window.updateStorageSummary();
+        [ 'renderClients','renderProducts','renderExpenses','renderInvoices','renderDashboard','renderInventory' ].forEach(function(fn){ try{ window[fn] && window[fn](); }catch(e){} });
+
+        window.showToast&&window.showToast('✅ Imported '+success+' record(s)'+(skipped?(', skipped '+skipped+' invalid row(s)'):''), success? 'success':'warning');
+
+        var previewArea = document.getElementById('import-preview-area');
+        if(previewArea) previewArea.classList.add('hidden');
+        var fileInput = document.getElementById('import-file-input');
+        if(fileInput) fileInput.value = '';
+        window._importData = null;
+    } catch(err) {
+        window.showToast&&window.showToast('Import failed: '+err.message, 'error');
+    } finally {
+        if(btn){ btn.disabled = false; btn.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i> Confirm Import'; if(typeof lucide!=='undefined') lucide.createIcons(); }
+    }
+};
 
 window.downloadImportTemplate = function() {
     var type = document.querySelector('input[name="import-type"]:checked');
