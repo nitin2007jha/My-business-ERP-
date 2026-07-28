@@ -2244,6 +2244,9 @@ body.fullscreen-page-open #dash-fab-row{
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
       <span id="rec-filter-label">All</span>
     </button>
+    <button id="rec-export-btn" onclick="window.openInvoiceExportModal&&openInvoiceExportModal()" title="Download/Print invoices by month, client or date range" style="flex-shrink:0;background:#fff;border:1px solid #dee2e6;border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#495057;font-family:inherit;white-space:nowrap;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
   </div>
 
   <!-- Hidden filter inputs for compatibility -->
@@ -2289,7 +2292,8 @@ body.fullscreen-page-open #dash-fab-row{
       <button id="idp-menu-btn" onclick="toggleIdpMenu()" style="background:rgba(255,255,255,.1);border:none;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
       </button>
-      <div id="idp-menu-dropdown" style="display:none;position:fixed;top:90px;right:12px;background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);min-width:200px;z-index:99999;overflow:hidden;">
+      <div id="idp-menu-backdrop" onclick="toggleIdpMenu()" style="display:none;position:fixed;inset:0;background:transparent;z-index:2147483646;"></div>
+      <div id="idp-menu-dropdown" style="display:none;position:fixed;top:90px;right:12px;background:#fff;border:1px solid #e9ecef;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);min-width:200px;z-index:2147483647;overflow:hidden;">
         <button onclick="idpAction('edit')" style="width:100%;padding:13px 16px;border:none;background:none;text-align:left;font-size:13px;font-weight:600;color:#212529;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Edit Invoice
@@ -2425,6 +2429,9 @@ body.fullscreen-page-open #dash-fab-row{
       <button onclick="openClientDrawer(window._cdpClientId,false)" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px;cursor:pointer;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
+      <button onclick="window._cdpDelete&&window._cdpDelete()" title="Delete Client" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px;cursor:pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
     </div>
     <!-- Stats row -->
     <div style="display:flex;gap:0;margin-top:16px;background:rgba(255,255,255,.1);border-radius:12px;overflow:hidden;">
@@ -2546,6 +2553,12 @@ body.fullscreen-page-open #dash-fab-row{
 
   <!-- Settings Grid — modal triggers -->
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+
+    <div class="card p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all" onclick="window.switchTab('website')">
+      <div class="acc-icon mb-3" style="background:#e8f0fe"><i data-lucide="globe" class="w-5 h-5 text-blue-600"></i></div>
+      <div class="font-bold text-slate-800 text-sm">Website & Orders</div>
+      <div class="text-xs text-slate-400 mt-0.5">Your online store, connected to ERP</div>
+    </div>
 
     <div class="card p-4 cursor-pointer hover:shadow-md hover:border-emerald-200 transition-all" onclick="openSettingsModal('invoice-display')">
       <div class="acc-icon bg-emerald-50 mb-3"><i data-lucide="sliders" class="w-5 h-5 text-emerald-600"></i></div>
@@ -2877,6 +2890,181 @@ body.fullscreen-page-open #dash-fab-row{
 </div>
 
 <!-- ===== MULTI-BRANCH ===== -->
+<div id="view-website" class="tab">
+  <!-- Website Header -->
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 14px;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Online Presence</div>
+        <h2 style="font-size:22px;font-weight:800;color:#fff;margin:0;letter-spacing:-.3px;">Website & Orders</h2>
+        <p style="font-size:11px;color:rgba(255,255,255,.6);margin:2px 0 0;">Your own online store, connected to this ERP</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:4px;background:#f1f3f5;border-radius:14px;padding:4px;margin:16px 0 16px;width:fit-content;flex-wrap:wrap;">
+    <button id="webtab-setup-btn" onclick="window.switchWebsiteSubTab('setup')" style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;background:#fff;color:var(--op);border:none;cursor:pointer;font-family:inherit;box-shadow:0 1px 3px rgba(0,0,0,.1);">🏪 Store Setup</button>
+    <button id="webtab-coupons-btn" onclick="window.switchWebsiteSubTab('coupons')" style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;background:transparent;color:#6c757d;border:none;cursor:pointer;font-family:inherit;">🎟️ Coupons</button>
+    <button id="webtab-orders-btn" onclick="window.switchWebsiteSubTab('orders')" style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;background:transparent;color:#6c757d;border:none;cursor:pointer;font-family:inherit;position:relative;">
+      📦 Orders <span id="web-order-badge" class="hidden" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#dc3545;color:#fff;font-size:9px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;">0</span>
+    </button>
+    <button id="webtab-analytics-btn" onclick="window.switchWebsiteSubTab('analytics')" style="padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;background:transparent;color:#6c757d;border:none;cursor:pointer;font-family:inherit;">📊 Analytics</button>
+  </div>
+
+  <!-- ══════ STORE SETUP ══════ -->
+  <div id="web-main-setup">
+    <div class="card p-4 mb-3" style="border-left:3px solid var(--ot);">
+      <div style="display:flex;align-items:center;justify-content:between;gap:10px;">
+        <div style="flex:1;">
+          <div class="font-bold text-slate-800 text-sm">Store Status</div>
+          <div class="text-xs text-slate-400 mt-0.5" id="web-status-desc">Store abhi off hai — customers isko dekh nahi sakte</div>
+        </div>
+        <label class="toggle" style="width:44px;height:26px;flex-shrink:0"><input type="checkbox" id="web-enabled-toggle" onchange="window.onWebsiteEnabledToggle(this.checked)"><span class="toggle-track"></span></label>
+      </div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2"><i data-lucide="link" class="w-4 h-4 text-blue-600"></i> Your Store Link</div>
+      <div id="web-link-preview" style="font-size:12.5px;color:#0b6377;background:#f0f9fb;padding:9px 11px;border-radius:10px;word-break:break-all;margin-bottom:8px;">Slug set karke save karein</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="web-slug-input" placeholder="my-shop-name" class="inp text-sm flex-1" oninput="window.onSlugInputChange(this.value)">
+        <button onclick="window.saveWebsiteSlug()" class="btn btn-primary btn-sm text-xs" style="flex-shrink:0;">Save</button>
+      </div>
+      <div id="web-slug-feedback" class="text-xs mt-1.5"></div>
+      <button onclick="window.copyStoreLink()" id="web-copy-link-btn" class="btn btn-sm text-xs mt-2 hidden" style="background:#f0f9fb;color:#0b6377;border:1px solid #d0eef2;"><i data-lucide="copy" class="w-3 h-3"></i> Copy Link</button>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">Store Details</div>
+      <div class="fg mb-3"><label class="text-xs font-semibold text-slate-500 mb-1 block">Tagline / Description</label><textarea id="web-tagline" rows="2" class="inp text-sm w-full" placeholder="e.g. Premium LED lights at best prices"></textarea></div>
+      <div class="fg mb-1"><label class="text-xs font-semibold text-slate-500 mb-1 block">Theme Color</label>
+        <div style="display:flex;gap:8px;" id="web-theme-swatches"></div>
+        <input type="hidden" id="web-theme-color" value="#2874f0">
+      </div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">Orders & Payments</div>
+      <label class="flex items-center justify-between py-2"><span class="text-sm text-slate-700">Cash on Delivery</span><label class="toggle" style="width:34px;height:20px"><input type="checkbox" id="web-cod-enabled"><span class="toggle-track"></span></label></label>
+      <label class="flex items-center justify-between py-2"><span class="text-sm text-slate-700">UPI / Online Payment</span><label class="toggle" style="width:34px;height:20px"><input type="checkbox" id="web-upi-enabled"><span class="toggle-track"></span></label></label>
+      <div class="fg mt-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Minimum Order Amount (₹)</label><input type="number" id="web-min-order" class="inp text-sm w-full" placeholder="0"></div>
+      <div class="fg mt-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">WhatsApp Number for Order Alerts</label><input type="text" id="web-whatsapp-number" class="inp text-sm w-full" placeholder="91XXXXXXXXXX"></div>
+      <label class="flex items-center justify-between py-2 mt-1" style="border-top:1px solid #f0f0f0;padding-top:12px;">
+        <span class="text-sm text-slate-700">Auto-accept orders<div class="text-xs text-slate-400 font-normal">Invoice + stock update instantly, bina manual approval ke</div></span>
+        <label class="toggle" style="width:34px;height:20px;flex-shrink:0"><input type="checkbox" id="web-auto-accept"><span class="toggle-track"></span></label>
+      </label>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-1">Products Visible on Website</div>
+      <div class="text-xs text-slate-400 mb-3">Default: sab products website pe dikhenge. Jo nahi dikhane, unhe uncheck karein.</div>
+      <input type="text" id="web-product-search" placeholder="Search products..." class="inp text-sm w-full mb-2" oninput="window.renderWebsiteProductVisibility()">
+      <div id="web-product-visibility-list" style="max-height:280px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">📦 Delivery & Fulfillment</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Delivery Charge (₹)</label><input type="number" id="web-delivery-charge" class="inp text-sm w-full" placeholder="0"></div>
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Free Above (₹)</label><input type="number" id="web-free-delivery-above" class="inp text-sm w-full" placeholder="e.g. 999"></div>
+      </div>
+      <div class="fg mb-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Serviceable Pincodes</label><input type="text" id="web-pincodes" class="inp text-sm w-full" placeholder="All India, ya 110001,110002..."></div>
+      <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Order Cancellation Window (hours)</label><input type="number" id="web-cancel-window" class="inp text-sm w-full" placeholder="e.g. 2"></div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">🕒 Store Hours & Availability</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Opens At</label><input type="time" id="web-open-time" class="inp text-sm w-full"></div>
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Closes At</label><input type="time" id="web-close-time" class="inp text-sm w-full"></div>
+      </div>
+      <label class="flex items-center justify-between py-2" style="border-top:1px solid #f0f0f0;">
+        <span class="text-sm text-slate-700">Maintenance / Break mode<div class="text-xs text-slate-400 font-normal">Store customer ko "temporarily closed" dikhega</div></span>
+        <label class="toggle" style="width:34px;height:20px;flex-shrink:0"><input type="checkbox" id="web-maintenance-mode"><span class="toggle-track"></span></label>
+      </label>
+      <div class="fg mt-1"><input type="text" id="web-maintenance-msg" class="inp text-sm w-full" placeholder="e.g. Back on Monday 10 AM!"></div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">📸 Banners (Carousel)</div>
+      <div class="text-xs text-slate-400 mb-2">Ek line mein ek image URL dalein (upar wala pehla banner dikhega)</div>
+      <textarea id="web-banners-list" rows="3" class="inp text-sm w-full" placeholder="https://image1.jpg&#10;https://image2.jpg"></textarea>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">📱 Social & Support Links</div>
+      <div class="fg mb-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Instagram URL</label><input type="text" id="web-instagram" class="inp text-sm w-full" placeholder="https://instagram.com/..."></div>
+      <div class="fg mb-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Facebook URL</label><input type="text" id="web-facebook" class="inp text-sm w-full" placeholder="https://facebook.com/..."></div>
+      <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Customer Support WhatsApp</label><input type="text" id="web-support-whatsapp" class="inp text-sm w-full" placeholder="91XXXXXXXXXX"></div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">🔍 SEO & Discovery</div>
+      <div class="fg mb-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Page Title</label><input type="text" id="web-seo-title" class="inp text-sm w-full" placeholder="Best LED Lights Online | Your Store"></div>
+      <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Meta Description</label><textarea id="web-seo-desc" rows="2" class="inp text-sm w-full" placeholder="Shop premium LED lights..."></textarea></div>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">🎁 Loyalty & Growth</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Points per ₹100 spent</label><input type="number" id="web-loyalty-rate" class="inp text-sm w-full" placeholder="e.g. 5"></div>
+        <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">₹ value per point</label><input type="number" id="web-loyalty-value" class="inp text-sm w-full" placeholder="e.g. 1"></div>
+      </div>
+      <label class="flex items-center justify-between py-2" style="border-top:1px solid #f0f0f0;">
+        <span class="text-sm text-slate-700">Track abandoned carts<div class="text-xs text-slate-400 font-normal">Customer cart bana ke chala jaye to record ho</div></span>
+        <label class="toggle" style="width:34px;height:20px;flex-shrink:0"><input type="checkbox" id="web-track-abandoned-cart"><span class="toggle-track"></span></label>
+      </label>
+    </div>
+
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-3">📜 Policies & Domain</div>
+      <div class="fg mb-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Return / Refund Policy</label><textarea id="web-return-policy" rows="2" class="inp text-sm w-full" placeholder="e.g. 7 din ke andar return..."></textarea></div>
+      <div class="fg"><label class="text-xs font-semibold text-slate-500 mb-1 block">Custom Domain (agar hai)</label><input type="text" id="web-custom-domain" class="inp text-sm w-full" placeholder="e.g. www.myshop.in (DNS aapko configure karna hoga)"></div>
+    </div>
+
+    <div class="card p-4 mb-3 text-center">
+      <div class="font-bold text-slate-800 text-sm mb-3">📱 Store QR Code</div>
+      <div id="web-qr-wrap" style="display:flex;justify-content:center;"></div>
+      <button onclick="window.generateWebsiteQR()" class="btn btn-sm text-xs mt-2" style="background:#f0f9fb;color:#0b6377;">Generate QR</button>
+    </div>
+
+    <button onclick="window.saveWebsiteSettings()" class="btn btn-primary btn-f mb-6"><i data-lucide="save" class="w-4 h-4"></i> Save Store Settings</button>
+  </div>
+
+  <!-- ══════ COUPONS ══════ -->
+  <div id="web-main-coupons" class="hidden">
+    <button onclick="window.openCouponForm()" class="btn btn-primary btn-f mb-3"><i data-lucide="plus" class="w-4 h-4"></i> Create Coupon</button>
+    <div id="web-coupons-list" class="space-y-2"></div>
+  </div>
+
+  <!-- ══════ ANALYTICS ══════ -->
+  <div id="web-main-analytics" class="hidden">
+    <div class="grid grid-cols-2 gap-3 mb-3">
+      <div class="card p-3 text-center"><div class="text-2xl font-black text-slate-800" id="web-an-orders">0</div><div class="text-xs text-slate-400">Online Orders</div></div>
+      <div class="card p-3 text-center"><div class="text-2xl font-black text-slate-800" id="web-an-revenue">₹0</div><div class="text-xs text-slate-400">Online Revenue</div></div>
+      <div class="card p-3 text-center"><div class="text-2xl font-black text-slate-800" id="web-an-conv">0%</div><div class="text-xs text-slate-400">Accept Rate</div></div>
+      <div class="card p-3 text-center"><div class="text-2xl font-black text-slate-800" id="web-an-split">0%</div><div class="text-xs text-slate-400">Online vs Total Sales</div></div>
+    </div>
+    <div class="card p-4 mb-3">
+      <div class="font-bold text-slate-800 text-sm mb-2">🏆 Top Selling Online</div>
+      <div id="web-an-top-products"></div>
+    </div>
+  </div>
+
+  <!-- ══════ ORDERS ══════ -->
+  <div id="web-main-orders" class="hidden">
+    <input type="text" id="web-order-search-input" placeholder="Customer naam ya phone se search..." class="inp text-sm w-full mb-3" oninput="window.searchWebsiteOrders(this.value)">
+    <div style="display:flex;gap:4px;background:#f8f9fa;border-radius:12px;padding:3px;margin-bottom:14px;width:fit-content;">
+      <button class="web-order-filter-btn active" data-filter="pending" onclick="window.filterWebsiteOrders('pending')" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;">Pending</button>
+      <button class="web-order-filter-btn" data-filter="accepted" onclick="window.filterWebsiteOrders('accepted')" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:transparent;color:#6c757d;">Accepted</button>
+      <button class="web-order-filter-btn" data-filter="rejected" onclick="window.filterWebsiteOrders('rejected')" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:transparent;color:#6c757d;">Rejected</button>
+      <button class="web-order-filter-btn" data-filter="all" onclick="window.filterWebsiteOrders('all')" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;background:transparent;color:#6c757d;">All</button>
+    </div>
+    <div id="web-orders-list" class="space-y-3"></div>
+  </div>
+</div>
+
 <div id="view-branches" class="tab">
   <!-- Branches Header -->
   <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px 16px 14px;color:#fff;flex-shrink:0;margin:-16px -16px 0 -16px;">
@@ -3377,6 +3565,10 @@ body.fullscreen-page-open #dash-fab-row{
 
   <!-- STAFF LIST -->
   <div id="emp-main-list">
+    <div style="position:relative;margin-bottom:12px;">
+      <i data-lucide="search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;"></i>
+      <input type="text" id="emp-search-input" placeholder="Naam, designation ya email se search karein..." oninput="window.renderEmployees()" style="width:100%;padding:10px 12px 10px 34px;border:1px solid #e9ecef;border-radius:12px;font-size:13px;font-family:inherit;background:#fff;">
+    </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="employees-list">
       <div class="col-span-full p-8 text-center text-slate-400">
         <i data-lucide="user-check" class="w-12 h-12 mx-auto mb-3 text-slate-200"></i>
@@ -4686,7 +4878,7 @@ window.addEventListener('resize', function(){
 </div>
 
 <!-- Bulk PDF / PDF Loading -->
-<div id="bulk-render-container" style="position:fixed;top:0;left:0;width:794px;background:white;pointer-events:none;z-index:9990;opacity:0.001;overflow:visible;"><div id="bulk-render-area" style="width:794px;background:white;"></div></div>
+<div id="bulk-render-container" style="position:fixed;top:0;left:0;width:794px;background:white;pointer-events:none;z-index:-1;opacity:0.001;overflow:visible;"><div id="bulk-render-area" style="width:794px;background:white;"></div></div>
 <div id="pdf-loading-overlay" class="fixed inset-0 z-[9999] bg-white hidden flex-col items-center justify-center">
   <i data-lucide="loader-2" class="w-12 h-12 text-emerald-600 animate-spin mb-4"></i>
   <h2 class="text-2xl font-bold text-slate-800 mb-2">Generating PDF...</h2>
@@ -5578,14 +5770,14 @@ document.addEventListener('DOMContentLoaded', function() {
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, signOut, onAuthStateChanged, sendPasswordResetEmail, setPersistence, browserLocalPersistence, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp, writeBatch, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const defaultAppId = 'dev-ayurveda-pro-auth';
         const appId = typeof __app_id !== 'undefined' ? __app_id : defaultAppId;
         // Bridge Firestore to window for drawer bridge
         window._getFirestoreRef = () => ({db, appId, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch});
         
-        const fallbackConfig = { apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og", authDomain: "dev-ayurveda.firebaseapp.com", projectId: "dev-ayurveda", storageBucket: "dev-ayurveda.firebasestorage.app", messagingSenderId: "40760282698", appId: "1:40760282698:web:20e31100eed712631ca0b3" };
+        const fallbackConfig = { apiKey: "AIzaSyDHzTJwqowLfoM3BuMrBw9w-yeVVPBcUgA", authDomain: "my-business-erp-9a826.firebaseapp.com", projectId: "my-business-erp-9a826", storageBucket: "my-business-erp-9a826.firebasestorage.app", messagingSenderId: "483878230402", appId: "1:483878230402:web:7def5e340df4c37bc7179b", measurementId: "G-8BHHF3NSSE" };
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
         
         let app, auth, db;
@@ -6719,6 +6911,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { id: 'expenses', icon: 'receipt', label: 'Expenses', class: 'feat-expenses' },
             { id: 'clients', icon: 'users', label: 'Clients' }, 
             { id: 'employees', icon: 'user-check', label: 'Employees' },
+            { id: 'website', icon: 'globe', label: 'Website' },
             { id: 'branches', icon: 'building-2', label: 'Branches' },
             { id: 'gst', icon: 'landmark', label: 'GST Filing' },
             { id: 'ai-report', icon: 'bar-chart-2', label: 'AI Report' },
@@ -6756,6 +6949,12 @@ document.addEventListener('DOMContentLoaded', function() {
         window._serverTimestamp = serverTimestamp;
         window._updateDoc = updateDoc;
         window._deleteDoc = deleteDoc;
+        window._getDocs = getDocs;
+        window._getDoc = getDoc;
+        window._onSnapshot = onSnapshot;
+        window._fsQuery = query;
+        window._fsOrderBy = orderBy;
+        window._fsLimit = limit;
         // Expose internal functions needed by employee session
         window.setupFirestoreListeners = setupFirestoreListeners;
         window.clearFirestoreListeners = clearFirestoreListeners;
@@ -7229,7 +7428,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'dashboard':'dash_view', 'daybook':'daybook_view', 'invoice':'inv_create',
             'records':'rec_view', 'inventory':'inv_tab', 'services':'svc_view',
             'expenses':'exp_view', 'clients':'client_view', 'employees':'emp_view',
-            'ai-report':'ai_report', 'settings':'settings_view'
+            'ai-report':'ai_report', 'settings':'settings_view', 'website':'website_view'
         };
 
         window.switchTab = function(tabId) {
@@ -7272,6 +7471,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if(tabId === 'clients') window.renderClients && window.renderClients();
             if(tabId === 'services') window.renderServices && window.renderServices();
             if(tabId === 'employees') window.renderEmployees && window.renderEmployees();
+            if(tabId === 'website') window.renderWebsiteTab && window.renderWebsiteTab();
             if(tabId === 'settings') window.populateSettingsUI && window.populateSettingsUI();
             if(tabId === 'ai-report') { window.updateAIReportPreview && window.updateAIReportPreview(); if(typeof lucide!=='undefined') lucide.createIcons(); }
             if(tabId === 'gst') { window.renderGSTModule && window.renderGSTModule(); }
@@ -8789,9 +8989,11 @@ try {
         };
 
         window.toggleIdpMenu = function() {
-            var dd=document.getElementById('idp-menu-dropdown'),dlm=document.getElementById('idp-download-menu');
+            var dd=document.getElementById('idp-menu-dropdown'),dlm=document.getElementById('idp-download-menu'),bg=document.getElementById('idp-menu-backdrop');
             if(dlm) dlm.style.display='none';
-            if(dd) dd.style.display=(dd.style.display==='none'||!dd.style.display)?'block':'none';
+            var show=(dd&&(dd.style.display==='none'||!dd.style.display));
+            if(dd) dd.style.display=show?'block':'none';
+            if(bg) bg.style.display=show?'block':'none';
         };
 
         window.toggleIdpDownloadMenu = function() {
@@ -8808,6 +9010,7 @@ try {
             var btn=document.getElementById('idp-menu-btn');
             if(dd&&dd.style.display==='block'&&!dd.contains(e.target)&&btn&&!btn.contains(e.target)){
                 dd.style.display='none';
+                var bg0=document.getElementById('idp-menu-backdrop'); if(bg0) bg0.style.display='none';
             }
             var dlm=document.getElementById('idp-download-menu');
             var dBtn=document.getElementById('idp-download-btn');
@@ -8817,7 +9020,7 @@ try {
         });
 
         window.idpAction = function(action) {
-            ['idp-menu-dropdown','idp-download-menu'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+            ['idp-menu-dropdown','idp-download-menu','idp-menu-backdrop'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
             var invId=window._idpInvId; if(!invId) return;
 
             if(action==='edit'){
@@ -9017,7 +9220,7 @@ try {
                 try {
                     window.showToast && window.showToast('Opening WhatsApp + PDF...');
                     const freshDiv = document.createElement('div');
-                    freshDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;font-size:11px;padding:30px 36px;box-sizing:border-box;z-index:9990;overflow:visible;opacity:0.001;pointer-events:none;';
+                    freshDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;font-size:11px;padding:30px 36px;box-sizing:border-box;z-index:-1;overflow:visible;opacity:0.001;pointer-events:none;';
                     freshDiv.innerHTML = window.generateInvoiceHTML(inv);
                     document.body.appendChild(freshDiv);
                     await new Promise(r => setTimeout(r, 400));
@@ -9268,6 +9471,11 @@ try {
             window._cdpClientId = clientId;
             const c = (window.AppState.clients||[]).find(x => x.id === clientId);
             if(!c) return;
+            window._cdpDelete = function(){
+                if(!window.softDeleteClient) return;
+                window.softDeleteClient(clientId);
+                window.closeClientDetailPage && window.closeClientDetailPage();
+            };
             const invoices = (window.AppState.invoices||[]).filter(i => i.client.name === c.name && i.status === 'final' && i.status !== 'void');
             const totalBilled = invoices.reduce((s, i) => s + Number(i.grandTotal||0), 0);
             const outstanding = invoices.filter(i => i.paymentStatus !== 'paid').reduce((s, i) => s + Number(i.grandTotal||0), 0);
@@ -10882,7 +11090,7 @@ window.downloadPreviewPDF = async function() {
     var filename = (inv.id || 'preview') + '.pdf';
     // Use opacity:0.001 NOT left:-9999px — Android WebView won't render off-viewport elements
     var freshDiv = document.createElement('div');
-    freshDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;font-size:11px;padding:30px 36px;box-sizing:border-box;z-index:9997;overflow:visible;opacity:0.001;pointer-events:none;';
+    freshDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;font-size:11px;padding:30px 36px;box-sizing:border-box;z-index:-1;overflow:visible;opacity:0.001;pointer-events:none;';
     freshDiv.innerHTML = window.generateInvoiceHTML ? window.generateInvoiceHTML(inv) : (document.getElementById('preview-render-area')||{}).innerHTML || '';
     var savedScroll = window.pageYOffset || 0;
     window.scrollTo(0, 0);
@@ -13112,7 +13320,7 @@ window.autoSendWAInvoice = async function() {
 
     // Try to render invoice and share as PDF
     var tempDiv = document.createElement('div');
-    tempDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;opacity:0.001;pointer-events:none;z-index:9997;box-sizing:border-box;';
+    tempDiv.style.cssText = 'position:fixed;top:0;left:0;width:794px;min-height:1123px;background:white;opacity:0.001;pointer-events:none;z-index:-1;box-sizing:border-box;';
     if(window.generateInvoiceHTML) tempDiv.innerHTML = window.generateInvoiceHTML(latest);
     document.body.appendChild(tempDiv);
 
@@ -14063,6 +14271,9 @@ window.EMP_PERMISSIONS = {
     'emp_view':         { label:'View Employee List', group:'Employees', sensitive:true, defaultOn:false },
     'emp_add':          { label:'Add Employee', group:'Employees', sensitive:true, defaultOn:false },
     'emp_edit_role':    { label:'Edit Employee Roles', group:'Employees', sensitive:true, defaultOn:false },
+    'website_view':     { label:'View Website & Orders', group:'Website', sensitive:true, defaultOn:false },
+    'website_manage':   { label:'Edit Store Settings', group:'Website', sensitive:true, defaultOn:false },
+    'website_order_accept': { label:'Accept/Reject Online Orders', group:'Website', sensitive:true, defaultOn:false },
     'backup_download':  { label:'Download Backup Excel', group:'Data', sensitive:true, defaultOn:false },
     'tally_export':     { label:'Export to Tally XML', group:'Data', sensitive:true, defaultOn:false },
     'trash_view':       { label:'View Recycle Bin', group:'Data', sensitive:true, defaultOn:false },
@@ -14099,17 +14310,57 @@ window.setAuthMode=function(mode){
     }
 };
 
-// ── SECURITY: password hashing (SHA-256 via Web Crypto) ──────────────────────
-// Employee passwords used to be stored in plain text. From now on we hash them
-// before ever writing to localStorage or Firestore. Old plaintext passwords
-// already saved are auto-upgraded to a hash the next time they're used.
+// ── SECURITY: password hashing (salted PBKDF2 via Web Crypto) ────────────────
+// v1 (oldest): plaintext. v2: bare unsalted SHA-256 (weak — no salt, single
+// round, vulnerable to rainbow tables). v3 (current): PBKDF2-SHA256, 150,000
+// iterations, random 16-byte salt per employee — stored as
+// "pbkdf2$<iterations>$<saltHex>$<hashHex>". Old records of either earlier
+// kind are transparently upgraded to v3 the next time that employee logs in
+// successfully — nothing needs to be done manually.
 window._sha256 = async function(str) {
     try {
         var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(str)));
         return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2,'0'); }).join('');
     } catch(e) { return str; } // extremely old browser fallback
 };
-window._looksHashed = function(pw) { return typeof pw === 'string' && /^[a-f0-9]{64}$/i.test(pw); };
+window._PBKDF2_ITERATIONS = 150000;
+window._bufToHex = function(buf){ return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2,'0'); }).join(''); };
+window._hexToBuf = function(hex){ var a=new Uint8Array(hex.length/2); for(var i=0;i<a.length;i++) a[i]=parseInt(hex.substr(i*2,2),16); return a; };
+window._pbkdf2Hash = async function(password, saltBytes, iterations){
+    try{
+        var keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(password)), {name:'PBKDF2'}, false, ['deriveBits']);
+        var bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt:saltBytes, iterations:iterations, hash:'SHA-256'}, keyMaterial, 256);
+        return window._bufToHex(bits);
+    }catch(e){ return await window._sha256(password); } // fallback for ancient browsers without PBKDF2 support
+};
+// Hash a NEW/changed plaintext password into the current (v3) format.
+window._hashPasswordStrong = async function(plainPassword){
+    var saltBytes = crypto.getRandomValues(new Uint8Array(16));
+    var hashHex = await window._pbkdf2Hash(plainPassword, saltBytes, window._PBKDF2_ITERATIONS);
+    return 'pbkdf2$' + window._PBKDF2_ITERATIONS + '$' + window._bufToHex(saltBytes) + '$' + hashHex;
+};
+// Verify an entered plaintext password against a stored value of ANY generation
+// (v3 pbkdf2$.., v2 bare sha256 hex, or v1 plaintext). Returns {ok, upgradedHash}
+// — if ok and upgradedHash is set, callers should persist it to silently
+// migrate that record to the strongest current format.
+window._verifyPassword = async function(enteredPlain, stored){
+    if(typeof stored === 'string' && stored.indexOf('pbkdf2$') === 0){
+        var parts = stored.split('$'); // ['pbkdf2', iterations, saltHex, hashHex]
+        var iterations = parseInt(parts[1], 10) || window._PBKDF2_ITERATIONS;
+        var saltBytes = window._hexToBuf(parts[2]);
+        var computed = await window._pbkdf2Hash(enteredPlain, saltBytes, iterations);
+        return { ok: computed === parts[3], upgradedHash: null }; // already current format
+    }
+    if(window._looksHashed(stored)){ // legacy v2: bare sha256 hex
+        var enteredHash = await window._sha256(enteredPlain);
+        var ok2 = (enteredHash === stored);
+        return { ok: ok2, upgradedHash: ok2 ? await window._hashPasswordStrong(enteredPlain) : null };
+    }
+    // legacy v1: plaintext record
+    var ok1 = (enteredPlain === stored);
+    return { ok: ok1, upgradedHash: ok1 ? await window._hashPasswordStrong(enteredPlain) : null };
+};
+window._looksHashed = function(pw) { return typeof pw === 'string' && (pw.indexOf('pbkdf2$') === 0 || /^[a-f0-9]{64}$/i.test(pw)); };
 window._normEmail = function(e) { return String(e || '').trim().toLowerCase(); };
 
 // ── CLOUD SYNC: employee credentials also saved to Firestore (not just this
@@ -14287,15 +14538,10 @@ window.handleEmployeeLogin=async function(e){
         return;
     }
 
-    // Password check — supports both new hashed passwords and old plaintext
-    // passwords saved before this update (auto-upgraded to a hash on success).
-    var passwordOk = false;
-    if(window._looksHashed(emp.password)){
-        var enteredHash = await window._sha256(password);
-        passwordOk = (enteredHash === emp.password);
-    } else {
-        passwordOk = (password === emp.password); // legacy plaintext record
-    }
+    // Password check — supports v3 (pbkdf2, current), v2 (bare sha256, legacy),
+    // and v1 (plaintext, very old) records; verified match auto-upgrades to v3.
+    var verify = await window._verifyPassword(password, emp.password);
+    var passwordOk = verify.ok;
 
     if(!passwordOk){
         var failCount = window._empLoginRecordFail(lockKey);
@@ -14307,13 +14553,11 @@ window.handleEmployeeLogin=async function(e){
     // Success — clear lockout
     window._empLoginClear(lockKey);
 
-    // Auto-upgrade legacy plaintext password to a hash now that we've verified it.
-    // Written directly against bizUid (not via window.saveEmployees, since AppState.user
-    // isn't the employee's owner account yet at this point in the login flow).
-    if(!window._looksHashed(emp.password)){
+    // Silently upgrade this record to the current strong hash format if it was
+    // still on an older/weaker one (bare sha256, or ancient plaintext).
+    if(verify.upgradedHash){
         try{
-            var upgradedHash = await window._sha256(password);
-            var allEmps = emps.map(function(e2){ return (window._normEmail(e2.email)===email) ? Object.assign({}, e2, {password: upgradedHash}) : e2; });
+            var allEmps = emps.map(function(e2){ return (window._normEmail(e2.email)===email) ? Object.assign({}, e2, {password: verify.upgradedHash}) : e2; });
             localStorage.setItem('ayur_employees_'+bizUid, JSON.stringify(allEmps));
             window._syncEmployeesToCloud(bizUid, allEmps);
         }catch(ex){}
@@ -14592,7 +14836,7 @@ window.saveEmployees=async function(emps){
     for(var i=0;i<emps.length;i++){
         if(emps[i] && emps[i].email) emps[i].email = window._normEmail(emps[i].email);
         if(emps[i] && emps[i].password && !window._looksHashed(emps[i].password)){
-            emps[i].password = await window._sha256(emps[i].password);
+            emps[i].password = await window._hashPasswordStrong(emps[i].password);
         }
     }
     localStorage.setItem('ayur_employees_'+uid,JSON.stringify(emps));
@@ -14607,11 +14851,21 @@ window.saveEmployees=async function(emps){
 
 window.renderEmployees=function(){
     var emps=window.loadEmployees();
+    var searchEl=document.getElementById('emp-search-input');
+    var searchQ=(searchEl?searchEl.value:'').trim().toLowerCase();
     var listEl=document.getElementById('employees-list');
     var te=document.getElementById('emp-total'),ae=document.getElementById('emp-active'),se=document.getElementById('emp-salary');
     if(te)te.textContent=emps.length;if(ae)ae.textContent=emps.filter(function(e){return e.active!==false;}).length;
     var sal=emps.reduce(function(s,e){return s+Number(e.salary||0);},0);if(se)se.textContent='₹'+sal.toLocaleString('en-IN');
     if(!listEl)return;
+    if(searchQ){
+        emps=emps.filter(function(e){
+            return (e.name||'').toLowerCase().indexOf(searchQ)!==-1
+                || (e.designation||'').toLowerCase().indexOf(searchQ)!==-1
+                || (e.dept||'').toLowerCase().indexOf(searchQ)!==-1
+                || (e.email||'').toLowerCase().indexOf(searchQ)!==-1;
+        });
+    }
     var uid=window.AppState&&window.AppState.user&&window.AppState.user.uid;
     var pwR=JSON.parse(localStorage.getItem('ayur_pw_requests_'+uid)||'[]').filter(function(r){return r.status==='pending';});
     var pmR=JSON.parse(localStorage.getItem('ayur_perm_requests_'+uid)||'[]').filter(function(r){return r.status==='pending';});
@@ -14622,7 +14876,12 @@ window.renderEmployees=function(){
         +pmR.map(function(r){return'<div class="flex items-center justify-between p-2.5 bg-white rounded-xl border border-blue-100 mb-2"><div><div class="text-sm font-bold text-blue-900">🔓 Permission Request</div><div class="text-xs text-blue-600">'+r.empName+' · '+new Date(r.requestedAt).toLocaleDateString('en-IN')+'</div></div><button onclick="window.openPermissionRequest(\''+r.empEmail+'\')" class="btn btn-sm text-xs" style="background:var(--op);color:white;border-color:var(--op);">Review</button></div>';}).join('')
         +'</div></div>';
     }
-    if(!emps.length){listEl.innerHTML=pendHTML+'<div class="col-span-full p-8 text-center text-slate-400 flex flex-col items-center gap-2"><span class="text-4xl">👥</span><div class="font-semibold">No employees yet</div><button onclick="window.openEmployeeDrawer(null)" class="btn btn-primary btn-sm mt-2"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Add Employee</button></div>';if(typeof lucide!=='undefined')lucide.createIcons({node:listEl});return;}
+    if(!emps.length){
+        listEl.innerHTML=pendHTML+(searchQ
+            ? '<div class="col-span-full p-8 text-center text-slate-400 flex flex-col items-center gap-2"><span class="text-4xl">🔍</span><div class="font-semibold">"'+searchQ+'" se koi employee nahi mila</div></div>'
+            : '<div class="col-span-full p-8 text-center text-slate-400 flex flex-col items-center gap-2"><span class="text-4xl">👥</span><div class="font-semibold">No employees yet</div><button onclick="window.openEmployeeDrawer(null)" class="btn btn-primary btn-sm mt-2"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Add Employee</button></div>');
+        if(typeof lucide!=='undefined')lucide.createIcons({node:listEl});return;
+    }
     var totalPerms=Object.keys(window.EMP_PERMISSIONS).length;
     listEl.innerHTML=pendHTML+emps.map(function(emp){
         var pc=Object.values(emp.permissions||{}).filter(Boolean).length;
@@ -14683,14 +14942,31 @@ window.renderRolePermissions=function(){
     var perms=window._currentEmpPermissions;var groups={};
     Object.keys(window.EMP_PERMISSIONS).forEach(function(k){var p=window.EMP_PERMISSIONS[k];if(!groups[p.group])groups[p.group]=[];groups[p.group].push({key:k,label:p.label,sensitive:p.sensitive});});
     container.innerHTML=Object.keys(groups).map(function(g){
-        return'<div class="mb-3"><div class="text-[10px] font-black uppercase tracking-wider text-indigo-400 bg-indigo-50 px-2 py-1 rounded mb-1">'+g+'</div>'
+        var allOn=groups[g].every(function(p){return perms[p.key]===true;});
+        var gid='permgrp_'+g.replace(/[^a-zA-Z0-9]/g,'');
+        return'<div class="mb-3"><div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-indigo-400 bg-indigo-50 px-2 py-1 rounded mb-1">'
+        +'<span>'+g+'</span>'
+        +'<span onclick="window.toggleGroupPerms(\''+g.replace(/'/g,"\\'")+'\','+(!allOn)+')" style="cursor:pointer;color:'+(allOn?'#dc3545':'#0b6377')+';text-transform:none;font-weight:700;">'+(allOn?'Clear all':'Select all')+'</span>'
+        +'</div>'
+        +'<div id="'+gid+'">'
         +groups[g].map(function(p){
             var isOn=perms[p.key]===true;
             return'<label class="flex items-center gap-3 py-2 px-2 rounded-xl hover:bg-slate-50 cursor-pointer '+(p.sensitive?'border-l-2 border-amber-400 pl-3 ml-1':'')+'">'
             +'<label class="toggle" style="width:34px;height:20px;flex-shrink:0" onclick="event.stopPropagation()"><input type="checkbox" data-perm="'+p.key+'" '+(isOn?'checked':'')+' onchange="window.onPermToggle(\''+p.key+'\',this.checked,'+p.sensitive+')"><span class="toggle-track"></span></label>'
             +'<div class="flex-1 text-xs text-slate-700">'+p.label+'</div>'+(p.sensitive?'<span class="text-amber-500 text-[9px] font-bold">🔒</span>':'')+'</label>';
-        }).join('')+'</div>';
+        }).join('')+'</div></div>';
     }).join('');
+};
+window.toggleGroupPerms=function(groupName, turnOn){
+    var keys=Object.keys(window.EMP_PERMISSIONS).filter(function(k){return window.EMP_PERMISSIONS[k].group===groupName;});
+    if(turnOn){
+        var sensitiveOnes=keys.filter(function(k){return window.EMP_PERMISSIONS[k].sensitive;});
+        if(sensitiveOnes.length && !confirm('⚠️ "'+groupName+'" group mein '+sensitiveOnes.length+' sensitive permission(s) hain.\n\nSabhi enable karein?')) {
+            keys=keys.filter(function(k){return !window.EMP_PERMISSIONS[k].sensitive;});
+        }
+    }
+    keys.forEach(function(k){ window._currentEmpPermissions[k]=turnOn; });
+    window.renderRolePermissions();
 };
 window.onPermToggle=function(key,value,isSensitive){
     if(isSensitive&&value){if(!confirm('⚠️ "'+window.EMP_PERMISSIONS[key].label+'" is sensitive.\n\nEnable this?')){var el=document.querySelector('[data-perm="'+key+'"]');if(el)el.checked=false;return;}}
@@ -14816,18 +15092,29 @@ window.logEmployeeActivity = function(action, details) {
     var emp = window._employeeData || window.AppState?._empData;
     var bizUid = window._employeeOwnerUid;
     if(!emp || !bizUid) return;
-    var logs = [];
-    try { logs = JSON.parse(localStorage.getItem('ayur_activity_'+bizUid) || '[]'); } catch(e) {}
-    logs.unshift({
+    var entry = {
         empEmail: emp.email,
         empName: emp.name,
         action: action,
         details: details || '',
         timestamp: new Date().toISOString()
-    });
-    // Keep only last 500 entries
-    if(logs.length > 500) logs = logs.slice(0, 500);
+    };
+    // Local copy — keeps working instantly / offline on this device
+    var logs = [];
+    try { logs = JSON.parse(localStorage.getItem('ayur_activity_'+bizUid) || '[]'); } catch(e) {}
+    logs.unshift(entry);
+    if(logs.length > 500) logs = logs.slice(0, 500); // keep only last 500 entries locally
     try { localStorage.setItem('ayur_activity_'+bizUid, JSON.stringify(logs)); } catch(e) {}
+
+    // Cloud copy — so the OWNER can see this from their own device too, not
+    // just from whichever phone the employee happened to log in on. Each
+    // entry is its own doc (not one array field) so concurrent employees on
+    // different devices never overwrite each other's log entries.
+    try {
+        if(window._db && window._collection && window._addDoc){
+            window._addDoc(window._collection(window._db, 'artifacts', window._appId, 'users', bizUid, 'employeeActivity'), entry).catch(function(){});
+        }
+    } catch(e) {}
 };
 
 // Patch key actions to log activity
@@ -14873,16 +15160,9 @@ window.logEmployeeActivity = function(action, details) {
 })();
 
 // ── RENDER ACTIVITY LOG (owner view) ─────────────────────────
-window.renderActivityLog = function() {
-    var uid = window.AppState && window.AppState.user && window.AppState.user.uid;
-    if(!uid) return;
-    var logs = [];
-    try { logs = JSON.parse(localStorage.getItem('ayur_activity_'+uid) || '[]'); } catch(e) {}
-
+window._renderActivityLogHTML = function(logs, emps) {
     var filter = (document.getElementById('activity-emp-filter') || {}).value || '';
 
-    // Update filter dropdown
-    var emps = window.loadEmployees ? window.loadEmployees() : [];
     var filterEl = document.getElementById('activity-emp-filter');
     if(filterEl && filterEl.options.length < 2) {
         emps.forEach(function(e) {
@@ -14899,6 +15179,7 @@ window.renderActivityLog = function() {
 
     if(!filtered.length) {
         listEl.innerHTML = '<div class="text-center text-slate-400 text-sm py-8">No activity logged yet</div>';
+        window.renderActivitySummary(logs, emps);
         return;
     }
 
@@ -14924,8 +15205,52 @@ window.renderActivityLog = function() {
             + '</div></div>';
     }).join('');
 
-    // Summary
     window.renderActivitySummary(logs, emps);
+};
+
+// Merge two log arrays and de-dupe (same employee+action+timestamp = same event,
+// whether it came from localStorage or Firestore).
+window._mergeActivityLogs = function(a, b){
+    var seen = {}, out = [];
+    (a||[]).concat(b||[]).forEach(function(l){
+        var key = (l.empEmail||'')+'|'+(l.action||'')+'|'+(l.timestamp||'');
+        if(seen[key]) return;
+        seen[key] = true;
+        out.push(l);
+    });
+    out.sort(function(x,y){ return new Date(y.timestamp) - new Date(x.timestamp); });
+    return out.slice(0, 500);
+};
+
+window.renderActivityLog = function() {
+    var uid = window.AppState && window.AppState.user && window.AppState.user.uid;
+    if(!uid) return;
+    var localLogs = [];
+    try { localLogs = JSON.parse(localStorage.getItem('ayur_activity_'+uid) || '[]'); } catch(e) {}
+    var emps = window.loadEmployees ? window.loadEmployees() : [];
+
+    // Render immediately from whatever we have locally/cached (fast, works offline)
+    window._renderActivityLogHTML(localLogs, emps);
+
+    // Then pull the cloud copies (written from EVERY employee device, not just
+    // this one) and merge them in — this is what actually makes the log useful
+    // for monitoring remote staff instead of only whoever used this exact phone.
+    try {
+        if(window._db && window._collection && window._getDocs && window._fsQuery && window._fsOrderBy && window._fsLimit){
+            var q = window._fsQuery(
+                window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'employeeActivity'),
+                window._fsOrderBy('timestamp', 'desc'),
+                window._fsLimit(500)
+            );
+            window._getDocs(q).then(function(snap){
+                var cloudLogs = [];
+                snap.forEach(function(d){ cloudLogs.push(d.data()); });
+                var merged = window._mergeActivityLogs(localLogs, cloudLogs);
+                try { localStorage.setItem('ayur_activity_'+uid, JSON.stringify(merged)); } catch(e){}
+                window._renderActivityLogHTML(merged, emps);
+            }).catch(function(){ /* offline or rules not permitting — local view still shown */ });
+        }
+    } catch(e) {}
 };
 
 window.renderActivitySummary = function(logs, emps) {
@@ -14967,6 +15292,15 @@ window.clearActivityLog = function() {
     var uid = window.AppState && window.AppState.user && window.AppState.user.uid;
     if(!uid || !confirm('Clear all activity logs?')) return;
     localStorage.removeItem('ayur_activity_'+uid);
+    // Also remove the cloud copies, otherwise the next render would just pull
+    // the old entries straight back down from Firestore.
+    try {
+        if(window._db && window._collection && window._getDocs && window._deleteDoc){
+            window._getDocs(window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'employeeActivity')).then(function(snap){
+                snap.forEach(function(d){ window._deleteDoc(d.ref).catch(function(){}); });
+            }).catch(function(){});
+        }
+    } catch(e) {}
     window.renderActivityLog();
     window.showToast && window.showToast('Activity log cleared');
 };
@@ -15168,6 +15502,9 @@ window._wrapRestrictedFunctions = function() {
         ['exportServicesCSV',   'svc_view',          'Service Export'],
         ['exportToTally',       'tally_export',      'Tally Export'],
         ['handleExcelImport',   'prod_import',       'Excel Import'],
+        ['softDeleteClient',    'client_delete',     'Delete Client'],
+        ['softDeleteProduct',   'prod_delete',       'Delete Product'],
+        ['permanentDeleteItem', 'trash_restore',     'Permanent Delete'],
     ];
     fns.forEach(function(f) {
         var fnName=f[0], permKey=f[1], label=f[2];
@@ -15239,6 +15576,8 @@ window._enforceEmployeeUI = function() {
         'report_view':    ['button[onclick*="openFinancialReports"]'],
         'exp_add':        ['button[onclick*="addExpense"]','button[onclick*="openExpenseModal"]'],
         'rec_export':     ['button[onclick*="exportCSV"]'],
+        'client_delete':  ['button[onclick*="softDeleteClient"]','button[onclick*="_cdpDelete"]'],
+        'prod_delete':    ['button[onclick*="softDeleteProduct"]','button[onclick*="_pdpDelete"]'],
     };
 
     Object.keys(hideMap).forEach(function(perm) {
@@ -15605,15 +15944,26 @@ window.addAccountAndSwitch = function() {
         var empPw = (document.getElementById('add-acc-emp-pw')||{}).value||'';
         if(!bizUid||!empEmail||!empPw) { if(errEl){errEl.textContent='Fill all fields and select a business';errEl.classList.remove('hidden');} return; }
         var emps = []; try { emps = JSON.parse(localStorage.getItem('ayur_employees_'+bizUid)||'[]'); } catch(e){}
-        var emp = emps.find(function(e){ return e.email===empEmail&&e.password===empPw&&e.active!==false; });
-        if(!emp) { if(errEl){errEl.textContent='Invalid credentials or inactive account';errEl.classList.remove('hidden');} return; }
-        var bizCfg = {}; try { bizCfg = JSON.parse(localStorage.getItem('ayur_settings_cache_'+bizUid)||'{}'); } catch(e){}
-        window.saveAccountToList({ type:'employee', email:empEmail, name:emp.name, bizName:bizCfg.businessName||'Business', bizUid:bizUid, empId:emp.id });
-        document.getElementById('add-account-modal').classList.remove('open');
-        window.showToast && window.showToast('Employee account saved! ✅');
-        if(confirm('Switch to '+emp.name+'?')) {
-            window.switchToAccount(empEmail, 'employee', bizUid);
-        }
+        var candidate = emps.find(function(e){ return e.email===empEmail&&e.active!==false; });
+        if(!candidate) { if(errEl){errEl.textContent='Invalid credentials or inactive account';errEl.classList.remove('hidden');} return; }
+        window._verifyPassword(empPw, candidate.password).then(function(verify){
+            if(!verify.ok) { if(errEl){errEl.textContent='Invalid credentials or inactive account';errEl.classList.remove('hidden');} return; }
+            var emp = candidate;
+            if(verify.upgradedHash){
+                try{
+                    var allEmps = emps.map(function(e2){ return (e2.email===empEmail) ? Object.assign({}, e2, {password: verify.upgradedHash}) : e2; });
+                    localStorage.setItem('ayur_employees_'+bizUid, JSON.stringify(allEmps));
+                    window._syncEmployeesToCloud && window._syncEmployeesToCloud(bizUid, allEmps);
+                }catch(ex){}
+            }
+            var bizCfg = {}; try { bizCfg = JSON.parse(localStorage.getItem('ayur_settings_cache_'+bizUid)||'{}'); } catch(e){}
+            window.saveAccountToList({ type:'employee', email:empEmail, name:emp.name, bizName:bizCfg.businessName||'Business', bizUid:bizUid, empId:emp.id });
+            document.getElementById('add-account-modal').classList.remove('open');
+            window.showToast && window.showToast('Employee account saved! ✅');
+            if(confirm('Switch to '+emp.name+'?')) {
+                window.switchToAccount(empEmail, 'employee', bizUid);
+            }
+        });
     }
 };
 
@@ -18433,12 +18783,13 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
 const FIREBASE_CONFIG = {
-    apiKey:"AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
-    authDomain:"dev-ayurveda.firebaseapp.com",
-    projectId:"dev-ayurveda",
-    storageBucket:"dev-ayurveda.firebasestorage.app",
-    messagingSenderId:"40760282698",
-    appId:"1:40760282698:web:20e31100eed712631ca0b3"
+    apiKey:"AIzaSyDHzTJwqowLfoM3BuMrBw9w-yeVVPBcUgA",
+    authDomain:"my-business-erp-9a826.firebaseapp.com",
+    projectId:"my-business-erp-9a826",
+    storageBucket:"my-business-erp-9a826.firebasestorage.app",
+    messagingSenderId:"483878230402",
+    appId:"1:483878230402:web:7def5e340df4c37bc7179b",
+    measurementId:"G-8BHHF3NSSE"
 };
 const fbApp = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG, 'sub-app');
 const subDB  = getFirestore(fbApp);
@@ -19273,6 +19624,218 @@ window.resetInvCounter = function() {
     }
     document.addEventListener('DOMContentLoaded', function(){ setTimeout(reStamp,100); setTimeout(reStamp,600); });
     setTimeout(reStamp,300); setTimeout(reStamp,1200); setTimeout(reStamp,2500);
+})();
+
+// ── Invoice Export — by Month / Client / Date Range → combined PDF or Print ──
+(function(){
+    window._iexMode = 'month';
+
+    window.openInvoiceExportModal = function(){
+        var existing = document.getElementById('inv-export-modal');
+        if(existing) existing.remove();
+
+        var clients = (window.AppState && window.AppState.clients) || [];
+        var today = new Date();
+        var curMonthVal = today.toISOString().slice(0,7);
+
+        var overlay = document.createElement('div');
+        overlay.id = 'inv-export-modal';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+        overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+        var card = document.createElement('div');
+        card.style.cssText = 'background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;font-family:inherit;';
+        card.onclick = function(e){ e.stopPropagation(); };
+
+        card.innerHTML = ''
+            + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+            +   '<div style="font-size:16px;font-weight:800;color:#1e293b;">📥 Export Invoices</div>'
+            +   '<button onclick="document.getElementById(\'inv-export-modal\').remove()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;color:#64748b;">✕</button>'
+            + '</div>'
+            + '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Client</div>'
+            + '<select id="iex-client" onchange="window._iexUpdateCount&&window._iexUpdateCount()" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:10px;font-size:13px;margin-bottom:16px;font-family:inherit;">'
+            +   '<option value="">All Clients</option>'
+            +   clients.map(function(c){ var n=(c.name||'').replace(/"/g,'&quot;'); return '<option value="'+n+'">'+(c.name||'')+'</option>'; }).join('')
+            + '</select>'
+            + '<div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Period</div>'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
+            +   '<button type="button" id="iex-mode-month" onclick="window._iexSetMode(\'month\')" style="padding:9px 4px;border-radius:10px;border:1.5px solid #dee2e6;background:#fff;color:#495057;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Month</button>'
+            +   '<button type="button" id="iex-mode-range" onclick="window._iexSetMode(\'range\')" style="padding:9px 4px;border-radius:10px;border:1.5px solid #dee2e6;background:#fff;color:#495057;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Date Range</button>'
+            +   '<button type="button" id="iex-mode-all" onclick="window._iexSetMode(\'all\')" style="padding:9px 4px;border-radius:10px;border:1.5px solid #dee2e6;background:#fff;color:#495057;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">All Time</button>'
+            + '</div>'
+            + '<div id="iex-month-wrap" style="margin-bottom:16px;">'
+            +   '<input type="month" id="iex-month" value="'+curMonthVal+'" onchange="window._iexUpdateCount&&window._iexUpdateCount()" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:10px;font-size:13px;font-family:inherit;">'
+            + '</div>'
+            + '<div id="iex-range-wrap" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
+            +   '<input type="date" id="iex-start" onchange="window._iexUpdateCount&&window._iexUpdateCount()" style="padding:10px 12px;border:1px solid #dee2e6;border-radius:10px;font-size:13px;font-family:inherit;">'
+            +   '<input type="date" id="iex-end" onchange="window._iexUpdateCount&&window._iexUpdateCount()" style="padding:10px 12px;border:1px solid #dee2e6;border-radius:10px;font-size:13px;font-family:inherit;">'
+            + '</div>'
+            + '<div id="iex-count" style="font-size:12px;color:#64748b;margin-bottom:16px;"></div>'
+            + '<div style="display:flex;gap:10px;">'
+            +   '<button type="button" onclick="window._iexRun(\'print\')" style="flex:1;padding:12px;background:#f1f5f9;color:#0f172a;border:none;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">🖨️ Print</button>'
+            +   '<button type="button" onclick="window._iexRun(\'download\')" style="flex:1;padding:12px;background:#0b6377;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">⬇️ Download PDF</button>'
+            + '</div>';
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        window._iexSetMode('month');
+    };
+
+    window._iexSetMode = function(mode){
+        window._iexMode = mode;
+        ['month','range','all'].forEach(function(m){
+            var btn = document.getElementById('iex-mode-'+m);
+            if(!btn) return;
+            if(m===mode){ btn.style.background='#0b6377'; btn.style.borderColor='#0b6377'; btn.style.color='#fff'; }
+            else { btn.style.background='#fff'; btn.style.borderColor='#dee2e6'; btn.style.color='#495057'; }
+        });
+        var mw = document.getElementById('iex-month-wrap'), rw = document.getElementById('iex-range-wrap');
+        if(mw) mw.style.display = mode==='month' ? 'block' : 'none';
+        if(rw) rw.style.display = mode==='range' ? 'grid' : 'none';
+        window._iexUpdateCount();
+    };
+
+    window._iexGetFiltered = function(){
+        var clientEl = document.getElementById('iex-client');
+        var clientName = clientEl ? clientEl.value : '';
+        var mode = window._iexMode || 'month';
+        var start = '', end = '';
+        if(mode === 'month'){
+            var mVal = (document.getElementById('iex-month')||{}).value;
+            if(mVal){
+                start = mVal + '-01';
+                var d = new Date(mVal + '-01');
+                var lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+                end = mVal + '-' + String(lastDay).padStart(2,'0');
+            }
+        } else if(mode === 'range'){
+            start = (document.getElementById('iex-start')||{}).value || '';
+            end = (document.getElementById('iex-end')||{}).value || '';
+        }
+        var all = (window.AppState && window.AppState.invoices) || [];
+        var filtered = all.filter(function(i){
+            if(i.status !== 'final') return false;
+            if(clientName && !(i.client && i.client.name === clientName)) return false;
+            if(start && i.date < start) return false;
+            if(end && i.date > end) return false;
+            return true;
+        });
+        filtered.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+        return filtered;
+    };
+
+    window._iexUpdateCount = function(){
+        var el = document.getElementById('iex-count');
+        if(!el) return;
+        var list = window._iexGetFiltered();
+        var total = list.reduce(function(s,i){ return s + (i.grandTotal || i.total || 0); }, 0);
+        el.textContent = list.length + ' invoice(s) found — ₹' + total.toLocaleString('en-IN');
+    };
+
+    window._iexRun = function(action){
+        var clientEl = document.getElementById('iex-client');
+        var clientName = clientEl ? clientEl.value : '';
+        var mode = window._iexMode || 'month';
+        var mVal = (document.getElementById('iex-month')||{}).value || '';
+        var sVal = (document.getElementById('iex-start')||{}).value || '';
+        var eVal = (document.getElementById('iex-end')||{}).value || '';
+
+        var list = window._iexGetFiltered();
+        if(!list.length){ window.showToast && window.showToast('No invoices found for this selection','warning'); return; }
+        if(!window.generateInvoiceHTML){ window.showToast && window.showToast('Invoice renderer not ready','error'); return; }
+        if(typeof html2pdf === 'undefined'){ window.showToast && window.showToast('PDF engine not ready','error'); return; }
+
+        var modal = document.getElementById('inv-export-modal');
+        if(modal) modal.remove();
+
+        var periodPart = 'AllTime';
+        if(mode==='month') periodPart = mVal || 'Month';
+        else if(mode==='range') periodPart = (sVal||'Start') + '_to_' + (eVal||'End');
+        var clientPart = clientName ? clientName.replace(/[^a-zA-Z0-9]+/g,'_') : 'AllClients';
+        var filename = 'Invoices_' + clientPart + '_' + periodPart + '.pdf';
+
+        // ── Loading feedback so the app never looks frozen ──
+        var ov = document.getElementById('pdf-loading-overlay');
+        if(ov){
+            ov.classList.remove('hidden'); ov.classList.add('flex');
+            var h2 = ov.querySelector('h2'); if(h2) h2.textContent = (action==='print'?'Preparing Print...':'Generating PDF...');
+            var p = ov.querySelector('p'); if(p) p.textContent = list.length + ' invoice(s) — please wait...';
+            if(window.lucide) window.lucide.createIcons({node:ov});
+        }
+        window.showToast && window.showToast('PDF बन रही है... (' + list.length + ' invoice' + (list.length>1?'s':'') + ')');
+
+        function hideLoader(){ if(ov){ ov.classList.add('hidden'); ov.classList.remove('flex'); } }
+
+        // ── Render pages into the app's existing hidden bulk-render area ──
+        // (on-screen but invisible: top:0/left:0/opacity:0.001 — off-viewport
+        // positions like left:-9999px can render blank in some Android WebViews,
+        // which was causing the blank-PDF issue)
+        var area = document.getElementById('bulk-render-area');
+        var container = document.getElementById('bulk-render-container');
+        if(!area || !container){
+            container = document.createElement('div');
+            container.id = 'bulk-render-container';
+            container.style.cssText = 'position:fixed;top:0;left:0;width:794px;background:white;pointer-events:none;z-index:-1;opacity:0.001;overflow:visible;';
+            area = document.createElement('div');
+            area.id = 'bulk-render-area';
+            area.style.cssText = 'width:794px;background:white;';
+            container.appendChild(area);
+            document.body.appendChild(container);
+        }
+        area.innerHTML = '';
+        list.forEach(function(inv, i){
+            var page = document.createElement('div');
+            page.style.cssText = 'width:794px;min-height:1123px;background:#fff;overflow:hidden;box-sizing:border-box;' + (i<list.length-1 ? 'page-break-after:always;break-after:page;' : '');
+            page.innerHTML = window.generateInvoiceHTML(inv);
+            area.appendChild(page);
+        });
+
+        html2pdf().set({
+            margin:0, filename:filename,
+            image:{type:'jpeg',quality:0.97},
+            html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',width:794,windowWidth:794,scrollX:0,scrollY:0},
+            jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+            pagebreak:{mode:['css','legacy']}
+        }).from(area).output('blob').then(async function(blob){
+            area.innerHTML = '';
+            hideLoader();
+            if(!blob){ window.showToast && window.showToast('PDF error!','error'); return; }
+
+            if(action === 'download'){
+                // Reliable blob-URL download (matches the proven single-invoice
+                // download path) — avoids the blank chrome-native://pdf preview
+                if(window.downloadPDFBlob) {
+                    await window.downloadPDFBlob(blob, filename);
+                } else {
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob); a.download = filename;
+                    document.body.appendChild(a); a.click();
+                    setTimeout(function(){ a.remove(); }, 3000);
+                }
+                window.showToast && window.showToast('✅ ' + list.length + ' invoice(s) downloaded!');
+            } else {
+                // Print: open the ALREADY-PAGINATED PDF in Chrome's native PDF
+                // viewer, so pagination is guaranteed correct (avoids the
+                // unreliable CSS page-break-after behaviour of window.print()
+                // on combined HTML, which was squeezing pages together)
+                var blobUrl = URL.createObjectURL(blob);
+                var win = window.open(blobUrl, '_blank');
+                if(!win) {
+                    // Popup blocked — fall back to download so the user still gets the file
+                    if(window.downloadPDFBlob) await window.downloadPDFBlob(blob, filename);
+                    window.showToast && window.showToast('Popup blocked — PDF downloaded instead. Open it and tap Print.', 'warning');
+                } else {
+                    window.showToast && window.showToast('📄 PDF opened — tap the Print icon to print');
+                }
+                setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
+            }
+        }).catch(function(e){
+            area.innerHTML = '';
+            hideLoader();
+            window.showToast && window.showToast('PDF error: ' + e.message, 'error');
+        });
+    };
 })();
 
 // ── GST Tables — ensure ALL card>table wrapped in scroll div ──
@@ -21825,24 +22388,25 @@ function t(hi,en){return VC.lang==='hi'?hi:en;}
 // 6. INTENT SYSTEM
 // ══════════════════════════════════════════════
 var INTENTS=[
-  {id:'stop',kw:['ruko','stop','chup'],p:10},
-  {id:'repeat',kw:['phir se','repeat','dobara bolo'],p:9},
-  {id:'confirm',kw:['haan','yes','ha','okay','theek hai','sahi hai','bilkul','finalize karo','confirm karo','kar do'],p:8},
-  {id:'cancel_flow',kw:['nahi','mat karo','chhodo','hatao','band karo'],p:7},
-  {id:'help',kw:['help','madad','kya kar sakte','commands'],p:6},
-  {id:'small_talk',kw:['hello','hi ','namaste','namaskar','kaisa hai','shukriya','thank you','thanks','bye '],p:5},
-  {id:'whatsapp_share',kw:['whatsapp share','whatsapp pe','share karo whatsapp','whatsapp bhejo','share invoice'],p:4.5},
-  {id:'pdf_download',kw:['pdf download','pdf banao','pdf generate','invoice pdf','download pdf'],p:4.5},
-  {id:'invoice_create',kw:['invoice banao','bill banao','naya bill','naya invoice','invoice bana','bill bana','ka invoice','invoice bnao','naya sale'],p:4},
-  {id:'stock_query',kw:['stock','kitna hai','kitni hai','maal kitna'],p:4},
-  {id:'financial_query',kw:['kamai','revenue','kitna hua','earnings','bikri','profit','income','aaj kitna','daily report'],p:4},
-  {id:'navigate',kw:['dashboard','records dikhaao','reports dikhaao','settings mein jao','inventory tab'],p:4},
-  {id:'client_lookup',kw:['client dhundho','party dhundho','ka address','ka mobile','client search'],p:4},
-  {id:'product_add',kw:['naya product','product add karo','new product','add product'],p:4},
-  {id:'invoice_records',kw:['last invoice','aaj ke bills','recent invoices','invoice list'],p:4},
-  {id:'expense_add',kw:['expense add','kharcha','kharcha add','kharch'],p:4},
-  {id:'settings_update',kw:['business name','gstin update','settings update','naam change','naam rakh'],p:4},
-  {id:'discount_apply',kw:['discount','chhoot','percent off','discount lagao'],p:4},
+  {id:'stop',kw:['ruko','stop','chup','band karo assistant'],p:10},
+  {id:'repeat',kw:['phir se','repeat','dobara bolo','dobara'],p:9},
+  {id:'confirm',kw:['haan','yes','ha','okay','theek hai','sahi hai','bilkul','finalize karo','confirm karo','kar do','ok'],p:8},
+  {id:'cancel_flow',kw:['nahi','mat karo','chhodo','hatao','band karo','cancel'],p:7},
+  {id:'help',kw:['help','madad','kya kar sakte','commands','shortcuts','what can you do'],p:6},
+  {id:'small_talk',kw:['hello','hi ','namaste','namaskar','kaisa hai','shukriya','thank you','thanks','bye ','kaise ho'],p:5},
+  {id:'whatsapp_share',kw:['whatsapp share','whatsapp pe','share karo whatsapp','whatsapp bhejo','share invoice','share karo','whatsapp'],p:4.5},
+  {id:'pdf_download',kw:['pdf download','pdf banao','pdf generate','invoice pdf','download pdf','pdf','download'],p:4.5},
+  {id:'invoice_create',kw:['invoice banao','bill banao','naya bill','naya invoice','invoice bana','bill bana','ka invoice','invoice bnao','naya sale','create invoice','new invoice','make invoice','invoice create','start invoice','invoice'],p:4},
+  {id:'stock_query',kw:['stock','kitna hai','kitni hai','maal kitna','check stock','stock check','inventory check','kitna bacha','kitna bacha hai'],p:4},
+  {id:'financial_query',kw:['kamai','revenue','kitna hua','earnings','bikri','profit','income','aaj kitna','daily report','today sales',"today's sales",'aaj ki kamai','aaj ki bikri','sales report','todays sales','aaj ka business','how much sold'],p:4},
+  {id:'navigate',kw:['dashboard','records dikhaao','reports dikhaao','settings mein jao','inventory tab','show dashboard','open dashboard','go to dashboard','show reports','open reports','show records','open records','show settings','open settings','reports','report','records','purchase order','purchase orders'],p:4},
+  {id:'client_lookup',kw:['client dhundho','party dhundho','ka address','ka mobile','client search','find client','search client','client details','client ka number','client info','lookup client'],p:4},
+  {id:'client_add',kw:['new client','naya client','add client','client add karo','naya customer'],p:4},
+  {id:'product_add',kw:['naya product','product add karo','new product','add product','create product'],p:4},
+  {id:'invoice_records',kw:['last invoice','aaj ke bills','recent invoices','invoice list','show invoices','invoice history','all invoices'],p:4},
+  {id:'expense_add',kw:['expense add','kharcha','kharcha add','kharch','add expense','naya kharcha','kharcha daalo','expense'],p:4},
+  {id:'settings_update',kw:['business name','gstin update','settings update','naam change','naam rakh','change business name'],p:4},
+  {id:'discount_apply',kw:['discount','chhoot','percent off','discount lagao','discount add karo'],p:4},
 ];
 var DEVA_INTENTS={
   invoice_create:['इनवॉइस बनाओ','बिल बनाओ','नया बिल','नया इनवॉइस','का इनवॉइस','का बिल'],
@@ -22080,7 +22644,7 @@ function getDailyReport(full){
 }
 function handleStop(){if(VC.synth)VC.synth.cancel();VC.ctx.intent=null;VC.ctx.step=0;VC.ctx.data={};return t('Theek hai, ruk gaya.','Stopped.');}
 function handleRepeat(){return VC.ctx.lastResponse||t('Kuch nahi bola.','Nothing to repeat.');}
-function handleHelp(){return t('Keh sakte ho: Invoice banao. Stock check karo. Aaj ki kamai. WhatsApp share. PDF download. Client dhundho. Expense add karo. Dashboard/reports dikhaao. Discount lagao.','Say: Create invoice. Check stock. Today\'s sales. WhatsApp share. PDF download. Find client. Add expense. Dashboard/reports.');}
+function handleHelp(){return t('Keh sakte ho: Invoice banao. Stock check karo. Aaj ki kamai. WhatsApp share. PDF download. Client dhundho. Naya client. Expense add karo. Dashboard/reports dikhaao. Discount lagao.','Say: Create invoice. Check stock. Today\'s sales. WhatsApp share. PDF download. Find client. New client. Add expense. Dashboard/reports.');}
 function handleSmallTalk(text){
   var biz=(AS().settings&&AS().settings.businessName)||t('aapka business','your business');
   if(/hello|hi\b|namaste/.test(text))return t('Namaste! Main '+biz+' ka assistant hoon!','Hello! I\'m '+biz+'\'s assistant!');
@@ -22159,11 +22723,16 @@ function checkStock(q){
   return t(m.name+' — '+s+' units stock mein'+(typeof s==='number'&&s<10?' ⚠️ Low!':'')+'.',m.name+' — '+s+' units in stock'+(typeof s==='number'&&s<10?' ⚠️ Low!':'')+'.');
 }
 function handleClientLookup(text){
-  var q=text.replace(/\b(client|party|dhundho|ka|ki|ke|address|mobile|number|search|find)\b/gi,'').trim();
+  var q=text.replace(/\b(client|party|dhundho|ka|ki|ke|address|mobile|number|search|find|lookup|details|info)\b/gi,'').trim();
   if(q.length<2){VC.ctx.intent='client_lookup';VC.ctx.step=1;return t('Kaunse client ka details?','Which client?');}
   var m=bestMatch(q,AS().clients||[],function(c){return c.name;});
   if(!m)return t('"'+q+'" client nahi mila.','"'+q+'" not found.');
   return m.name+' — '+(m.mobile||'No mobile')+(m.address?', '+m.address:'');
+}
+function handleClientAdd(){
+  if(window.openClientDrawer){window.openClientDrawer(null,true);}
+  else if(window.switchTab){window.switchTab('clients');}
+  return t('Naya client form khol diya! Naam aur details bhar do.','Opened new client form! Fill in the details.');
 }
 function handleInvoiceRecords(){
   var invs=AS().invoices||[];if(!invs.length)return t('Abhi koi invoice nahi.','No invoices yet.');
@@ -22221,6 +22790,7 @@ function generateResponse(text){
   if(intent==='navigate')return handleNavigate(tL);
   if(intent==='stock_query')return handleStockQuery(tL);
   if(intent==='client_lookup')return handleClientLookup(tL);
+  if(intent==='client_add')return handleClientAdd();
   if(intent==='invoice_records')return handleInvoiceRecords();
   if(intent==='settings_update')return handleSettingsUpdate(tL);
   if(intent==='invoice_create')return startInvoiceFlow(tO);
@@ -24381,6 +24951,9 @@ document.addEventListener('DOMContentLoaded',function(){
       <button onclick="window._pdpEdit&&window._pdpEdit()" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px;cursor:pointer;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
+      <button onclick="window._pdpDelete&&window._pdpDelete()" title="Delete Product" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px;cursor:pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
     </div>
     <div style="display:flex;gap:0;margin-top:16px;background:rgba(255,255,255,.1);border-radius:12px;overflow:hidden;">
       <div style="flex:1;text-align:center;padding:10px 4px;">
@@ -24791,6 +25364,659 @@ document.addEventListener('DOMContentLoaded',function(){
     nxSetHTML('pdp-tab-content', html);
     if(typeof lucide!=='undefined') lucide.createIcons();
   };
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WEBSITE & ORDERS — lets the owner run a connected online store.
+     A single shared storefront app (deployed once) reads a business's
+     public config + product catalog by "slug" from Firestore, and any
+     order it places lands in this business's `onlineOrders` collection.
+     Data model:
+       artifacts/{appId}/users/{uid}/config/website   — private settings
+       artifacts/{appId}/storefronts/{slug}           — PUBLIC slug→uid lookup
+       artifacts/{appId}/users/{uid}/onlineOrders/{id} — one order per doc
+     ══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  var THEME_SWATCHES = ['#2874f0','#0b6377','#e53935','#8a5d80','#017e84','#e65100','#3d6e6a'];
+  window._webOrdersUnsub = null;
+  window._webOrdersFilter = 'pending';
+  window.AppState = window.AppState || {};
+  window.AppState.websiteConfig = window.AppState.websiteConfig || null;
+  window.AppState.onlineOrders = window.AppState.onlineOrders || [];
+
+  function bizUid(){ return window.AppState && window.AppState.user && window.AppState.user.uid; }
+  function canManage(){ return !window._isEmployeeSession || (window._employeePermissions && window._employeePermissions.website_manage); }
+  function canAcceptOrders(){ return !window._isEmployeeSession || (window._employeePermissions && window._employeePermissions.website_order_accept); }
+
+  // ── MAIN ENTRY (called when the Website tab opens) ──────────────
+  window.renderWebsiteTab = function(){
+    window.switchWebsiteSubTab(window._webActiveWebsiteSub || 'setup');
+    window._loadWebsiteConfig().then(function(){
+      window._renderThemeSwatches();
+      window.renderWebsiteProductVisibility();
+    });
+    window._ensureWebsiteOrdersListener();
+  };
+
+  window.switchWebsiteSubTab = function(tab){
+    window._webActiveWebsiteSub = tab;
+    var panels = { setup:'web-main-setup', coupons:'web-main-coupons', orders:'web-main-orders', analytics:'web-main-analytics' };
+    var btns = { setup:'webtab-setup-btn', coupons:'webtab-coupons-btn', orders:'webtab-orders-btn', analytics:'webtab-analytics-btn' };
+    Object.keys(panels).forEach(function(k){
+      var el = document.getElementById(panels[k]); if(el) el.classList.toggle('hidden', tab!==k);
+      var b = document.getElementById(btns[k]);
+      if(b){ b.style.background = (tab===k)?'#fff':'transparent'; b.style.color=(tab===k)?'var(--op)':'#6c757d'; b.style.fontWeight=(tab===k)?'700':'600'; b.style.boxShadow=(tab===k)?'0 1px 3px rgba(0,0,0,.1)':'none'; }
+    });
+    if(tab==='orders') window.renderWebsiteOrdersList();
+    if(tab==='coupons') window.renderCoupons();
+    if(tab==='analytics') window.renderWebsiteAnalytics();
+  };
+
+  window._renderThemeSwatches = function(){
+    var wrap = document.getElementById('web-theme-swatches'); if(!wrap) return;
+    var current = document.getElementById('web-theme-color').value || THEME_SWATCHES[0];
+    wrap.innerHTML = THEME_SWATCHES.map(function(c){
+      var isOn = c.toLowerCase()===current.toLowerCase();
+      return '<div onclick="window.setWebsiteTheme(\''+c+'\')" style="width:28px;height:28px;border-radius:50%;background:'+c+';cursor:pointer;border:'+(isOn?'3px solid #212529':'2px solid #fff')+';box-shadow:0 1px 4px rgba(0,0,0,.2);"></div>';
+    }).join('');
+  };
+  window.setWebsiteTheme = function(c){ document.getElementById('web-theme-color').value = c; window._renderThemeSwatches(); };
+
+  // ── LOAD / SAVE SETTINGS ─────────────────────────────────────────
+  window._loadWebsiteConfig = async function(){
+    var uid = bizUid(); if(!uid || !window._db) return;
+    try{
+      var ref = window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'config', 'website');
+      var snap = await window._getDoc(ref);
+      var cfg = snap.exists() ? snap.data() : {};
+      window.AppState.websiteConfig = cfg;
+      document.getElementById('web-enabled-toggle').checked = !!cfg.enabled;
+      window.onWebsiteEnabledToggle(!!cfg.enabled);
+      document.getElementById('web-slug-input').value = cfg.slug || '';
+      document.getElementById('web-tagline').value = cfg.tagline || '';
+      document.getElementById('web-banners-list').value = (cfg.banners||[]).join('\n');
+      document.getElementById('web-theme-color').value = cfg.themeColor || THEME_SWATCHES[0];
+      document.getElementById('web-cod-enabled').checked = cfg.codEnabled !== false;
+      document.getElementById('web-upi-enabled').checked = cfg.upiEnabled !== false;
+      document.getElementById('web-min-order').value = cfg.minOrder || '';
+      document.getElementById('web-whatsapp-number').value = cfg.whatsappNumber || '';
+      document.getElementById('web-auto-accept').checked = !!cfg.autoAccept;
+      document.getElementById('web-delivery-charge').value = cfg.deliveryCharge || '';
+      document.getElementById('web-free-delivery-above').value = cfg.freeDeliveryAbove || '';
+      document.getElementById('web-pincodes').value = cfg.pincodes || 'All India';
+      document.getElementById('web-cancel-window').value = cfg.cancelWindowHours || '';
+      document.getElementById('web-open-time').value = cfg.openTime || '';
+      document.getElementById('web-close-time').value = cfg.closeTime || '';
+      document.getElementById('web-maintenance-mode').checked = !!cfg.maintenanceMode;
+      document.getElementById('web-maintenance-msg').value = cfg.maintenanceMsg || '';
+      document.getElementById('web-instagram').value = cfg.instagram || '';
+      document.getElementById('web-facebook').value = cfg.facebook || '';
+      document.getElementById('web-support-whatsapp').value = cfg.supportWhatsapp || '';
+      document.getElementById('web-seo-title').value = cfg.seoTitle || '';
+      document.getElementById('web-seo-desc').value = cfg.seoDesc || '';
+      document.getElementById('web-loyalty-rate').value = cfg.loyaltyRate || '';
+      document.getElementById('web-loyalty-value').value = cfg.loyaltyValue || '';
+      document.getElementById('web-track-abandoned-cart').checked = !!cfg.trackAbandonedCart;
+      document.getElementById('web-return-policy').value = cfg.returnPolicy || '';
+      document.getElementById('web-custom-domain').value = cfg.customDomain || '';
+      window._updateStoreLinkPreview(cfg.slug);
+    }catch(e){ console.warn('Website config load failed:', e && e.message); }
+  };
+
+  window._updateStoreLinkPreview = function(slug){
+    var prev = document.getElementById('web-link-preview'), copyBtn = document.getElementById('web-copy-link-btn');
+    if(slug){
+      if(prev) prev.textContent = window._websiteBaseUrl() + '?store=' + slug;
+      if(copyBtn) copyBtn.classList.remove('hidden');
+    } else {
+      if(prev) prev.textContent = 'Slug set karke save karein';
+      if(copyBtn) copyBtn.classList.add('hidden');
+    }
+  };
+  // Base URL of the shared storefront app — update this once if it ever moves.
+  window._websiteBaseUrl = function(){ return 'https://nitin2007jha.github.io/NJ-ERP-/'; };
+
+  window.onWebsiteEnabledToggle = function(checked){
+    var d = document.getElementById('web-status-desc');
+    if(d) d.textContent = checked ? 'Store LIVE hai — customers order kar sakte hain ✅' : 'Store abhi off hai — customers isko dekh nahi sakte';
+  };
+
+  window.onSlugInputChange = function(val){
+    var clean = String(val||'').toLowerCase().replace(/[^a-z0-9-]/g,'');
+    var el = document.getElementById('web-slug-input');
+    if(el && el.value !== clean) el.value = clean;
+    var fb = document.getElementById('web-slug-feedback');
+    if(fb) fb.textContent = '';
+  };
+
+  window.saveWebsiteSlug = async function(){
+    if(!canManage()){ window.showToast&&window.showToast('🔒 No permission to edit store settings','error'); return; }
+    var uid = bizUid(); if(!uid || !window._db) return;
+    var slug = (document.getElementById('web-slug-input')||{}).value || '';
+    slug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g,'');
+    var fb = document.getElementById('web-slug-feedback');
+    if(slug.length < 3){ if(fb){fb.textContent='Kam se kam 3 characters (sirf a-z, 0-9, -)';fb.style.color='#dc3545';} return; }
+    try{
+      var storeRef = window._fsDoc(window._db, 'artifacts', window._appId, 'storefronts', slug);
+      var existing = await window._getDoc(storeRef);
+      if(existing.exists() && existing.data().uid !== uid){
+        if(fb){ fb.textContent='❌ Ye naam pehle se liya ja chuka hai, koi aur try karein'; fb.style.color='#dc3545'; }
+        return;
+      }
+      // Remove the OLD slug mapping (if the owner is renaming their store)
+      var oldSlug = window.AppState.websiteConfig && window.AppState.websiteConfig.slug;
+      if(oldSlug && oldSlug !== slug){
+        try{ await window._deleteDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'storefronts', oldSlug)); }catch(e){}
+      }
+      await window._fsSetDoc(storeRef, { uid: uid, businessName: (window.AppState.settings&&window.AppState.settings.businessName)||'', updatedAt: new Date().toISOString() });
+      await window._fsSetDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'config', 'website'), Object.assign({}, window.AppState.websiteConfig||{}, {slug: slug}), {merge:true});
+      window.AppState.websiteConfig = Object.assign({}, window.AppState.websiteConfig||{}, {slug:slug});
+      if(fb){ fb.textContent='✅ Link saved!'; fb.style.color='#22c55e'; }
+      window._updateStoreLinkPreview(slug);
+      window.showToast && window.showToast('Store link saved! ✅');
+    }catch(e){
+      if(fb){ fb.textContent='Error: '+(e&&e.message); fb.style.color='#dc3545'; }
+    }
+  };
+
+  window.copyStoreLink = function(){
+    var slug = window.AppState.websiteConfig && window.AppState.websiteConfig.slug;
+    if(!slug) return;
+    var url = window._websiteBaseUrl() + '?store=' + slug;
+    navigator.clipboard && navigator.clipboard.writeText(url).then(function(){ window.showToast && window.showToast('Link copied! ✅'); });
+  };
+
+  // ── PRODUCT VISIBILITY ───────────────────────────────────────────
+  window.renderWebsiteProductVisibility = function(){
+    var wrap = document.getElementById('web-product-visibility-list'); if(!wrap) return;
+    var q = ((document.getElementById('web-product-search')||{}).value||'').toLowerCase().trim();
+    var hidden = (window.AppState.websiteConfig && window.AppState.websiteConfig.hiddenProductIds) || [];
+    var prods = (window.AppState.products||[]).filter(function(p){ return !p.isDeleted; });
+    if(q) prods = prods.filter(function(p){ return (p.name||'').toLowerCase().indexOf(q)!==-1; });
+    if(!prods.length){ wrap.innerHTML = '<div class="text-center text-slate-400 text-xs py-4">Koi product nahi mila</div>'; return; }
+    wrap.innerHTML = prods.map(function(p){
+      var isVisible = hidden.indexOf(p.id) === -1;
+      return '<label class="flex items-center justify-between py-2 px-1 border-b border-slate-50">'
+        +'<span class="text-sm text-slate-700 flex-1 truncate">'+p.name+'</span>'
+        +'<input type="checkbox" data-web-prod="'+p.id+'" '+(isVisible?'checked':'')+' style="width:16px;height:16px;accent-color:var(--op);">'
+        +'</label>';
+    }).join('');
+  };
+
+  window.saveWebsiteSettings = async function(){
+    if(!canManage()){ window.showToast&&window.showToast('🔒 No permission to edit store settings','error'); return; }
+    var uid = bizUid(); if(!uid || !window._db) return;
+    var hiddenIds = [];
+    document.querySelectorAll('[data-web-prod]').forEach(function(el){ if(!el.checked) hiddenIds.push(el.getAttribute('data-web-prod')); });
+    var banners = (document.getElementById('web-banners-list').value||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    var cfg = {
+      enabled: !!document.getElementById('web-enabled-toggle').checked,
+      slug: (window.AppState.websiteConfig&&window.AppState.websiteConfig.slug) || '',
+      tagline: document.getElementById('web-tagline').value || '',
+      banners: banners,
+      bannerUrl: banners[0] || '', // legacy single-image field, kept for compatibility
+      themeColor: document.getElementById('web-theme-color').value || THEME_SWATCHES[0],
+      codEnabled: !!document.getElementById('web-cod-enabled').checked,
+      upiEnabled: !!document.getElementById('web-upi-enabled').checked,
+      minOrder: Number(document.getElementById('web-min-order').value)||0,
+      whatsappNumber: document.getElementById('web-whatsapp-number').value || '',
+      autoAccept: !!document.getElementById('web-auto-accept').checked,
+      hiddenProductIds: hiddenIds,
+      deliveryCharge: Number(document.getElementById('web-delivery-charge').value)||0,
+      freeDeliveryAbove: Number(document.getElementById('web-free-delivery-above').value)||0,
+      pincodes: document.getElementById('web-pincodes').value || 'All India',
+      cancelWindowHours: Number(document.getElementById('web-cancel-window').value)||0,
+      openTime: document.getElementById('web-open-time').value || '',
+      closeTime: document.getElementById('web-close-time').value || '',
+      maintenanceMode: !!document.getElementById('web-maintenance-mode').checked,
+      maintenanceMsg: document.getElementById('web-maintenance-msg').value || '',
+      instagram: document.getElementById('web-instagram').value || '',
+      facebook: document.getElementById('web-facebook').value || '',
+      supportWhatsapp: document.getElementById('web-support-whatsapp').value || '',
+      seoTitle: document.getElementById('web-seo-title').value || '',
+      seoDesc: document.getElementById('web-seo-desc').value || '',
+      loyaltyRate: Number(document.getElementById('web-loyalty-rate').value)||0,
+      loyaltyValue: Number(document.getElementById('web-loyalty-value').value)||0,
+      trackAbandonedCart: !!document.getElementById('web-track-abandoned-cart').checked,
+      returnPolicy: document.getElementById('web-return-policy').value || '',
+      customDomain: document.getElementById('web-custom-domain').value || '',
+      updatedAt: new Date().toISOString()
+    };
+    try{
+      await window._fsSetDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'config', 'website'), cfg, {merge:true});
+      window.AppState.websiteConfig = Object.assign({}, window.AppState.websiteConfig||{}, cfg);
+      window.showToast && window.showToast('Store settings saved! ✅');
+    }catch(e){ window.showToast && window.showToast('Save failed: '+(e&&e.message), 'error'); }
+  };
+
+  // ── LIVE ORDERS LISTENER ──────────────────────────────────────────
+  window._ensureWebsiteOrdersListener = function(){
+    var uid = bizUid(); if(!uid || !window._db || window._webOrdersUnsub) return;
+    try{
+      var q = window._fsQuery(
+        window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'onlineOrders'),
+        window._fsOrderBy('createdAt', 'desc'),
+        window._fsLimit(200)
+      );
+      window._webOrdersUnsub = window._onSnapshot(q, function(snap){
+        var orders = [];
+        snap.forEach(function(d){ orders.push(Object.assign({id:d.id}, d.data())); });
+        var prevPendingIds = (window.AppState.onlineOrders||[]).filter(function(o){return o.status==='pending';}).map(function(o){return o.id;});
+        window.AppState.onlineOrders = orders;
+        var newPending = orders.filter(function(o){ return o.status==='pending' && prevPendingIds.indexOf(o.id)===-1; });
+        // Auto-accept if enabled — process brand-new pending orders only
+        if(window.AppState.websiteConfig && window.AppState.websiteConfig.autoAccept){
+          newPending.forEach(function(o){ window.acceptOnlineOrder(o.id, true); });
+        } else if(newPending.length && window.AppState.activeTab !== 'website'){
+          window.showToast && window.showToast('🛒 '+newPending.length+' new online order(s)!');
+        }
+        window._updateWebOrderBadge();
+        if(window.AppState.activeTab === 'website' && window._webActiveWebsiteSub === 'orders') window.renderWebsiteOrdersList();
+      }, function(err){ console.warn('Online orders listener error:', err && err.message); });
+    }catch(e){ console.warn('Could not start online orders listener:', e && e.message); }
+  };
+
+  window._updateWebOrderBadge = function(){
+    var badge = document.getElementById('web-order-badge');
+    var pendCount = (window.AppState.onlineOrders||[]).filter(function(o){return o.status==='pending';}).length;
+    if(badge){ badge.textContent = pendCount; badge.classList.toggle('hidden', pendCount===0); }
+  };
+
+  window.filterWebsiteOrders = function(filter){
+    window._webOrdersFilter = filter;
+    document.querySelectorAll('.web-order-filter-btn').forEach(function(b){
+      var isOn = b.getAttribute('data-filter')===filter;
+      b.style.background = isOn ? '#fff' : 'transparent';
+      b.style.color = isOn ? 'var(--op)' : '#6c757d';
+      b.style.boxShadow = isOn ? '0 1px 3px rgba(0,0,0,.1)' : 'none';
+    });
+    window.renderWebsiteOrdersList();
+  };
+
+  window.renderWebsiteOrdersList = function(){
+    var listEl = document.getElementById('web-orders-list'); if(!listEl) return;
+    var filter = window._webOrdersFilter || 'pending';
+    var orders = (window.AppState.onlineOrders||[]);
+    if(filter === 'accepted') orders = orders.filter(function(o){ return ['confirmed','packed','shipped','delivered'].indexOf(o.status)!==-1; });
+    else if(filter !== 'all') orders = orders.filter(function(o){ return o.status===filter; });
+    var sq = window._webOrderSearchQuery||'';
+    if(sq) orders = orders.filter(function(o){ return (o.customerName||'').toLowerCase().indexOf(sq)!==-1 || (o.customerPhone||'').indexOf(sq)!==-1; });
+    if(!orders.length){ listEl.innerHTML = '<div class="text-center text-slate-400 text-sm py-8">Koi order nahi hai</div>'; return; }
+    var statusColors = { pending:'#f59e0b', confirmed:'#3b82f6', packed:'#8b5cf6', shipped:'#06b6d4', delivered:'#22c55e', accepted:'#22c55e', rejected:'#ef4444' };
+    listEl.innerHTML = orders.map(function(o){
+      var itemsHtml = (o.items||[]).map(function(it){ return '<div class="flex justify-between text-xs text-slate-600"><span>'+it.name+' × '+it.qty+'</span><span>₹'+(Number(it.rate||0)*Number(it.qty||0)).toLocaleString('en-IN')+'</span></div>'; }).join('');
+      var canAct = o.status==='pending' && canAcceptOrders();
+      var nextIdx = window.ORDER_STATUS_FLOW.indexOf(o.status);
+      var canAdvance = nextIdx !== -1 && nextIdx < window.ORDER_STATUS_FLOW.length-1 && canAcceptOrders();
+      var nextLabel = canAdvance ? window.ORDER_STATUS_FLOW[nextIdx+1] : null;
+      return '<div class="card p-4" style="border-left:3px solid '+(statusColors[o.status]||'#94a3b8')+';">'
+        +'<div class="flex items-center justify-between mb-2">'
+        +'<div class="font-bold text-slate-800 text-sm">'+(o.customerName||'Customer')+'</div>'
+        +'<span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:'+(statusColors[o.status]||'#94a3b8')+'22;color:'+(statusColors[o.status]||'#94a3b8')+';text-transform:uppercase;">'+o.status+'</span>'
+        +'</div>'
+        +'<div class="text-xs text-slate-400 mb-2">'+(o.customerPhone||'')+(o.customerAddress?' · '+o.customerAddress:'')+(o.couponCode?' · Coupon: '+o.couponCode:'')+'</div>'
+        +'<div class="bg-slate-50 rounded-xl p-2.5 mb-2">'+itemsHtml+'</div>'
+        +'<div class="flex justify-between items-center font-bold text-sm text-slate-800 mb-2"><span>Total</span><span>₹'+Number(o.total||0).toLocaleString('en-IN')+'</span></div>'
+        +(o.invoiceId ? '<button onclick="window.openInvoiceDetailPage(\''+o.invoiceId+'\')" class="btn btn-sm text-xs w-full mb-2" style="background:#f0f9fb;color:#0b6377;">View Invoice #'+o.invoiceId+'</button>' : '')
+        +(canAct ? '<div class="flex gap-2 mb-2"><button onclick="window.acceptOnlineOrder(\''+o.id+'\')" class="btn btn-primary btn-sm text-xs flex-1">✅ Accept</button><button onclick="window.rejectOnlineOrder(\''+o.id+'\')" class="btn btn-sm text-xs flex-1" style="background:#fee2e2;color:#dc2626;">✕ Reject</button></div>' : '')
+        +(canAdvance ? '<button onclick="window.advanceOrderStatus(\''+o.id+'\')" class="btn btn-sm text-xs w-full mb-2" style="background:#eef2ff;color:#4338ca;">Mark as '+nextLabel+'</button>' : '')
+        +(o.customerPhone ? '<button onclick="window.notifyCustomerWhatsApp(\''+o.id+'\')" class="btn btn-sm text-xs w-full" style="background:#dcfce7;color:#16a34a;"><i data-lucide="message-circle" class="w-3 h-3"></i> WhatsApp Customer</button>' : '')
+        +'</div>';
+    }).join('');
+    if(typeof lucide!=='undefined') lucide.createIcons({node:listEl});
+  };
+
+  // ── CORE AUTOMATION: accept order → invoice + stock + client ─────
+  window.acceptOnlineOrder = async function(orderId, isAuto){
+    if(!canAcceptOrders()){ window.showToast&&window.showToast('🔒 No permission to accept orders','error'); return; }
+    var uid = bizUid(); if(!uid || !window._db) return;
+    var order = (window.AppState.onlineOrders||[]).find(function(o){ return o.id===orderId; });
+    if(!order || order.status!=='pending'){ return; }
+    try{
+      // 1) Build invoice items from the order (same shape the rest of the ERP uses)
+      var invItems = (order.items||[]).map(function(it){
+        var prod = (window.AppState.products||[]).find(function(p){ return p.id===it.productId; });
+        return { productId: it.productId, name: it.name, qty: Number(it.qty)||0, rate: Number(it.rate)||0, gst: prod ? Number(prod.gst||0) : Number(it.gst||0) };
+      });
+      var totals = { subtotal:0, totalTax:0 };
+      invItems.forEach(function(it){
+        var base = it.gst>0 ? it.rate/(1+it.gst/100) : it.rate;
+        totals.subtotal += base*it.qty;
+        totals.totalTax += (it.rate-base)*it.qty;
+      });
+      var grandTotal = order.total || (totals.subtotal+totals.totalTax);
+      var invId = window.getNextInvoiceId ? window.getNextInvoiceId() : ('WEB-'+Date.now());
+      var clientData = { name: order.customerName||'Website Customer', mobile: order.customerPhone||'', gstin:'', address: order.customerAddress||'' };
+      var invoiceDoc = {
+        id: invId, docType:'Tax Invoice', currency:'INR', items: invItems,
+        discount:0, discountType:'fixed', tds:0, isRcm:false, poNo:'', vehicleNo:'', ewayBill:'',
+        paymentMode: order.paymentMethod==='cod' ? 'cash' : 'upi',
+        paymentStatus: order.paymentMethod==='cod' ? 'unpaid' : 'paid',
+        notes: '🌐 Online order via website', dueDate:'',
+        client: clientData, status:'final', subtotal: totals.subtotal, totalTax: totals.totalTax,
+        grandTotal: grandTotal, tdsAmount:0, date: new Date().toISOString().split('T')[0],
+        isDeleted:false, createdAt: Date.now(), source:'website', onlineOrderId: order.id
+      };
+      await window._fsSetDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'invoices', invId), invoiceDoc);
+
+      // 2) Upsert client — tagged as a website customer
+      var existingClient = (window.AppState.clients||[]).find(function(c){ return c.mobile && c.mobile===clientData.mobile; }) 
+        || (window.AppState.clients||[]).find(function(c){ return c.name.toLowerCase()===clientData.name.toLowerCase(); });
+      if(existingClient){
+        await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'clients', existingClient.id), Object.assign({}, clientData, {source:'website'}));
+      } else {
+        await window._addDoc(window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'clients'), Object.assign({}, clientData, {source:'website', journal:[], isDeleted:false, createdAt: window._serverTimestamp ? window._serverTimestamp() : Date.now()}));
+      }
+
+      // 3) Decrement stock
+      for(var i=0;i<invItems.length;i++){
+        var it2 = invItems[i];
+        var prod2 = (window.AppState.products||[]).find(function(p){ return p.id===it2.productId; });
+        if(prod2 && typeof prod2.stock === 'number'){
+          await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'products', prod2.id), { stock: Math.max(0, prod2.stock - it2.qty) });
+        }
+      }
+
+      // 4) Mark the order accepted
+      await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'onlineOrders', orderId), { status:'confirmed', invoiceId: invId, acceptedAt: new Date().toISOString() });
+
+      window.showToast && window.showToast((isAuto?'Auto-accepted':'Order accepted')+' → Invoice #'+invId+' created ✅');
+    }catch(e){
+      console.error('acceptOnlineOrder failed:', e);
+      window.showToast && window.showToast('Order accept failed: '+(e&&e.message), 'error');
+    }
+  };
+
+  window.rejectOnlineOrder = async function(orderId){
+    if(!canAcceptOrders()){ window.showToast&&window.showToast('🔒 No permission to reject orders','error'); return; }
+    if(!confirm('Ye order reject karna hai? Customer ko notify karna hoga manually.')) return;
+    var uid = bizUid(); if(!uid || !window._db) return;
+    try{
+      await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'onlineOrders', orderId), { status:'rejected', rejectedAt: new Date().toISOString() });
+      window.showToast && window.showToast('Order rejected');
+    }catch(e){ window.showToast && window.showToast('Failed: '+(e&&e.message), 'error'); }
+  };
+
+  // ── "Website Customer" badge on client cards + detail page ───────
+  if(window.renderClients && !window.renderClients._webBadgePatched){
+    var _origRenderClientsForWeb = window.renderClients;
+    window.renderClients = function(){
+      var r = _origRenderClientsForWeb.apply(this, arguments);
+      setTimeout(function(){
+        (window.AppState.clients||[]).forEach(function(c){
+          if(c.source!=='website') return;
+          var el = document.querySelector('[onclick*="openClientDetailPage(\''+c.id+'\')"]');
+          if(el && !el.querySelector('.web-cust-badge')){
+            var b = document.createElement('span');
+            b.className = 'web-cust-badge';
+            b.style.cssText = 'position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;background:#e8f0fe;color:#2563eb;padding:2px 7px;border-radius:20px;';
+            b.textContent = '🌐 Website';
+            el.style.position = 'relative';
+            el.appendChild(b);
+          }
+        });
+      }, 50);
+      return r;
+    };
+    window.renderClients._webBadgePatched = true;
+  }
+  if(window.openClientDetailPage && !window.openClientDetailPage._webBadgePatched){
+    var _origOpenCdpForWeb = window.openClientDetailPage;
+    window.openClientDetailPage = function(clientId){
+      var r = _origOpenCdpForWeb.apply(this, arguments);
+      setTimeout(function(){
+        var c = (window.AppState.clients||[]).find(function(x){return x.id===clientId;});
+        var header = document.getElementById('client-detail-header');
+        if(header){ var old=header.querySelector('.web-cust-badge-cdp'); if(old) old.remove(); }
+        if(c && c.source==='website' && header){
+          var b = document.createElement('div');
+          b.className = 'web-cust-badge-cdp';
+          b.style.cssText = 'display:inline-block;margin-top:6px;font-size:10px;font-weight:800;background:rgba(255,255,255,.2);color:#fff;padding:3px 9px;border-radius:20px;';
+          b.textContent = '🌐 Website Customer';
+          header.appendChild(b);
+        }
+      }, 60);
+      return r;
+    };
+    window.openClientDetailPage._webBadgePatched = true;
+  }
+
+  // ── QR CODE for store link ────────────────────────────────────────
+  window.generateWebsiteQR = function(){
+    var slug = window.AppState.websiteConfig && window.AppState.websiteConfig.slug;
+    if(!slug){ window.showToast && window.showToast('Pehle store link save karein', 'error'); return; }
+    var url = window._websiteBaseUrl() + '?store=' + slug;
+    var wrap = document.getElementById('web-qr-wrap');
+    if(wrap && window.generateLocalQR){ wrap.innerHTML = '<img src="'+window.generateLocalQR(url)+'" style="width:160px;height:160px;border-radius:8px;">'; }
+  };
+
+  // ── COUPONS ────────────────────────────────────────────────────────
+  window.renderCoupons = async function(){
+    var uid = bizUid(); var listEl = document.getElementById('web-coupons-list'); if(!listEl || !uid) return;
+    try{
+      var snap = await window._getDocs(window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'coupons'));
+      var coupons = []; snap.forEach(function(d){ coupons.push(Object.assign({id:d.id}, d.data())); });
+      window.AppState.coupons = coupons;
+      if(!coupons.length){ listEl.innerHTML = '<div class="text-center text-slate-400 text-sm py-8">Koi coupon nahi bana abhi tak</div>'; return; }
+      listEl.innerHTML = coupons.map(function(c){
+        var expired = c.expiry && new Date(c.expiry) < new Date();
+        return '<div class="card p-3 flex items-center justify-between" style="opacity:'+((c.active===false||expired)?'0.55':'1')+';">'
+          +'<div><div class="font-bold text-sm text-slate-800">'+c.code+' <span style="font-size:10px;font-weight:600;color:#6c757d;">('+(c.type==='percent'?c.value+'% off':'₹'+c.value+' off')+')</span></div>'
+          +'<div class="text-xs text-slate-400">Min order ₹'+(c.minOrder||0)+(c.expiry?' · Expires '+c.expiry:'')+(expired?' · EXPIRED':'')+' · Used '+(c.usedCount||0)+(c.usageLimit?'/'+c.usageLimit:'')+' times</div></div>'
+          +'<div class="flex gap-2 flex-shrink-0"><button onclick="window.toggleCoupon(\''+c.id+'\','+(c.active===false)+')" class="btn btn-sm text-xs" style="background:'+(c.active===false?'#dcfce7':'#fef3c7')+';color:'+(c.active===false?'#16a34a':'#b45309')+';">'+(c.active===false?'Enable':'Disable')+'</button>'
+          +'<button onclick="window.deleteCoupon(\''+c.id+'\')" class="btn btn-sm text-xs" style="background:#fee2e2;color:#dc2626;">Delete</button></div>'
+          +'</div>';
+      }).join('');
+    }catch(e){ listEl.innerHTML = '<div class="text-center text-red-400 text-xs py-4">Load failed: '+(e&&e.message)+'</div>'; }
+  };
+
+  window.openCouponForm = function(){
+    if(!canManage()){ window.showToast&&window.showToast('🔒 No permission','error'); return; }
+    var code = prompt('Coupon code (e.g. WELCOME50):'); if(!code) return;
+    var type = confirm('Percent discount? (Cancel = flat ₹ discount)') ? 'percent' : 'flat';
+    var value = Number(prompt(type==='percent' ? 'Discount %:' : 'Discount ₹:') || 0);
+    if(!value){ window.showToast && window.showToast('Value zaruri hai'); return; }
+    var minOrder = Number(prompt('Minimum order amount (₹, 0 = no minimum):') || 0);
+    var expiry = prompt('Expiry date (YYYY-MM-DD, blank = never):') || '';
+    var usageLimit = Number(prompt('Total usage limit (0 = unlimited):') || 0);
+    window.saveCoupon({ code: code.toUpperCase().trim(), type: type, value: value, minOrder: minOrder, expiry: expiry, usageLimit: usageLimit||null, active: true, usedCount: 0 });
+  };
+
+  window.saveCoupon = async function(coupon){
+    var uid = bizUid(); if(!uid || !window._db) return;
+    try{
+      await window._addDoc(window._collection(window._db, 'artifacts', window._appId, 'users', uid, 'coupons'), coupon);
+      window.showToast && window.showToast('Coupon "'+coupon.code+'" created! ✅');
+      window.renderCoupons();
+    }catch(e){ window.showToast && window.showToast('Failed: '+(e&&e.message), 'error'); }
+  };
+
+  window.toggleCoupon = async function(couponId, makeActive){
+    var uid = bizUid(); if(!uid) return;
+    await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'coupons', couponId), { active: makeActive });
+    window.renderCoupons();
+  };
+
+  window.deleteCoupon = async function(couponId){
+    if(!confirm('Ye coupon delete karna hai?')) return;
+    var uid = bizUid(); if(!uid) return;
+    await window._deleteDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'coupons', couponId));
+    window.renderCoupons();
+  };
+
+  // ── ANALYTICS ────────────────────────────────────────────────────
+  window.renderWebsiteAnalytics = function(){
+    var invoices = (window.AppState.invoices||[]).filter(function(i){ return i.status==='final' && !i.isDeleted; });
+    var webInvoices = invoices.filter(function(i){ return i.source==='website'; });
+    var orders = window.AppState.onlineOrders || [];
+    var totalOrders = orders.length;
+    var webRevenue = webInvoices.reduce(function(s,i){ return s+Number(i.grandTotal||0); }, 0);
+    var totalRevenue = invoices.reduce(function(s,i){ return s+Number(i.grandTotal||0); }, 0);
+    var acceptedCount = orders.filter(function(o){ return ['confirmed','packed','shipped','delivered'].indexOf(o.status)!==-1; }).length;
+    var acceptRate = totalOrders ? Math.round((acceptedCount/totalOrders)*100) : 0;
+    var splitPct = totalRevenue ? Math.round((webRevenue/totalRevenue)*100) : 0;
+
+    var setT = function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+    setT('web-an-orders', totalOrders);
+    setT('web-an-revenue', '₹'+webRevenue.toLocaleString('en-IN'));
+    setT('web-an-conv', acceptRate+'%');
+    setT('web-an-split', splitPct+'%');
+
+    // Top selling products (by qty) across web invoices
+    var qtyMap = {};
+    webInvoices.forEach(function(inv){
+      (inv.items||[]).forEach(function(it){
+        qtyMap[it.name] = (qtyMap[it.name]||0) + Number(it.qty||0);
+      });
+    });
+    var top = Object.keys(qtyMap).map(function(name){ return {name:name, qty:qtyMap[name]}; }).sort(function(a,b){ return b.qty-a.qty; }).slice(0,5);
+    var topEl = document.getElementById('web-an-top-products');
+    if(topEl){
+      topEl.innerHTML = top.length ? top.map(function(p,idx){
+        return '<div class="flex justify-between items-center py-1.5 text-sm"><span class="text-slate-700">'+(idx+1)+'. '+p.name+'</span><span class="font-bold text-slate-800">'+p.qty+' sold</span></div>';
+      }).join('') : '<div class="text-xs text-slate-400 text-center py-4">Abhi tak koi online sale nahi</div>';
+    }
+  };
+
+  // ── ORDER STATUS PIPELINE + WhatsApp notify + search ─────────────
+  window.ORDER_STATUS_FLOW = ['pending','confirmed','packed','shipped','delivered'];
+  window.advanceOrderStatus = async function(orderId){
+    var uid = bizUid(); if(!uid) return;
+    var order = (window.AppState.onlineOrders||[]).find(function(o){return o.id===orderId;}); if(!order) return;
+    var idx = window.ORDER_STATUS_FLOW.indexOf(order.status);
+    var next = window.ORDER_STATUS_FLOW[idx+1];
+    if(!next) return;
+    await window._updateDoc(window._fsDoc(window._db, 'artifacts', window._appId, 'users', uid, 'onlineOrders', orderId), { status: next, [next+'At']: new Date().toISOString() });
+    window.showToast && window.showToast('Order marked as '+next+' ✅');
+  };
+  window.notifyCustomerWhatsApp = function(orderId){
+    var order = (window.AppState.onlineOrders||[]).find(function(o){return o.id===orderId;}); if(!order || !order.customerPhone) return;
+    var msg = 'Hi '+(order.customerName||'')+'! Aapka order status: *'+(order.status||'pending').toUpperCase()+'*. Order total: ₹'+Number(order.total||0).toLocaleString('en-IN')+'. Dhanyawad!';
+    var phone = order.customerPhone.replace(/\D/g,'');
+    window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg), '_blank');
+  };
+  window._webOrderSearchQuery = '';
+  window.searchWebsiteOrders = function(q){ window._webOrderSearchQuery = (q||'').toLowerCase(); window.renderWebsiteOrdersList(); };
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     URL ROUTING — gives every tab/page a real #/... link so it can
+     be shared, bookmarked, or deep-linked to (e.g. yourdomain.in/#/invoice).
+
+     Pure client-side (hash) routing — works with the single HTML file
+     as-is, no server config needed.
+     ══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  var VALID_TABS = ['dashboard','invoice','records','clients','inventory','purchase-orders',
+    'expenses','daybook','gst','employees','branches','services','appointments',
+    'ai-report','data-module','settings','website'];
+
+  function setHash(h){
+    try{ history.replaceState(history.state, '', h); }catch(e){}
+  }
+
+  // ── Reflect the active tab in the URL (replaceState so it never
+  //    fights with the existing back-button / tab-history system) ──
+  function patchSwitchTabForRouting(){
+    if(!window.switchTab || window.switchTab._routingPatched) return;
+    var orig = window.switchTab;
+    window.switchTab = function(tabId){
+      var r = orig.apply(this, arguments);
+      if(tabId) setHash('#/'+tabId);
+      return r;
+    };
+    for(var k in orig) window.switchTab[k] = orig[k];
+    window.switchTab._routingPatched = true;
+  }
+
+  // ── Reflect fullscreen detail pages (invoice/client/product/etc) ──
+  var PAGE_ROUTES = {
+    'invoice-detail-page': function(){ return window._idpInvId ? '#/invoice/'+encodeURIComponent(window._idpInvId) : null; },
+    'client-detail-page':  function(){ return window._cdpClientId ? '#/client/'+encodeURIComponent(window._cdpClientId) : null; },
+    'product-detail-page': function(){ return window._pdpProductId ? '#/product/'+encodeURIComponent(window._pdpProductId) : null; },
+    'drafts-page':         function(){ return '#/drafts'; },
+    'global-search-page':  function(){ return '#/search'; }
+  };
+
+  function patchFullscreenForRouting(){
+    if(!window._markFullscreenPageOpen || window._markFullscreenPageOpen._routingPatched) return;
+    var origOpen = window._markFullscreenPageOpen;
+    window._markFullscreenPageOpen = function(key){
+      var r = origOpen.apply(this, arguments);
+      var fn = PAGE_ROUTES[key];
+      if(fn){ var h = fn(); if(h) setHash(h); }
+      return r;
+    };
+    window._markFullscreenPageOpen._routingPatched = true;
+
+    var origClose = window._markFullscreenPageClosed;
+    window._markFullscreenPageClosed = function(key){
+      var r = origClose.apply(this, arguments);
+      // Back to whatever tab is currently active once no fullscreen page is open
+      if(!Object.keys(window._openFullscreenPages||{}).length){
+        var activeTab = (window.AppState && window.AppState.activeTab) || 'dashboard';
+        setHash('#/'+activeTab);
+      }
+      return r;
+    };
+  }
+
+  function patchNow(){ patchSwitchTabForRouting(); patchFullscreenForRouting(); }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(patchNow, 1000);
+    setTimeout(patchNow, 3000);
+  });
+  setTimeout(patchNow, 1500);
+
+  // ── On load / hashchange: open whatever the URL points to ──
+  function routeFromHash(){
+    var h = (location.hash || '').replace(/^#\/?/, '');
+    if(!h) return;
+    var parts = h.split('/').filter(Boolean);
+    if(!parts.length) return;
+    var first = parts[0];
+
+    if(first === 'invoice' && parts[1] && window.openInvoiceDetailPage){
+      if((window.AppState.invoices||[]).some(function(i){return i.id===parts[1];})) window.openInvoiceDetailPage(parts[1]);
+      return;
+    }
+    if(first === 'client' && parts[1] && window.openClientDetailPage){
+      if((window.AppState.clients||[]).some(function(c){return c.id===parts[1];})) window.openClientDetailPage(parts[1]);
+      return;
+    }
+    if(first === 'product' && parts[1] && window.openProductDetailPage){
+      if((window.AppState.products||[]).some(function(p){return p.id===parts[1];})) window.openProductDetailPage(parts[1]);
+      return;
+    }
+    if(first === 'drafts' && window.openDraftsPage){ window.openDraftsPage(); return; }
+    if(first === 'search' && window.openGlobalSearch){ window.openGlobalSearch(); return; }
+    if(VALID_TABS.indexOf(first) !== -1 && window.switchTab){ window.switchTab(first); return; }
+  }
+
+  // Wait for AppState data to actually be loaded (Firebase listeners) before
+  // trying to open a deep-linked invoice/client/product, else it won't be found yet.
+  function tryInitialRoute(attemptsLeft){
+    if(!location.hash){ return; }
+    var hasData = window.AppState && (
+      (window.AppState.invoices && window.AppState.invoices.length) ||
+      (window.AppState.clients && window.AppState.clients.length) ||
+      (window.AppState.products && window.AppState.products.length) ||
+      window.AppState.user
+    );
+    if(hasData || attemptsLeft <= 0){
+      try{ routeFromHash(); }catch(e){}
+      return;
+    }
+    setTimeout(function(){ tryInitialRoute(attemptsLeft-1); }, 400);
+  }
+  document.addEventListener('DOMContentLoaded', function(){ tryInitialRoute(15); });
+
+  // Manual hash edits / forward-back through real URLs
+  window.addEventListener('hashchange', function(){ try{ routeFromHash(); }catch(e){} });
 })();
 </script>
 
