@@ -2932,7 +2932,10 @@ body.fullscreen-page-open #dash-fab-row{
         <button onclick="window.saveWebsiteSlug()" class="btn btn-primary btn-sm text-xs" style="flex-shrink:0;">Save</button>
       </div>
       <div id="web-slug-feedback" class="text-xs mt-1.5"></div>
-      <button onclick="window.copyStoreLink()" id="web-copy-link-btn" class="btn btn-sm text-xs mt-2 hidden" style="background:#f0f9fb;color:#0b6377;border:1px solid #d0eef2;"><i data-lucide="copy" class="w-3 h-3"></i> Copy Link</button>
+      <div class="flex gap-2 mt-2">
+        <button onclick="window.copyStoreLink()" id="web-copy-link-btn" class="btn btn-sm text-xs hidden" style="background:#f0f9fb;color:#0b6377;border:1px solid #d0eef2;"><i data-lucide="copy" class="w-3 h-3"></i> Copy Link</button>
+        <button onclick="window.previewStore&&window.previewStore()" id="web-preview-link-btn" class="btn btn-sm text-xs hidden" style="background:var(--op);color:#fff;"><i data-lucide="external-link" class="w-3 h-3"></i> Preview Store</button>
+      </div>
     </div>
 
     <div class="card p-4 mb-3">
@@ -2948,6 +2951,7 @@ body.fullscreen-page-open #dash-fab-row{
       <div class="font-bold text-slate-800 text-sm mb-3">Orders & Payments</div>
       <label class="flex items-center justify-between py-2"><span class="text-sm text-slate-700">Cash on Delivery</span><label class="toggle" style="width:34px;height:20px"><input type="checkbox" id="web-cod-enabled"><span class="toggle-track"></span></label></label>
       <label class="flex items-center justify-between py-2"><span class="text-sm text-slate-700">UPI / Online Payment</span><label class="toggle" style="width:34px;height:20px"><input type="checkbox" id="web-upi-enabled"><span class="toggle-track"></span></label></label>
+      <div class="fg mt-1"><label class="text-xs font-semibold text-slate-500 mb-1 block">Your UPI ID <span class="text-slate-400 font-normal">(for customer QR payment)</span></label><input type="text" id="web-upi-id" class="inp text-sm w-full" placeholder="yourname@okhdfcbank"></div>
       <div class="fg mt-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">Minimum Order Amount (₹)</label><input type="number" id="web-min-order" class="inp text-sm w-full" placeholder="0"></div>
       <div class="fg mt-2"><label class="text-xs font-semibold text-slate-500 mb-1 block">WhatsApp Number for Order Alerts</label><input type="text" id="web-whatsapp-number" class="inp text-sm w-full" placeholder="91XXXXXXXXXX"></div>
       <label class="flex items-center justify-between py-2 mt-1" style="border-top:1px solid #f0f0f0;padding-top:12px;">
@@ -4757,6 +4761,7 @@ window.addEventListener('resize', function(){
         </div>
         <div><label class="lbl">Product Name *</label><input type="text" id="pd-name" class="inp"></div>
         <div><label class="lbl">Category</label><select id="pd-category" class="inp bg-white"><option value="Medicine">Medicine</option><option value="Consultation">Consultation</option><option value="Oils & Syrups">Oils & Syrups</option><option value="Kit/Combo">Kit/Combo</option><option value="Other">Other</option></select></div>
+        <div><label class="lbl">Description <span class="text-slate-400 font-normal normal-case">(shows on your website)</span></label><textarea id="pd-description" rows="2" class="inp" placeholder="Short product description for customers"></textarea></div>
       </div>
     </div>
     <!-- Pricing -->
@@ -5366,7 +5371,7 @@ function openProductDrawer(id) {
     var sub = document.getElementById('prod-drawer-sub');
     var delBtn = document.getElementById('pd-delete-btn');
     // Reset
-    ['pd-name','pd-cost','pd-rate','pd-hsn','pd-batch'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
+    ['pd-name','pd-cost','pd-rate','pd-hsn','pd-batch','pd-description'].forEach(function(x){ var el=document.getElementById(x); if(el) el.value=''; });
     document.getElementById('pd-stock').value = '0';
     document.getElementById('pd-low-stock-alert').value = '10';
     document.getElementById('pd-gst').value = '18';
@@ -5395,6 +5400,7 @@ function openProductDrawer(id) {
             document.getElementById('pd-category').value = p.category||'Medicine';
             document.getElementById('pd-batch').value = p.batch||'';
             document.getElementById('pd-expiry').value = p.expiry||'';
+            document.getElementById('pd-description').value = p.description||'';
             if(p.productImage && img) { img.src=p.productImage; img.classList.remove('hidden'); if(ph) ph.classList.add('hidden'); }
             if(p.activityLog && p.activityLog.length) {
                 document.getElementById('pd-activity-box').classList.remove('hidden');
@@ -5469,6 +5475,7 @@ async function saveProdFromDrawer() {
         lowStockAlert:parseInt(document.getElementById('pd-low-stock-alert').value)||10,
         batch:document.getElementById('pd-batch').value.trim(),
         expiry:document.getElementById('pd-expiry').value,
+        description:document.getElementById('pd-description').value.trim(),
         isHidden:false, isDeleted:false
     };
     if(window._prodImgB64) data.productImage = window._prodImgB64;
@@ -25781,9 +25788,9 @@ document.addEventListener('DOMContentLoaded',function(){
     var panels = { setup:'web-main-setup', coupons:'web-main-coupons', orders:'web-main-orders', analytics:'web-main-analytics' };
     var btns = { setup:'webtab-setup-btn', coupons:'webtab-coupons-btn', orders:'webtab-orders-btn', analytics:'webtab-analytics-btn' };
     Object.keys(panels).forEach(function(k){
-      var el = document.getElementById(panels[k]); if(el) el.classList.toggle('hidden', tab!==k);
+      var el = document.getElementById(panels[k]); if(el){ el.classList.toggle('hidden', tab!==k); if(tab===k){ el.style.animation='none'; void el.offsetWidth; el.style.animation='fadeUp .22s ease-out'; } }
       var b = document.getElementById(btns[k]);
-      if(b){ b.style.background = (tab===k)?'#fff':'transparent'; b.style.color=(tab===k)?'var(--op)':'#6c757d'; b.style.fontWeight=(tab===k)?'700':'600'; b.style.boxShadow=(tab===k)?'0 1px 3px rgba(0,0,0,.1)':'none'; }
+      if(b){ b.style.background = (tab===k)?'#fff':'transparent'; b.style.color=(tab===k)?'var(--op)':'#6c757d'; b.style.fontWeight=(tab===k)?'700':'600'; b.style.boxShadow=(tab===k)?'0 1px 3px rgba(0,0,0,.1)':'none'; b.style.transition='all .15s'; }
     });
     if(tab==='orders') window.renderWebsiteOrdersList();
     if(tab==='coupons') window.renderCoupons();
@@ -25816,6 +25823,7 @@ document.addEventListener('DOMContentLoaded',function(){
       document.getElementById('web-theme-color').value = cfg.themeColor || THEME_SWATCHES[0];
       document.getElementById('web-cod-enabled').checked = cfg.codEnabled !== false;
       document.getElementById('web-upi-enabled').checked = cfg.upiEnabled !== false;
+      document.getElementById('web-upi-id').value = cfg.upiId || '';
       document.getElementById('web-min-order').value = cfg.minOrder || '';
       document.getElementById('web-whatsapp-number').value = cfg.whatsappNumber || '';
       document.getElementById('web-auto-accept').checked = !!cfg.autoAccept;
@@ -25842,14 +25850,21 @@ document.addEventListener('DOMContentLoaded',function(){
   };
 
   window._updateStoreLinkPreview = function(slug){
-    var prev = document.getElementById('web-link-preview'), copyBtn = document.getElementById('web-copy-link-btn');
+    var prev = document.getElementById('web-link-preview'), copyBtn = document.getElementById('web-copy-link-btn'), prevBtn = document.getElementById('web-preview-link-btn');
     if(slug){
       if(prev) prev.textContent = window._websiteBaseUrl() + '?store=' + slug;
       if(copyBtn) copyBtn.classList.remove('hidden');
+      if(prevBtn) prevBtn.classList.remove('hidden');
     } else {
       if(prev) prev.textContent = 'Slug set karke save karein';
       if(copyBtn) copyBtn.classList.add('hidden');
+      if(prevBtn) prevBtn.classList.add('hidden');
     }
+  };
+  window.previewStore = function(){
+    var slug = window.AppState.websiteConfig && window.AppState.websiteConfig.slug;
+    if(!slug){ window.showToast && window.showToast('Pehle store link save karein','error'); return; }
+    window.open(window._websiteBaseUrl() + '?store=' + slug, '_blank');
   };
   // Base URL of the shared storefront app — update this once if it ever moves.
   window._websiteBaseUrl = function(){ return 'https://nitin2007jha.github.io/NJ-ERP-/'; };
@@ -25936,6 +25951,7 @@ document.addEventListener('DOMContentLoaded',function(){
       themeColor: document.getElementById('web-theme-color').value || THEME_SWATCHES[0],
       codEnabled: !!document.getElementById('web-cod-enabled').checked,
       upiEnabled: !!document.getElementById('web-upi-enabled').checked,
+      upiId: document.getElementById('web-upi-id').value.trim(),
       minOrder: Number(document.getElementById('web-min-order').value)||0,
       whatsappNumber: document.getElementById('web-whatsapp-number').value || '',
       autoAccept: !!document.getElementById('web-auto-accept').checked,
