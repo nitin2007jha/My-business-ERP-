@@ -13912,34 +13912,13 @@ window.generateDigitalInvoiceQR = function(inv) {
 })();
 
 // ── PWA OFFLINE MODE — Service Worker ────────────────────────
-(function(){
-    if('serviceWorker' in navigator) {
-        var swCode = `
-const CACHE = 'ayur-erp-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js'
-];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, {mode:'no-cors'}))))); self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))); });
-self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/index.html')))); });
-        `;
-        var blob = new Blob([swCode], {type:'application/javascript'});
-        var swUrl = URL.createObjectURL(blob);
-        // Note: SW from blob URL has limited scope, but this works for basic caching
-        // For production: serve sw.js from same origin
-        try {
-            navigator.serviceWorker.register(swUrl).then(function(reg){
-                console.log('SW registered, offline mode active');
-            }).catch(function(e){ console.log('SW registration limited (blob URL):', e.message); });
-        } catch(e) {}
-    }
-})();
+// NOTE: Legacy inline blob-based Service Worker registration removed (2026-09).
+// It registered a cache-first SW ('ayur-erp-v1') that permanently served stale
+// index.html/app-shell from cache and silently prevented the real ./sw.js
+// (network-first, versioned, with push/widgets/periodic-sync) from ever
+// controlling the page — this was the root cause of "GitHub par naya code
+// push karne par installed app update nahi hota". Real registration + auto-update
+// logic now lives in the single SW_REGISTER block near the end of this file.
 
 // ── MULTI-USER / STAFF ACCESS UI ─────────────────────────────
 window.openStaffModal = function() {
@@ -19078,20 +19057,64 @@ window.trackInvoiceGenerated = async function(inv) {
     }
 })();
 
-// ── 3. Performance — defer non-critical tab rendering ─────────
-// Service Worker registration for offline support
+// ── 3. SERVICE WORKER — single, real registration + forced-update flow ────
+// Registers the actual ./sw.js (network-first fetch strategy). Also:
+//  • polls registration.update() so a newly-pushed sw.js is detected even on
+//    a long-lived open tab (GitHub Pages caches sw.js itself briefly, so a
+//    plain register() alone can miss updates for a while)
+//  • when a new SW finishes installing, tells it to skipWaiting and reloads
+//    the page ONCE that new SW takes control — so "git push" -> next app
+//    open (or within ~60s if already open) always shows the latest code
+//  • listens for SW_NAVIGATE (from notification-click / shortcut deep links)
+//  • responds to the SW's periodic-sync data requests so PWA widgets +
+//    milestone notifications actually get real numbers instead of timing out
 if('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        // Register inline SW for offline caching
-        var swCode = [
-            "const CACHE='erp-v1';",
-            "const ASSETS=['/'];",
-            "self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))); });",
-            "self.addEventListener('fetch',e=>{ e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('/')))); });",
-        ].join('\n');
-        var blob = new Blob([swCode], {type:'text/javascript'});
-        var url = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(url).catch(function(){});
+        navigator.serviceWorker.register('./sw.js').then(function(reg){
+            // Re-check for a newer sw.js periodically while the tab is open
+            setInterval(function(){ reg.update().catch(function(){}); }, 60 * 1000);
+
+            function promptUpdate(newWorker){
+                newWorker.addEventListener('statechange', function(){
+                    if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+                        // A new version is ready — apply it immediately.
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                });
+            }
+            if(reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            if(reg.installing) promptUpdate(reg.installing);
+            reg.addEventListener('updatefound', function(){ promptUpdate(reg.installing); });
+
+            // Once the new SW takes control, reload so the fresh index.html/JS is live
+            var reloaded = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function(){
+                if(reloaded) return;
+                reloaded = true;
+                window.location.reload();
+            });
+        }).catch(function(e){ console.warn('SW registration failed:', e); });
+
+        // Deep-link from notification click / OS app-shortcut, handled by an
+        // already-open tab (SW posts this instead of opening a new window)
+        navigator.serviceWorker.addEventListener('message', function(event){
+            var msg = event.data || {};
+            if(msg.type === 'SW_NAVIGATE' && msg.url){
+                try{
+                    var u = new URL(msg.url, window.location.href);
+                    var action = u.searchParams.get('action');
+                    if(action && window.handleQuickAction) window.handleQuickAction(action);
+                }catch(e){}
+            }
+            if(msg.type === 'ERP_DATA_REFRESHED' && window.showToast){
+                window.showToast('Data refreshed in background');
+            }
+            // SW asks for a fresh snapshot to power widgets / milestone pushes
+            if(msg.type === 'GET_SALES_SNAPSHOT' || msg.type === 'GET_GST_SNAPSHOT' || msg.type === 'GET_STOCK_SNAPSHOT'){
+                var reply = window._buildSWSnapshot ? window._buildSWSnapshot(msg.type) : null;
+                if(event.ports && event.ports[0]) event.ports[0].postMessage(reply);
+            }
+        });
     });
 }
 
@@ -21954,6 +21977,43 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 }
 #vc-lang-btn:active{background:#6366f1;color:#fff;border-color:#6366f1;}
 
+/* ── Auto-listen (conversational loop) toggle ── */
+#vc-autolisten-btn{
+  width:30px;height:26px;border-radius:8px;border:1.5px solid #e2e8f0;
+  background:#f8fafc;cursor:pointer;color:#94a3b8;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s;
+}
+#vc-autolisten-btn svg{width:14px;height:14px;transition:transform .3s;}
+#vc-autolisten-btn.on{background:#eef2ff;border-color:#6366f1;color:#6366f1;}
+#vc-autolisten-btn.on svg{transform:rotate(180deg);}
+
+/* ── FAB / mic long-press "charging" ring — visual feedback for the
+   push-to-talk gesture (600ms hold to jump straight into listening) ── */
+.vc-charge-ring{
+  position:absolute;inset:-5px;pointer-events:none;
+  transform:rotate(-90deg);opacity:0;transition:opacity .15s;
+}
+.vc-charge-ring circle{
+  fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;
+  stroke-dasharray:157;stroke-dashoffset:157;
+}
+.vc-charging .vc-charge-ring{opacity:1;}
+.vc-charging .vc-charge-ring circle{stroke-dashoffset:0;transition:stroke-dashoffset .6s linear;}
+#vc-fab,#mic-fab-wrap button{position:relative;}
+
+/* ── Success micro-animation for bot bubbles that confirm a finished action
+   (invoice finalized, etc.) ── */
+.vc-bubble.vc-success{position:relative;}
+.vc-success-pop{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;background:#10b981;color:#fff;
+  margin-right:5px;flex-shrink:0;
+  animation:vcSuccessPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+.vc-success-pop svg{width:10px;height:10px;}
+@keyframes vcSuccessPop{0%{transform:scale(0);opacity:0;}60%{transform:scale(1.25);}100%{transform:scale(1);opacity:1;}}
+
 /* ── Waveform ── */
 #vc-wave{
   display:flex;align-items:center;justify-content:center;gap:3px;
@@ -21971,6 +22031,10 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 #vc-wave.vc-active .vc-bar:nth-child(5){animation-delay:.24s;}
 #vc-wave.vc-active .vc-bar:nth-child(6){animation-delay:.30s;}
 #vc-wave.vc-active .vc-bar:nth-child(7){animation-delay:.36s;}
+/* When real mic-amplitude data is driving the bars (.vc-live), JS sets
+   height/opacity inline per-frame — the CSS keyframe loop is only the
+   fallback for browsers where live analysis isn't available. */
+#vc-wave.vc-live .vc-bar{animation:none;}
 @keyframes vcwave{0%,100%{height:4px;opacity:.5;}50%{height:20px;opacity:1;}}
 
 /* ── Interim transcript ── */
@@ -22058,6 +22122,14 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 }
 .vc-action-btn:active{transform:scale(.95);}
 .vc-action-btn.green{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 2px 8px rgba(34,197,94,.3);}
+.vc-action-btn:disabled{opacity:.5;cursor:default;}
+
+/* Tappable product/client suggestion chips */
+.vc-chip-wrap{background:transparent!important;box-shadow:none!important;padding:0!important;max-width:96%!important;}
+.vc-chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.vc-chip{padding:7px 14px;border-radius:16px;border:1.5px solid #e0e7ff;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;cursor:pointer;transition:transform .15s,opacity .15s;}
+.vc-chip:active{transform:scale(.94);background:#e0e7ff;}
+.vc-chip:disabled{opacity:.45;cursor:default;}
 
 /* ── Input row — NO separate mic button ── */
 #vc-input-row{
@@ -22100,7 +22172,8 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 .vc-modal-inner{
   background:#fff;border-radius:24px 24px 0 0;
   padding:20px 18px 24px;width:100%;
-  max-height:80vh;overflow-y:auto;
+  max-height:80vh;overflow-y:auto;overflow-x:hidden;
+  box-sizing:border-box;
   animation:vcmodalup .3s cubic-bezier(.32,1,.46,1);
 }
 @keyframes vcmodalup{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
@@ -22109,12 +22182,20 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
   margin-left:auto;width:28px;height:28px;border-radius:50%;
   border:none;background:#f1f5f9;cursor:pointer;font-size:14px;
   display:flex;align-items:center;justify-content:center;color:#64748b;
+  flex-shrink:0;
 }
-/* shortcut rows */
-.vc-sc-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border-radius:12px;}
-.vc-sc-row input{flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;background:#fff;}
-.vc-sc-row input:focus{border-color:#6366f1;}
-.vc-sc-del{width:28px;height:28px;border:none;background:#fee2e2;border-radius:50%;cursor:pointer;color:#ef4444;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* ── Shortcut cards — stacked layout (not side-by-side inputs), so
+   nothing gets clipped or forces horizontal scroll on narrow phones. ── */
+.vc-sc-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px;box-sizing:border-box;}
+.vc-sc-field{margin-bottom:8px;}
+.vc-sc-label{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;display:block;}
+.vc-sc-field input{width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;background:#fff;min-width:0;}
+.vc-sc-field input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.12);}
+.vc-sc-arrow{font-size:11px;color:#94a3b8;margin:-3px 0 8px 2px;display:flex;align-items:center;gap:4px;}
+.vc-sc-footer{display:flex;justify-content:flex-end;}
+.vc-sc-del{display:inline-flex;align-items:center;gap:5px;border:none;background:#fee2e2;border-radius:20px;padding:7px 14px;color:#ef4444;font-size:11.5px;font-weight:700;cursor:pointer;}
+.vc-sc-del:active{background:#fecaca;}
+.vc-sc-empty{font-size:12px;color:#94a3b8;text-align:center;padding:18px 8px;line-height:1.6;}
 /* history */
 .vc-hist-row{padding:10px 0;border-bottom:1px solid #f1f5f9;}
 .vc-hist-time{font-size:10px;color:#94a3b8;margin-bottom:3px;}
@@ -22174,6 +22255,7 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 
 <!-- Voice FAB (hidden on mobile — dashboard has its own pair) -->
 <button id="vc-fab" title="Voice Assistant" aria-label="Open Voice Assistant">
+  <svg class="vc-charge-ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="25"/></svg>
   <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
 </button>
 
@@ -22188,7 +22270,8 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
   <!-- Mic FAB wrap — hidden while quick-create menu is open -->
   <div id="mic-fab-wrap" style="pointer-events:auto;display:flex;align-items:center;gap:10px;transition:opacity .18s,transform .18s;">
     <div style="background:rgba(15,23,42,.8);backdrop-filter:blur(8px);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.3);">Voice Assistant</div>
-    <button onclick="(function(){var f=document.getElementById('vc-fab');if(f)f.click();})()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(11,99,119,.55);-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:transform .15s;" onmousedown="this.style.transform='scale(.88)'" onmouseup="this.style.transform=''">
+    <button onclick="(function(){var f=document.getElementById('vc-fab');if(f)f.click();})()" id="mic-fab-btn" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--op),var(--op-dark));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(11,99,119,.55);-webkit-tap-highlight-color:transparent;flex-shrink:0;transition:transform .15s;" onmousedown="this.style.transform='scale(.88)'" onmouseup="this.style.transform=''">
+      <svg class="vc-charge-ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="25"/></svg>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
     </button>
   </div>
@@ -22209,6 +22292,9 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
     <div id="vc-status-dot"></div>
     <span id="vc-status-label">Ready</span>
     <button id="vc-lang-btn" title="Language">HI</button>
+    <button id="vc-autolisten-btn" title="Auto-listen (keeps listening between turns)" aria-label="Toggle auto-listen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+    </button>
     <button id="vc-close-btn" title="Close" aria-label="Close" onclick="window.dispatchEvent(new CustomEvent('vc-close-click'))"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
 
@@ -22287,7 +22373,23 @@ body.is-desktop-device #vc-close-btn:hover{color:#0b6377;background:rgba(11,99,1
 var CFG={
   ttsRate:.92,ttsPitch:1,ttsVol:1,
   fuzzyThreshold:.42,maxHistory:60,
-  historyKey:'vc_cmd_history',shortcutsKey:'vc_shortcuts',langKey:'vc_lang'
+  historyKey:'vc_cmd_history',shortcutsKey:'vc_shortcuts',langKey:'vc_lang',autoListenKey:'vc_auto_listen'
+};
+
+// ══════════════════════════════════════════════
+// 1b. HAPTICS — short, purposeful vibration patterns for key voice
+// events (listening started, result heard, error, long-press trigger,
+// action succeeded). No-ops silently on devices/browsers without support.
+// ══════════════════════════════════════════════
+function haptic(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+var HAPTIC={
+  listenStart:[15],
+  heard:[10],
+  error:[40,60,40],
+  longPress:[25],
+  success:[20,40,20]
 };
 
 // ══════════════════════════════════════════════
@@ -22298,6 +22400,8 @@ var VC={
   recognition:null,synth:window.speechSynthesis||null,
   voices:[],hindiVoice:null,enVoice:null,
   lang:localStorage.getItem(CFG.langKey)||'hi',
+  autoListen:localStorage.getItem(CFG.autoListenKey)!=='off',
+  manualStop:false,
   ctx:{intent:null,step:0,data:{},lastProduct:null,lastClient:null,lastResponse:'',lastInvoice:null},
   cmdHistory:[],shortcuts:[],scanActive:false,scanStream:null,
   firstOpen:true
@@ -22319,8 +22423,10 @@ var FAB=$('vc-fab'),PANEL=$('vc-panel'),OVERLAY=$('vc-overlay');
 var CHAT=$('vc-chat'),INTERIM=$('vc-interim'),STATUS=$('vc-status-label');
 var STATUSDOT=$('vc-status-dot'),STATUSSUB=$('vc-status-sub');
 var WAVE=$('vc-wave'),TINPUT=$('vc-text-input'),SENDBTN=$('vc-send-btn');
-var MICBTN=$('vc-mic-input-btn'),LANGBTN=$('vc-lang-btn');
+var MICBTN=$('vc-mic-input-btn'),LANGBTN=$('vc-lang-btn'),AUTOBTN=$('vc-autolisten-btn');
 var WELCOME=$('vc-welcome');
+var waveBars=WAVE?WAVE.querySelectorAll('.vc-bar'):[];
+var waveCtx=null,waveAnalyser=null,waveStream=null,waveRAF=null;
 
 // ══════════════════════════════════════════════
 // 4. FUZZY MATCH
@@ -22364,6 +22470,22 @@ function bestMatch(query,items,keyFn,threshold){
     if(score>bestScore){bestScore=score;best=item;}
   });
   return bestScore>=threshold?best:null;
+}
+// Top-N fuzzy candidates (for tappable suggestion chips) — looser
+// threshold than bestMatch since these are "did you mean" options,
+// not auto-accepted matches.
+function topMatches(query,items,keyFn,limit,minScore){
+  limit=limit||4;minScore=minScore===undefined?0.3:minScore;
+  if(!query||!items||!items.length)return[];
+  var qO=query.toLowerCase().trim(),qN=normForMatch(query);
+  var scored=items.map(function(item){
+    var nameO=(keyFn?keyFn(item):item)||'';
+    var nameN=normForMatch(nameO),nameL=nameO.toLowerCase().trim();
+    var score=Math.max(simNorm(qO,nameL),simNorm(qN,nameN));
+    return{item:item,score:score};
+  }).filter(function(s){return s.score>=minScore;});
+  scored.sort(function(a,b){return b.score-a.score;});
+  return scored.slice(0,limit).map(function(s){return s.item;});
 }
 
 // ══════════════════════════════════════════════
@@ -22424,6 +22546,40 @@ function classifyIntent(text){
   var best=null,bs=0;
   INTENTS.forEach(function(intent){intent.kw.forEach(function(kw){if(tL.includes(kw.trim())){var s=intent.p+kw.length/10;if(s>bs){bs=s;best=intent;}}});});
   return best?best.id:'unknown';
+}
+
+// ══════════════════════════════════════════════
+// 6b. CONTEXT-INTERRUPT GUARD
+// Jab koi multi-step flow chal raha ho (invoice/expense/stock/client...)
+// aur beech mein user ek naya, saaf-saaf alag command bol de (e.g. stock
+// query ka jawab maangte waqt user "naya invoice banao" bol de), to
+// purana flow chhod ke naya command turant chalao — "samajh nahi aaya"
+// bolne ya galat slot mein fit karne ke bajaye. Sirf strong/explicit
+// keyword matches (5+ chars) par trigger hota hai taaki chhote product/
+// client naam galti se kisi command jaisa na lage.
+// ══════════════════════════════════════════════
+var FLOW_BREAK_INTENTS=['invoice_create','stock_query','financial_query','navigate','client_lookup','client_add','product_add','invoice_records','expense_add','settings_update','discount_apply','whatsapp_share','pdf_download','help'];
+function maybeInterruptFlow(tO,tL){
+  for(var did in DEVA_INTENTS){
+    if(FLOW_BREAK_INTENTS.indexOf(did)===-1)continue;
+    var dkws=DEVA_INTENTS[did];
+    for(var di=0;di<dkws.length;di++){if(tO.includes(dkws[di]))return did;}
+  }
+  var best=null,bs=0;
+  INTENTS.forEach(function(intent){
+    if(FLOW_BREAK_INTENTS.indexOf(intent.id)===-1)return;
+    intent.kw.forEach(function(kw){
+      var kwt=kw.trim();
+      if(kwt.length<5)return;
+      if(tL.includes(kwt)){var s=intent.p+kwt.length/10;if(s>bs){bs=s;best=intent.id;}}
+    });
+  });
+  return best;
+}
+function breakFlowAndReroute(tO){
+  VC.ctx.intent=null;VC.ctx.step=0;VC.ctx.data={};
+  var r=generateResponse(tO);
+  return t('↩️ (Pichla kaam chhod diya) ','↩️ (Switched) ')+(r||'');
 }
 
 // ══════════════════════════════════════════════
@@ -22502,7 +22658,7 @@ function executeOneShotInvoice(parsed){
   if(!parsed.items.length){VC.ctx.step=2;return t(parsed.client.name+' ka invoice. Kya add karein?',parsed.client.name+'\'s invoice. Add products?');}
   if(!parsed.paymentMode){VC.ctx.step=3;return t(resp.join(', ')+'. Total ₹'+total.toFixed(0)+'. Payment? UPI, cash, ya credit?',resp.join(', ')+'. ₹'+total.toFixed(0)+'. Payment? UPI, cash, or credit?');}
   VC.ctx.step=4;
-  return t(resp.join(', ')+'. '+parsed.paymentMode.toUpperCase()+'. ₹'+total.toFixed(0)+'. Finalize karein?',resp.join(', ')+'. ₹'+total.toFixed(0)+'. Finalize?');
+  return t(resp.join(', ')+'. '+parsed.paymentMode.toUpperCase()+'. ₹'+total.toFixed(0)+'. Finalize karein? (Haan/Nahi)',resp.join(', ')+'. ₹'+total.toFixed(0)+'. Finalize? (Yes/No)');
 }
 
 // ══════════════════════════════════════════════
@@ -22534,6 +22690,17 @@ function continueInvoiceFlow(text){
   if(step===1){
     var cm=bestMatch(tl,AS().clients||[],function(c){return c.name;});
     if(cm)return processClientSelect(cm);
+    var ctops=topMatches(tl,AS().clients||[],function(c){return c.name;},4,0.32);
+    if(ctops.length){
+      setTimeout(function(){
+        var opts=ctops.concat([{__new:true,name:t('➕ Naya Client','➕ New Client')}]);
+        renderPickerChips(opts,function(c){return c.name;},function(c){
+          if(c.__new){VC.ctx.data.clientName=text;VC.ctx.step=15;addBubble('bot',t('Theek hai, naya client. Mobile batao ("skip"):','Okay, new client. Mobile ("skip"):'));}
+          else processText(c.name);
+        });
+      },350);
+      return t('"'+text+'" exact client nahi mila. Inme se koi?','"'+text+'" not found exactly. One of these?');
+    }
     VC.ctx.data.clientName=text;VC.ctx.step=15;
     return t('"'+text+'" client nahi mila. Naya? Mobile batao ("skip"):','"'+text+'" not found. New? Mobile ("skip"):');
   }
@@ -22566,6 +22733,11 @@ function continueInvoiceFlow(text){
         return t(pm.name+' — kitni quantity chahiye?',pm.name+' — how many units?');
       }
       return addItemToInvoice(pm,qty);
+    }
+    var ptops=topMatches(cleanQ||text,AS().products||[],function(p){return p.name;},4,0.3);
+    if(ptops.length){
+      setTimeout(function(){renderPickerChips(ptops,function(p){return p.name;},function(p){processText(p.name);});},350);
+      return t('"'+text+'" exact nahi mila. Inme se koi?','"'+text+'" not found exactly. One of these?');
     }
     return t('"'+text+'" product nahi mila. Doosra naam ya "bas" bolo.','"'+text+'" not found. Try another or say "done".');
   }
@@ -22718,7 +22890,14 @@ function handleStockQuery(text){
 }
 function checkStock(q){
   var m=bestMatch(q,AS().products||[],function(p){return p.name;});
-  if(!m)return t('"'+q+'" product nahi mila.','"'+q+'" not found.');
+  if(!m){
+    var tops=topMatches(q,AS().products||[],function(p){return p.name;},4,0.3);
+    if(tops.length){
+      setTimeout(function(){renderPickerChips(tops,function(p){return p.name;},function(p){processText(p.name);});},350);
+      return t('"'+q+'" exact nahi mila — inme se koi?','"'+q+'" not found exactly — one of these?');
+    }
+    return t('"'+q+'" product nahi mila.','"'+q+'" not found.');
+  }
   var s=m.stock!==undefined?m.stock:'?';
   return t(m.name+' — '+s+' units stock mein'+(typeof s==='number'&&s<10?' ⚠️ Low!':'')+'.',m.name+' — '+s+' units in stock'+(typeof s==='number'&&s<10?' ⚠️ Low!':'')+'.');
 }
@@ -22726,7 +22905,14 @@ function handleClientLookup(text){
   var q=text.replace(/\b(client|party|dhundho|ka|ki|ke|address|mobile|number|search|find|lookup|details|info)\b/gi,'').trim();
   if(q.length<2){VC.ctx.intent='client_lookup';VC.ctx.step=1;return t('Kaunse client ka details?','Which client?');}
   var m=bestMatch(q,AS().clients||[],function(c){return c.name;});
-  if(!m)return t('"'+q+'" client nahi mila.','"'+q+'" not found.');
+  if(!m){
+    var tops=topMatches(q,AS().clients||[],function(c){return c.name;},4,0.3);
+    if(tops.length){
+      setTimeout(function(){renderPickerChips(tops,function(c){return c.name;},function(c){processText(c.name);});},350);
+      return t('"'+q+'" exact nahi mila — inme se koi?','"'+q+'" not found — one of these?');
+    }
+    return t('"'+q+'" client nahi mila.','"'+q+'" not found.');
+  }
   return m.name+' — '+(m.mobile||'No mobile')+(m.address?', '+m.address:'');
 }
 function handleClientAdd(){
@@ -22774,6 +22960,10 @@ function generateResponse(text){
   if(/\b(ruko|stop\b|chup)\b/.test(tL))return handleStop();
   if(/\b(phir se|repeat|dobara bolo)\b/.test(tL))return handleRepeat();
   var sc=checkShortcuts(tL);if(sc)return generateResponse(sc);
+  if(VC.ctx.intent){
+    var interrupt=maybeInterruptFlow(tO,tL);
+    if(interrupt&&interrupt!==VC.ctx.intent)return breakFlowAndReroute(tO);
+  }
   if(VC.ctx.intent==='invoice_create')return continueInvoiceFlow(tL);
   if(VC.ctx.intent==='stock_query'&&VC.ctx.step===1){VC.ctx.intent=null;return checkStock(tL);}
   if(VC.ctx.intent==='client_lookup'&&VC.ctx.step===1){VC.ctx.intent=null;return handleClientLookup(tL);}
@@ -22863,7 +23053,7 @@ async function processText(text){
       }
     }
     removeTyping(tid);
-    if(resp){VC.ctx.lastResponse=resp;addBubble('bot',resp);speak(resp);saveHistory(text,resp);}
+    if(resp){VC.ctx.lastResponse=resp;addBubble('bot',resp,/✅/.test(resp));speak(resp);saveHistory(text,resp);}
   },280);
 }
 
@@ -22880,6 +23070,45 @@ function saveHistory(u,b){
 // 13. SPEECH RECOGNITION
 // ══════════════════════════════════════════════
 var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+// ── Real mic-amplitude-driven waveform (falls back to the CSS keyframe
+// loop if getUserMedia/AudioContext isn't available or permission fails —
+// SpeechRecognition keeps working either way, this is visual-only). ──
+function startWaveAnalyser(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.AudioContext&&!window.webkitAudioContext)return;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    waveStream=stream;
+    var AC=window.AudioContext||window.webkitAudioContext;
+    waveCtx=new AC();
+    var src=waveCtx.createMediaStreamSource(stream);
+    waveAnalyser=waveCtx.createAnalyser();
+    waveAnalyser.fftSize=64;waveAnalyser.smoothingTimeConstant=.6;
+    src.connect(waveAnalyser);
+    var data=new Uint8Array(waveAnalyser.frequencyBinCount);
+    WAVE.classList.add('vc-live');
+    function tick(){
+      if(!VC.isListening){WAVE.classList.remove('vc-live');return;}
+      waveAnalyser.getByteFrequencyData(data);
+      for(var i=0;i<waveBars.length;i++){
+        var v=data[Math.floor(i*data.length/waveBars.length)]||0;
+        var h=Math.max(4,Math.min(24,4+(v/255)*20));
+        waveBars[i].style.height=h+'px';
+        waveBars[i].style.opacity=Math.max(.5,v/255);
+      }
+      waveRAF=requestAnimationFrame(tick);
+    }
+    tick();
+  }).catch(function(){ /* mic taken by SpeechRecognition on some browsers, or denied — CSS fallback covers it */ });
+}
+function stopWaveAnalyser(){
+  if(waveRAF)cancelAnimationFrame(waveRAF);waveRAF=null;
+  if(waveStream){waveStream.getTracks().forEach(function(tr){tr.stop();});waveStream=null;}
+  if(waveCtx){try{waveCtx.close();}catch(e){}waveCtx=null;}
+  waveAnalyser=null;
+  WAVE.classList.remove('vc-live');
+  waveBars.forEach(function(b){b.style.height='';b.style.opacity='';});
+}
+
 function initRecognition(){
   if(!SpeechRec)return;
   var rec=new SpeechRec();
@@ -22891,6 +23120,8 @@ function initRecognition(){
     MICBTN.classList.add('active');
     WAVE.classList.add('vc-active');INTERIM.textContent='';
     if(VC.synth)VC.synth.cancel();
+    haptic(HAPTIC.listenStart);
+    startWaveAnalyser();
   };
   rec.onresult=function(e){
     var interim='',final='';
@@ -22899,28 +23130,39 @@ function initRecognition(){
       else interim+=e.results[i][0].transcript;
     }
     INTERIM.textContent=interim||final;
-    if(final){INTERIM.textContent='';processText(final);}
+    if(final){INTERIM.textContent='';haptic(HAPTIC.heard);processText(final);}
   };
   rec.onerror=function(e){
     VC.isListening=false;setStatus('Ready',false,'ready');
     FAB.classList.remove('vc-listening');MICBTN.classList.remove('active');WAVE.classList.remove('vc-active');
-    INTERIM.textContent='';
-    if(e.error==='not-allowed')addBubble('bot',t('Microphone allow karein browser settings mein.','Allow microphone in settings.'));
+    INTERIM.textContent='';stopWaveAnalyser();
+    // "aborted" fires on every manual stop/re-tap — that's expected, not an
+    // error worth interrupting the user for.
+    if(e.error==='aborted')return;
+    var msg=null;
+    if(e.error==='not-allowed'||e.error==='service-not-allowed')msg=t('Microphone allow karein browser settings mein.','Allow microphone in browser settings.');
+    else if(e.error==='no-speech')msg=t('Kuch sunayi nahi diya. Phir se try karein.',"Didn't catch that. Try again.");
+    else if(e.error==='audio-capture')msg=t('Microphone nahi mila. Device check karein.','No microphone found. Check your device.');
+    else if(e.error==='network')msg=t('Network issue — speech service tak nahi pahunch paaye.','Network issue — could not reach speech service.');
+    if(msg){haptic(HAPTIC.error);addBubble('bot',msg);}
   };
   rec.onend=function(){
     VC.isListening=false;setStatus('Ready',false,'ready');
     FAB.classList.remove('vc-listening');MICBTN.classList.remove('active');WAVE.classList.remove('vc-active');
-    INTERIM.textContent='';
+    INTERIM.textContent='';stopWaveAnalyser();
   };
   VC.recognition=rec;
 }
 function startListening(){
   if(!VC.recognition)initRecognition();
-  if(VC.isListening){stopListening();return;}
+  if(!VC.recognition){addBubble('bot',t('Is browser mein voice input support nahi hai.','Voice input is not supported in this browser.'));return;}
+  VC.manualStop=false;
+  if(VC.isListening){VC.manualStop=true;stopListening();return;}
   if(VC.isSpeaking&&VC.synth)VC.synth.cancel();
   try{VC.recognition.lang=VC.lang==='hi'?'hi-IN':'en-IN';VC.recognition.start();}catch(e){}
 }
 function stopListening(){if(VC.recognition&&VC.isListening)try{VC.recognition.stop();}catch(e){}}
+
 
 // ══════════════════════════════════════════════
 // 14. TTS
@@ -22951,7 +23193,18 @@ function speak(text){
   utt.lang=VC.lang==='hi'?'hi-IN':'en-IN';
   utt.rate=CFG.ttsRate;utt.pitch=CFG.ttsPitch;utt.volume=CFG.ttsVol;
   utt.onstart=function(){VC.isSpeaking=true;setStatus('Speaking...',false,'speaking');};
-  utt.onend=function(){VC.isSpeaking=false;setStatus('Ready',false,'ready');};
+  utt.onend=function(){
+    VC.isSpeaking=false;setStatus('Ready',false,'ready');
+    // ── Conversational auto-listen: mid multi-step flow (invoice/expense/etc.),
+    // with the toggle on and the panel still open, jump straight back into
+    // listening so the user doesn't have to keep re-tapping the mic between
+    // every turn — genuinely hands-free while serving a customer.
+    if(VC.autoListen&&VC.ctx.intent&&VC.panelOpen&&!VC.scanActive&&!VC.manualStop&&VC.recognition){
+      setTimeout(function(){
+        if(VC.panelOpen&&!VC.isListening&&!VC.isSpeaking)startListening();
+      },450);
+    }
+  };
   utt.onerror=function(){VC.isSpeaking=false;setStatus('Ready',false,'ready');};
   VC.synth.speak(utt);
 }
@@ -22969,13 +23222,77 @@ function setStatus(msg,listening,state){
   }
 }
 var _tc=0;
-function addBubble(role,text){
+function addBubble(role,text,success){
   var div=document.createElement('div');
-  div.className='vc-bubble '+role;
-  div.textContent=text;
+  div.className='vc-bubble '+role+(success?' vc-success':'');
+  if(success){
+    var chk=document.createElement('span');chk.className='vc-success-pop';
+    chk.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    div.appendChild(chk);
+    div.appendChild(document.createTextNode(text));
+    haptic(HAPTIC.success);
+  } else {
+    div.textContent=text;
+  }
   CHAT.appendChild(div);
   CHAT.scrollTop=CHAT.scrollHeight;
+  if(role==='bot')attachQuickReplies(div,text);
   return div;
+}
+
+// ── Tappable product/client suggestion chips — shown when a voice/text
+// match is missing or ambiguous, or when the assistant is about to ask
+// "which product/client", so the user can tap instead of repeating
+// themselves. Tapping just feeds the chosen name back through the normal
+// pipeline (same as if it had been typed or spoken). ──
+function renderPickerChips(items,labelFn,onPick){
+  if(!items||!items.length)return;
+  var wrap=document.createElement('div');wrap.className='vc-bubble bot vc-chip-wrap';
+  var row=document.createElement('div');row.className='vc-chip-row';
+  items.forEach(function(item){
+    var chip=document.createElement('button');chip.className='vc-chip';
+    chip.textContent=labelFn(item);
+    chip.onclick=function(){row.querySelectorAll('.vc-chip').forEach(function(c){c.disabled=true;});onPick(item);};
+    row.appendChild(chip);
+  });
+  wrap.appendChild(row);
+  CHAT.appendChild(wrap);CHAT.scrollTop=CHAT.scrollHeight;
+}
+
+// ── Auto-detect confirmation / selection prompts in bot replies and
+// attach tappable buttons, so closed questions don't require typing or
+// speaking a reply. Detection is purely pattern-based on the reply text,
+// so no business-logic call sites need to change. ──
+function attachQuickReplies(bubbleEl,text){
+  if(!text)return;
+  if(/\(haan\/nahi\)|\(yes\/no\)/i.test(text)){
+    var row=document.createElement('div');row.className='vc-action-row';
+    var isFinalize=/finaliz/i.test(text);
+    var yesBtn=document.createElement('button');yesBtn.className='vc-action-btn';
+    yesBtn.textContent=isFinalize?t('✅ Finalize','✅ Finalize'):t('✅ Haan','✅ Yes');
+    yesBtn.onclick=function(){row.remove();processText(t('haan','yes'));};
+    var noBtn=document.createElement('button');noBtn.className='vc-action-btn';noBtn.style.background='linear-gradient(135deg,#94a3b8,#64748b)';
+    noBtn.textContent=isFinalize?t('📝 Draft','📝 Draft'):t('❌ Nahi','❌ No');
+    noBtn.onclick=function(){row.remove();processText(t('nahi','no'));};
+    row.appendChild(yesBtn);row.appendChild(noBtn);
+    bubbleEl.appendChild(row);
+    return;
+  }
+  if(VC.ctx.intent==='invoice_create'&&VC.ctx.data&&VC.ctx.data.items&&VC.ctx.data.items.length&&/aur kuch\?|more\?/i.test(text)){
+    var row2=document.createElement('div');row2.className='vc-action-row';
+    var doneBtn=document.createElement('button');doneBtn.className='vc-action-btn green';
+    doneBtn.textContent=t('✅ Bas, Aage Badho','✅ Done, Continue');
+    doneBtn.onclick=function(){row2.remove();processText(t('bas','done'));};
+    row2.appendChild(doneBtn);
+    bubbleEl.appendChild(row2);
+  }
+  if(/kaunsa product|which product|kya add karein|add products/i.test(text)){
+    var prods=(AS().products||[]).slice(-8).reverse();
+    if(prods.length)setTimeout(function(){renderPickerChips(prods,function(p){return p.name;},function(p){processText(p.name);});},250);
+  } else if(/kaunsa client\??\s*$|which client\??\s*$|kaunse client|kaun sa client/i.test(text)){
+    var cls=(AS().clients||[]).slice(-8).reverse();
+    if(cls.length)setTimeout(function(){renderPickerChips(cls,function(c){return c.name;},function(c){processText(c.name);});},250);
+  }
 }
 function addTyping(){
   var id='vct-'+(++_tc);
@@ -23097,13 +23414,33 @@ function showShortcutsModal(){
   var rows=document.createElement('div');rows.id='vc-sc-rows';
   function renderRows(){
     rows.innerHTML='';
+    if(!VC.shortcuts.length){
+      var empty=document.createElement('p');empty.className='vc-sc-empty';
+      empty.textContent=t('Abhi koi shortcut nahi hai. Neeche se ek add karein.','No shortcuts yet. Add one below.');
+      rows.appendChild(empty);
+      return;
+    }
     VC.shortcuts.forEach(function(sc,i){
-      var row=document.createElement('div');row.className='vc-sc-row';
-      row.innerHTML='<input placeholder="'+t('Trigger','Trigger')+'" value="'+sc.trigger+'" data-i="'+i+'" data-f="trigger">'+
-        '<span style="font-size:14px;color:#94a3b8;">→</span>'+
-        '<input placeholder="'+t('Command','Command')+'" value="'+sc.action+'" data-i="'+i+'" data-f="action">'+
-        '<button class="vc-sc-del" data-del="'+i+'">✕</button>';
-      rows.appendChild(row);
+      var card=document.createElement('div');card.className='vc-sc-card';
+
+      var f1=document.createElement('div');f1.className='vc-sc-field';
+      var l1=document.createElement('span');l1.className='vc-sc-label';l1.textContent=t('Trigger Word','Trigger Word');
+      var inp1=document.createElement('input');inp1.placeholder=t('e.g. daily report','e.g. daily report');inp1.value=sc.trigger;inp1.dataset.i=i;inp1.dataset.f='trigger';
+      f1.appendChild(l1);f1.appendChild(inp1);
+
+      var arrow=document.createElement('div');arrow.className='vc-sc-arrow';arrow.textContent='↓ '+t('ye command activate karta hai','activates this command');
+
+      var f2=document.createElement('div');f2.className='vc-sc-field';
+      var l2=document.createElement('span');l2.className='vc-sc-label';l2.textContent=t('Command','Command');
+      var inp2=document.createElement('input');inp2.placeholder=t('e.g. aaj ki kamai','e.g. today\'s sales');inp2.value=sc.action;inp2.dataset.i=i;inp2.dataset.f='action';
+      f2.appendChild(l2);f2.appendChild(inp2);
+
+      var footer=document.createElement('div');footer.className='vc-sc-footer';
+      var delBtn=document.createElement('button');delBtn.className='vc-sc-del';delBtn.dataset.del=i;delBtn.innerHTML='🗑 '+t('Hatao','Remove');
+      footer.appendChild(delBtn);
+
+      card.appendChild(f1);card.appendChild(arrow);card.appendChild(f2);card.appendChild(footer);
+      rows.appendChild(card);
     });
     rows.querySelectorAll('input').forEach(function(inp){inp.oninput=function(){var i=parseInt(this.dataset.i);if(VC.shortcuts[i])VC.shortcuts[i][this.dataset.f]=this.value;saveShortcuts();};});
     rows.querySelectorAll('[data-del]').forEach(function(btn){btn.onclick=function(){VC.shortcuts.splice(parseInt(this.dataset.del),1);saveShortcuts();renderRows();};});
@@ -23197,11 +23534,36 @@ FAB.addEventListener('click',function(e){
   e.stopPropagation();
   if(VC.panelOpen)closePanel();else openPanel();
 });
-var fabTimer;
-FAB.addEventListener('touchstart',function(e){
-  fabTimer=setTimeout(function(){if(!VC.panelOpen)openPanel();setTimeout(startListening,150);},600);
-},{passive:true});
-FAB.addEventListener('touchend',function(){clearTimeout(fabTimer);},{passive:true});
+// ── Push-to-talk long-press, with a visible 600ms "charging" ring so the
+// gesture is discoverable instead of feeling like nothing is happening.
+// Wired identically onto the desktop FAB and the actual on-screen mobile
+// mic button (mic-fab-btn) — previously only the (mobile-hidden) FAB had
+// this listener, so the gesture was unreachable on phones. ──
+function wirePushToTalk(el){
+  if(!el)return;
+  var timer,fired;
+  var start=function(e){
+    fired=false;
+    el.classList.add('vc-charging');
+    timer=setTimeout(function(){
+      fired=true;
+      el.classList.remove('vc-charging');
+      haptic(HAPTIC.longPress);
+      if(!VC.panelOpen)openPanel();
+      setTimeout(startListening,150);
+    },600);
+  };
+  var cancel=function(){
+    clearTimeout(timer);
+    el.classList.remove('vc-charging');
+  };
+  el.addEventListener('touchstart',start,{passive:true});
+  el.addEventListener('touchend',cancel,{passive:true});
+  el.addEventListener('touchcancel',cancel,{passive:true});
+  el.addEventListener('touchmove',cancel,{passive:true});
+}
+wirePushToTalk(FAB);
+wirePushToTalk($('mic-fab-btn'));
 
 // Overlay click = close
 OVERLAY.addEventListener('click',closePanel);
@@ -23235,6 +23597,20 @@ LANGBTN.addEventListener('click',function(){
   if(VC.recognition)VC.recognition.lang=VC.lang==='hi'?'hi-IN':'en-IN';
   addBubble('bot',VC.lang==='hi'?'Hindi mode on! 🇮🇳':'English mode on! 🇬🇧');
 });
+
+// Auto-listen (conversational loop) toggle
+if(AUTOBTN){
+  var syncAutoBtn=function(){ AUTOBTN.classList.toggle('on',VC.autoListen); };
+  syncAutoBtn();
+  AUTOBTN.addEventListener('click',function(){
+    VC.autoListen=!VC.autoListen;
+    localStorage.setItem(CFG.autoListenKey,VC.autoListen?'on':'off');
+    syncAutoBtn();
+    addBubble('bot',VC.autoListen
+      ? t('Auto-listen ON — jawab ke baad khud sunna shuru karega.','Auto-listen ON — I\'ll keep listening after each reply.')
+      : t('Auto-listen OFF — har baar mic dabana hoga.','Auto-listen OFF — tap the mic each time.'));
+  });
+}
 
 // Voices & init
 if(VC.synth){VC.synth.onvoiceschanged=loadVoices;loadVoices();}
@@ -25899,6 +26275,120 @@ document.addEventListener('DOMContentLoaded',function(){
   };
   window._webOrderSearchQuery = '';
   window.searchWebsiteOrders = function(q){ window._webOrderSearchQuery = (q||'').toLowerCase(); window.renderWebsiteOrdersList(); };
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     QUICK ACTIONS — makes the manifest.json "shortcuts" (long-press app
+     icon) and push-notification action buttons actually open the right
+     module instead of always landing on the Dashboard.
+
+     Both sw.js (notificationclick) and manifest.json (shortcuts) build
+     URLs like ./index.html?action=new-invoice — this reads that param
+     once on load and routes to the matching module.
+     ══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  function waitForApp(cb, attemptsLeft){
+    attemptsLeft = attemptsLeft == null ? 25 : attemptsLeft;
+    if(window.switchTab && window.AppState && window.AppState.user){ cb(); return; }
+    if(attemptsLeft <= 0) return; // give up quietly — user is still on dashboard, not broken
+    setTimeout(function(){ waitForApp(cb, attemptsLeft - 1); }, 300);
+  }
+
+  window.handleQuickAction = function(action){
+    if(!action) return;
+    waitForApp(function(){
+      switch(action){
+        case 'new-invoice':
+          window.switchTab('invoice');
+          break;
+        case 'today-sales': {
+          window.switchTab('dashboard');
+          var todayStr = new Date().toISOString().slice(0,10);
+          var sel = document.getElementById('dash-date-filter');
+          var s = document.getElementById('dash-date-start');
+          var e = document.getElementById('dash-date-end');
+          if(sel){ sel.value = 'custom'; }
+          if(s) s.value = todayStr;
+          if(e) e.value = todayStr;
+          if(window.updateDashboard) window.updateDashboard();
+          break;
+        }
+        case 'low-stock':
+          window.switchTab('inventory');
+          setTimeout(function(){
+            var stockEl = document.getElementById('inv-filter-stock');
+            if(stockEl){ stockEl.value = 'low'; }
+            if(window.renderInventory) window.renderInventory();
+          }, 200);
+          break;
+        case 'gst-report':
+          window.switchTab('gst');
+          break;
+        case 'purchase-order':
+          window.switchTab('purchase-orders');
+          break;
+        case 'voice': {
+          var fab = document.getElementById('vc-fab');
+          if(fab) fab.click();
+          break;
+        }
+        default:
+          break; // unknown action — stay on dashboard rather than error
+      }
+    });
+  };
+
+  // Read ?action= once on initial load (covers: manifest shortcuts,
+  // notification click that opened a brand-new window/tab)
+  try{
+    var params = new URLSearchParams(window.location.search);
+    var action = params.get('action');
+    if(action){
+      window.handleQuickAction(action);
+      // Clean the URL so a page refresh doesn't re-trigger the same action
+      var cleanUrl = window.location.pathname + (window.location.hash || '');
+      history.replaceState(history.state, '', cleanUrl);
+    }
+  }catch(e){}
+
+  // ── Build a lightweight data snapshot when the Service Worker asks for one
+  // (periodic background sync → PWA widgets + "sales milestone" notification).
+  // Without this the SW's 3s timeout always fires and widgets show
+  // "Could not load data. Open ERP to refresh." forever.
+  window._buildSWSnapshot = function(type){
+    try{
+      var st = window.AppState || {};
+      if(type === 'GET_SALES_SNAPSHOT'){
+        var todayStr = new Date().toISOString().slice(0,10);
+        var todays = (st.invoices||[]).filter(function(i){ return i.date === todayStr && i.status !== 'void' && i.docType !== 'Credit Note'; });
+        var cash = 0, upi = 0, total = 0;
+        todays.forEach(function(i){
+          total += Number(i.grandTotal||0);
+          if(i.paymentMode === 'cash') cash += Number(i.grandTotal||0);
+          if(i.paymentMode === 'upi')  upi  += Number(i.grandTotal||0);
+        });
+        return { todayRevenue: total, cashTotal: cash, upiTotal: upi, invoiceCount: todays.length, milestoneHit: false };
+      }
+      if(type === 'GET_GST_SNAPSHOT'){
+        var mStr = new Date().toISOString().slice(0,7);
+        var monthInv = (st.invoices||[]).filter(function(i){ return (i.date||'').slice(0,7) === mStr && i.status !== 'void'; });
+        var cgst=0, sgst=0, igst=0, taxable=0;
+        monthInv.forEach(function(i){
+          cgst += Number(i.cgst||0); sgst += Number(i.sgst||0); igst += Number(i.igst||0);
+          taxable += Number(i.taxableValue||i.subtotal||0);
+        });
+        return { totalGST: cgst+sgst+igst, taxableAmount: taxable, cgst: cgst, sgst: sgst, igst: igst, period: 'This Month' };
+      }
+      if(type === 'GET_STOCK_SNAPSHOT'){
+        var low = (st.products||[]).filter(function(p){ return !p.isHidden && (p.stock||0) > 0 && (p.stock||0) <= (p.lowStockAlert||10); })
+          .map(function(p){ return { name: p.name, stock: p.stock, minStock: p.lowStockAlert||10 }; });
+        return { lowStockItems: low };
+      }
+    }catch(e){}
+    return null;
+  };
 })();
 </script>
 
