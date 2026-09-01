@@ -3,8 +3,8 @@
    Features: Periodic Sync, Push Notifications, PWA Widgets, Offline Cache
    ═══════════════════════════════════════════════════════════════════ */
 
-const SW_VERSION = 'erp-sw-v3.0';
-const CACHE_NAME  = 'erp-cache-v3';
+const SW_VERSION = 'erp-sw-v3.1';
+const CACHE_NAME  = 'erp-cache-v3.1';
 
 // Files to pre-cache for offline use
 const PRE_CACHE = [
