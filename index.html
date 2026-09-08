@@ -5918,18 +5918,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Bridge Firestore to window for drawer bridge
         window._getFirestoreRef = () => ({db, appId, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch});
         
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
-  authDomain: "dev-ayurveda.firebaseapp.com",
-  databaseURL: "https://dev-ayurveda-default-rtdb.firebaseio.com",
-  projectId: "dev-ayurveda",
-  storageBucket: "dev-ayurveda.firebasestorage.app",
-  messagingSenderId: "40760282698",
-  appId: "1:40760282698:web:20e31100eed712631ca0b3",
-  measurementId: "G-THLCJRV6MZ"
-};
-  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
+        const fallbackConfig = { apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og", authDomain: "dev-ayurveda.firebaseapp.com", databaseURL: "https://dev-ayurveda-default-rtdb.firebaseio.com", projectId: "dev-ayurveda", storageBucket: "dev-ayurveda.firebasestorage.app", messagingSenderId: "40760282698", appId: "1:40760282698:web:20e31100eed712631ca0b3", measurementId: "G-THLCJRV6MZ" };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
         
         let app, auth, db;
         try {
@@ -18913,13 +18903,14 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
 const FIREBASE_CONFIG = {
-    apiKey:"AIzaSyDHzTJwqowLfoM3BuMrBw9w-yeVVPBcUgA",
-    authDomain:"my-business-erp-9a826.firebaseapp.com",
-    projectId:"my-business-erp-9a826",
-    storageBucket:"my-business-erp-9a826.firebasestorage.app",
-    messagingSenderId:"483878230402",
-    appId:"1:483878230402:web:7def5e340df4c37bc7179b",
-    measurementId:"G-8BHHF3NSSE"
+    apiKey:"AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
+    authDomain:"dev-ayurveda.firebaseapp.com",
+    databaseURL:"https://dev-ayurveda-default-rtdb.firebaseio.com",
+    projectId:"dev-ayurveda",
+    storageBucket:"dev-ayurveda.firebasestorage.app",
+    messagingSenderId:"40760282698",
+    appId:"1:40760282698:web:20e31100eed712631ca0b3",
+    measurementId:"G-THLCJRV6MZ"
 };
 const fbApp = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG, 'sub-app');
 const subDB  = getFirestore(fbApp);
