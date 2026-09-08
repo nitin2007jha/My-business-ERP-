@@ -19956,13 +19956,59 @@ window.resetInvCounter = function() {
             area.appendChild(page);
         });
 
-        html2pdf().set({
-            margin:0, filename:filename,
-            image:{type:'jpeg',quality:0.97},
-            html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',width:794,windowWidth:794,scrollX:0,scrollY:0},
-            jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-            pagebreak:{mode:['css','legacy']}
-        }).from(area).output('blob').then(async function(blob){
+        // ── Bulk PDF generation ──
+        // IMPORTANT: we do NOT hand the whole multi-invoice `area` to
+        // html2pdf/html2canvas in one shot anymore. Doing that renders every
+        // invoice page into a SINGLE giant canvas (width 1588px × height
+        // 2246px-per-invoice at scale:2), and Android WebView silently
+        // returns a blank white canvas once its internal pixel-area limit
+        // is exceeded (this is why 1-2 invoices could work but a bigger
+        // bulk batch came out blank). Instead we capture ONE invoice page
+        // at a time (small canvas, always under the limit) and assemble
+        // them into a multi-page PDF with jsPDF directly.
+        (async function(){
+        var jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        var pageEls = Array.prototype.slice.call(area.children);
+
+        async function buildBlobPerPage(){
+            var pdf = new jsPDFCtor({unit:'mm', format:'a4', orientation:'portrait'});
+            for(var i=0;i<pageEls.length;i++){
+                var canvas = await html2canvas(pageEls[i], {
+                    scale:2, useCORS:true, allowTaint:true, logging:false,
+                    backgroundColor:'#ffffff', width:794, windowWidth:794,
+                    scrollX:0, scrollY:0
+                });
+                var imgData = canvas.toDataURL('image/jpeg', 0.97);
+                if(i>0) pdf.addPage('a4','portrait');
+                pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                if(ov){ var p2 = ov.querySelector('p'); if(p2) p2.textContent = 'Page ' + (i+1) + ' of ' + pageEls.length + '...'; }
+            }
+            return pdf.output('blob');
+        }
+
+        var blob;
+        try {
+            if(jsPDFCtor && typeof html2canvas !== 'undefined' && pageEls.length){
+                blob = await buildBlobPerPage();
+            } else {
+                // Fallback: old single-shot method (better than nothing if
+                // jsPDF/html2canvas aren't exposed globally for some reason)
+                blob = await html2pdf().set({
+                    margin:0, filename:filename,
+                    image:{type:'jpeg',quality:0.97},
+                    html2canvas:{scale:2,useCORS:true,allowTaint:true,logging:false,backgroundColor:'#ffffff',width:794,windowWidth:794,scrollX:0,scrollY:0},
+                    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+                    pagebreak:{mode:['css','legacy']}
+                }).from(area).output('blob');
+            }
+        } catch(e){
+            area.innerHTML = '';
+            hideLoader();
+            window.showToast && window.showToast('PDF error: ' + e.message, 'error');
+            return;
+        }
+
+        {
             area.innerHTML = '';
             hideLoader();
             if(!blob){ window.showToast && window.showToast('PDF error!','error'); return; }
@@ -19995,11 +20041,8 @@ window.resetInvCounter = function() {
                 }
                 setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
             }
-        }).catch(function(e){
-            area.innerHTML = '';
-            hideLoader();
-            window.showToast && window.showToast('PDF error: ' + e.message, 'error');
-        });
+        }
+        })();
     };
 })();
 
