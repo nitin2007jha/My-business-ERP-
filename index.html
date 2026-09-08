@@ -1530,6 +1530,11 @@ body.fullscreen-page-open #dash-fab-row{
         <button onclick="window.openFinancialReports&&openFinancialReports()" class="btn btn-icon" title="Reports">
           <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
         </button>
+        <!-- Notifications -->
+        <button onclick="window.openNotifCenter&&openNotifCenter()" class="btn btn-icon relative" title="Notifications" id="notif-bell-btn">
+          <i data-lucide="bell" class="w-4 h-4" id="notif-bell-icon"></i>
+          <span id="notif-badge" class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] font-black rounded-full items-center justify-center hidden" style="display:none;">0</span>
+        </button>
         <!-- User avatar pill — shows logo or initials -->
         <div id="topbar-avatar"
              class="flex items-center justify-center w-8 h-8 rounded-full ml-1 cursor-pointer flex-shrink-0 overflow-hidden"
@@ -2516,6 +2521,135 @@ body.fullscreen-page-open #dash-fab-row{
   <!-- List -->
   <div id="drafts-list" style="flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));">
     <!-- Filled by JS -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     NOTIFICATION CENTER — styles, pages
+     ══════════════════════════════════════════════════════════════ -->
+<style id="notif-center-styles">
+@keyframes ncPulse{0%{transform:scale(1)}30%{transform:scale(1.35)}60%{transform:scale(.9)}100%{transform:scale(1)}}
+.nc-bell-pulse{animation:ncPulse .5s ease}
+@keyframes ncBellRing{0%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(9deg)}40%{transform:rotate(-7deg)}50%{transform:rotate(4deg)}60%{transform:rotate(0)}}
+.nc-bell-ring{animation:ncBellRing .6s ease}
+@keyframes ncFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.nc-card{position:relative;border-radius:16px;margin-bottom:10px;overflow:hidden;animation:ncFadeUp .28s ease both;}
+.nc-swipe-bg{position:absolute;inset:0;display:flex;align-items:center;font-weight:800;font-size:12px;color:#fff;padding:0 18px;}
+.nc-swipe-bg.left{background:linear-gradient(90deg,#3b82f6,#2563eb);justify-content:flex-start;}
+.nc-swipe-bg.right{background:linear-gradient(90deg,#f87171,#ef4444);justify-content:flex-end;}
+.nc-card-inner{position:relative;background:#fff;padding:13px 14px;display:flex;gap:11px;border:1px solid #f1f5f9;border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.04);}
+.nc-card.unread .nc-card-inner{background:#f7fdfd;border-color:#d7f0f0;}
+.nc-icon-circle{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nc-chip{flex-shrink:0;padding:7px 13px;border-radius:20px;border:none;cursor:pointer;font-size:11.5px;font-weight:700;font-family:inherit;white-space:nowrap;background:rgba(255,255,255,.16);color:#fff;transition:background .15s,color .15s;}
+.nc-chip.active{background:#fff;color:var(--op);}
+.nc-chip .nc-chip-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#fbbf24;margin-left:5px;vertical-align:middle;}
+.nc-action-btn{border:none;border-radius:9px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;}
+.nc-empty{text-align:center;padding:60px 20px;color:#94a3b8;}
+.nc-empty svg{margin:0 auto 14px;opacity:.55;}
+@keyframes ncShimmer{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+.nc-skeleton{background:linear-gradient(90deg,#f1f5f9 0%,#e9eef3 50%,#f1f5f9 100%);background-size:200px 100%;animation:ncShimmer 1.2s ease infinite;border-radius:16px;}
+.nc-ptr-spin{animation:ncSpin .7s linear infinite;}
+@keyframes ncSpin{to{transform:rotate(360deg)}}
+.nc-date-hdr{font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin:16px 2px 8px;}
+.nc-date-hdr:first-child{margin-top:2px;}
+.nc-toggle{position:relative;width:42px;height:24px;border-radius:20px;background:#e2e8f0;cursor:pointer;transition:background .18s;flex-shrink:0;}
+.nc-toggle.on{background:var(--op);}
+.nc-toggle .knob{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s;}
+.nc-toggle.on .knob{transform:translateX(18px);}
+.nc-settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 4px;border-bottom:1px solid #f1f5f9;}
+.nc-settings-row:last-child{border-bottom:none;}
+.nc-menu{position:absolute;top:52px;right:12px;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);min-width:190px;overflow:hidden;z-index:300;animation:ncFadeUp .15s ease both;}
+.nc-menu button{width:100%;text-align:left;padding:12px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#334155;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:9px;}
+.nc-menu button:hover{background:#f8fafc;}
+.nc-menu button.danger{color:#dc2626;}
+.nc-bulk-bar{display:none;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:#0f172a;flex-shrink:0;}
+#notif-center-page.select-mode .nc-bulk-bar{display:flex;}
+.nc-select-check{width:22px;height:22px;border-radius:7px;border:2px solid #cbd5e1;flex-shrink:0;display:none;align-items:center;justify-content:center;margin-top:2px;}
+#notif-center-page.select-mode .nc-select-check{display:flex;}
+#notif-center-page.select-mode .nc-icon-circle{display:none;}
+.nc-select-check.checked{background:var(--op);border-color:var(--op);}
+</style>
+
+<!-- NOTIFICATION CENTER PAGE -->
+<div id="notif-center-page" style="display:none;position:fixed;inset:0;height:100dvh;z-index:221;background:#f8f9fa;flex-direction:column;overflow:hidden;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px;flex-shrink:0;padding-top:calc(16px + env(safe-area-inset-top,0px));position:relative;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="window.closeNotifCenter()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2;">Notifications</div>
+        <div id="notif-center-subtitle" style="font-size:11px;color:rgba(255,255,255,.7);">All caught up</div>
+      </div>
+      <button onclick="window.NotifCenter.toggleSearch()" title="Search" style="background:rgba(255,255,255,.15);border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button onclick="window.NotifCenter.toggleMenu(event)" title="More" style="background:rgba(255,255,255,.15);border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+    </div>
+    <div id="notif-search-wrap" style="display:none;margin-top:12px;">
+      <input id="notif-search-input" oninput="window.NotifCenter.render()" placeholder="Search notifications…" style="width:100%;padding:9px 14px;border-radius:12px;border:none;font-size:13px;font-family:inherit;background:rgba(255,255,255,.18);color:#fff;outline:none;" onfocus="this.style.background='rgba(255,255,255,.28)'" onblur="this.style.background='rgba(255,255,255,.18)'">
+    </div>
+    <div id="notif-filter-chips" style="display:flex;gap:6px;margin-top:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;"></div>
+  </div>
+
+  <!-- Bulk select action bar -->
+  <div class="nc-bulk-bar">
+    <span id="notif-bulk-count" style="color:#fff;font-size:12.5px;font-weight:700;">0 selected</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="window.NotifCenter.bulkMarkRead()" class="nc-action-btn" style="background:rgba(255,255,255,.15);color:#fff;">Mark read</button>
+      <button onclick="window.NotifCenter.bulkDelete()" class="nc-action-btn" style="background:#ef4444;color:#fff;">Delete</button>
+      <button onclick="window.NotifCenter.exitSelectMode()" class="nc-action-btn" style="background:rgba(255,255,255,.15);color:#fff;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Pull to refresh -->
+  <div id="notif-ptr" style="display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;transition:height .15s;color:var(--op);flex-shrink:0;">
+    <svg class="nc-ptr-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+  </div>
+
+  <div id="notif-list" style="flex:1;overflow-y:auto;padding:14px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<!-- NOTIFICATION SETTINGS PAGE -->
+<div id="notif-settings-page" style="display:none;position:fixed;inset:0;height:100dvh;z-index:222;background:#f8f9fa;flex-direction:column;overflow:hidden;">
+  <div style="background:linear-gradient(135deg,var(--op) 0%,var(--op-dark) 100%);padding:16px;flex-shrink:0;padding-top:calc(16px + env(safe-area-inset-top,0px));">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="window.closeNotifSettings()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2;">Notification Settings</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7);">Choose what you want to hear about</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:18px 16px;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));">
+    <div class="card p-4 mb-4" style="border-radius:16px;">
+      <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Alert types</div>
+      <div id="notif-settings-categories"></div>
+    </div>
+    <div class="card p-4 mb-4" style="border-radius:16px;">
+      <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Alert behaviour</div>
+      <div class="nc-settings-row">
+        <div><div style="font-size:13.5px;font-weight:700;color:#334155;">Sound</div><div style="font-size:11.5px;color:#94a3b8;">Play a chime for new alerts</div></div>
+        <div class="nc-toggle" id="nc-toggle-sound" onclick="window.NotifCenter.toggleSetting('sound')"><div class="knob"></div></div>
+      </div>
+      <div class="nc-settings-row">
+        <div><div style="font-size:13.5px;font-weight:700;color:#334155;">Vibration</div><div style="font-size:11.5px;color:#94a3b8;">Haptic buzz on new alerts</div></div>
+        <div class="nc-toggle" id="nc-toggle-vibrate" onclick="window.NotifCenter.toggleSetting('vibrate')"><div class="knob"></div></div>
+      </div>
+      <div class="nc-settings-row">
+        <div><div style="font-size:13.5px;font-weight:700;color:#334155;">Quiet hours (9pm–8am)</div><div style="font-size:11.5px;color:#94a3b8;">Mute sound & vibration overnight</div></div>
+        <div class="nc-toggle" id="nc-toggle-quiet" onclick="window.NotifCenter.toggleSetting('quietHours')"><div class="knob"></div></div>
+      </div>
+    </div>
+    <button onclick="window.NotifCenter.clearAllConfirm()" class="btn btn-sm" style="width:100%;background:#fef2f2;color:#dc2626;border:1px solid #fee2e2;padding:12px;border-radius:12px;font-weight:700;">
+      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear notification history
+    </button>
   </div>
 </div>
 
@@ -5784,8 +5918,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Bridge Firestore to window for drawer bridge
         window._getFirestoreRef = () => ({db, appId, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch});
         
-        const fallbackConfig = { apiKey: "AIzaSyDHzTJwqowLfoM3BuMrBw9w-yeVVPBcUgA", authDomain: "my-business-erp-9a826.firebaseapp.com", projectId: "my-business-erp-9a826", storageBucket: "my-business-erp-9a826.firebasestorage.app", messagingSenderId: "483878230402", appId: "1:483878230402:web:7def5e340df4c37bc7179b", measurementId: "G-8BHHF3NSSE" };
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
+  authDomain: "dev-ayurveda.firebaseapp.com",
+  databaseURL: "https://dev-ayurveda-default-rtdb.firebaseio.com",
+  projectId: "dev-ayurveda",
+  storageBucket: "dev-ayurveda.firebasestorage.app",
+  messagingSenderId: "40760282698",
+  appId: "1:40760282698:web:20e31100eed712631ca0b3",
+  measurementId: "G-THLCJRV6MZ"
+};
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : fallbackConfig;
         
         let app, auth, db;
         try {
@@ -26523,6 +26667,796 @@ document.addEventListener('DOMContentLoaded',function(){
 
   // Manual hash edits / forward-back through real URLs
   window.addEventListener('hashchange', function(){ try{ routeFromHash(); }catch(e){} });
+})();
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// NOTIFICATION CENTER — full module
+// IndexedDB-backed, swipeable, filterable notification system that
+// powers invoice/report/inventory/payment/feature alerts app-wide.
+// ══════════════════════════════════════════════════════════════════
+(function(){
+
+  function ncVib(pattern){ try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){} }
+
+  // ── Storage (IndexedDB, mirrors window.DraftDB pattern) ──────────
+  window.NotifDB = (function(){
+    var DB_NAME = 'erp_notifications', DB_VERSION = 1, dbPromise = null;
+    function open(){
+      if(dbPromise) return dbPromise;
+      dbPromise = new Promise(function(resolve, reject){
+        if(!window.indexedDB){ reject(new Error('IndexedDB not supported')); return; }
+        var req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function(e){
+          var db = e.target.result;
+          if(!db.objectStoreNames.contains('items')){
+            var store = db.createObjectStore('items', {keyPath:'id'});
+            store.createIndex('category', 'category', {unique:false});
+            store.createIndex('createdAt', 'createdAt', {unique:false});
+          }
+        };
+        req.onsuccess = function(e){ resolve(e.target.result); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+      return dbPromise;
+    }
+    function put(item){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('items', 'readwrite');
+          tx.objectStore('items').put(item);
+          tx.oncomplete = function(){ resolve(item); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    function getAll(){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('items', 'readonly');
+          var req = tx.objectStore('items').getAll();
+          req.onsuccess = function(){ resolve(req.result || []); };
+          req.onerror = function(){ reject(req.error); };
+        });
+      });
+    }
+    function remove(id){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('items', 'readwrite');
+          tx.objectStore('items').delete(id);
+          tx.oncomplete = function(){ resolve(); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    function clearAll(){
+      return open().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction('items', 'readwrite');
+          tx.objectStore('items').clear();
+          tx.oncomplete = function(){ resolve(); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    return { put:put, getAll:getAll, remove:remove, clearAll:clearAll };
+  })();
+
+  // ── Category metadata ─────────────────────────────────────────────
+  var CATS = {
+    invoice:   { label:'Invoice',   icon:'file-text',     color:'#0f7a80', bg:'#e6f6f6' },
+    report:    { label:'Report',    icon:'bar-chart-2',   color:'#4f46e5', bg:'#eef2ff' },
+    inventory: { label:'Inventory', icon:'package',       color:'#d97706', bg:'#fffbeb' },
+    payment:   { label:'Payment',   icon:'wallet',        color:'#dc2626', bg:'#fef2f2' },
+    client:    { label:'Client',    icon:'users',         color:'#db2777', bg:'#fdf2f8' },
+    feature:   { label:'New',       icon:'sparkles',      color:'#7c3aed', bg:'#f5f3ff' },
+    system:    { label:'System',    icon:'settings',      color:'#64748b', bg:'#f8fafc' }
+  };
+  var FILTERS = [
+    { key:'all',       label:'All' },
+    { key:'unread',    label:'Unread' },
+    { key:'docs',      label:'Reports & Invoices', cats:['invoice','report'] },
+    { key:'inventory', label:'Inventory',          cats:['inventory'] },
+    { key:'payment',   label:'Payments',           cats:['payment','client'] },
+    { key:'updates',   label:'Updates',            cats:['feature','system'] }
+  ];
+  var SETTINGS_KEY = 'notif_settings_v1';
+
+  window.NotifCenter = {
+    _items: [],
+    _filter: 'all',
+    _pageOpen: false,
+    _selectMode: false,
+    _selected: {},
+    CATS: CATS,
+    FILTERS: FILTERS,
+
+    // ── Settings ─────────────────────────────────────────────────
+    getSettings: function(){
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      var def = { sound:true, vibrate:true, quietHours:false, categories:{} };
+      Object.keys(CATS).forEach(function(k){ def.categories[k]=true; });
+      if(!raw) return def;
+      try{
+        var parsed = JSON.parse(raw);
+        def.sound = parsed.sound !== false;
+        def.vibrate = parsed.vibrate !== false;
+        def.quietHours = !!parsed.quietHours;
+        Object.keys(CATS).forEach(function(k){
+          def.categories[k] = parsed.categories && parsed.categories[k] !== undefined ? parsed.categories[k] : true;
+        });
+        return def;
+      }catch(e){ return def; }
+    },
+    saveSettings: function(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); },
+    toggleSetting: function(key){
+      var s = this.getSettings();
+      s[key] = !s[key];
+      this.saveSettings(s);
+      var el = document.getElementById('nc-toggle-'+(key==='quietHours'?'quiet':key));
+      if(el) el.classList.toggle('on', !!s[key]);
+    },
+    toggleCategory: function(cat){
+      var s = this.getSettings();
+      s.categories[cat] = !s.categories[cat];
+      this.saveSettings(s);
+      var el = document.getElementById('nc-cat-toggle-'+cat);
+      if(el) el.classList.toggle('on', !!s.categories[cat]);
+    },
+    _inQuietHours: function(){
+      var h = new Date().getHours();
+      return h >= 21 || h < 8;
+    },
+
+    // ── Init / load ──────────────────────────────────────────────
+    init: function(){
+      var self = this;
+      window.NotifDB.getAll().then(function(items){
+        self._items = items || [];
+        self._sort();
+        self.updateBadge();
+      }).catch(function(){ /* IndexedDB unavailable — degrade silently */ });
+    },
+    _sort: function(){ this._items.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); }); },
+
+    // ── Add / dedupe ─────────────────────────────────────────────
+    add: function(n){
+      var s = this.getSettings();
+      if(n.category && s.categories && s.categories[n.category] === false) return null;
+      if(n.dedupeKey){
+        var existing = this._items.find(function(i){ return i.dedupeKey === n.dedupeKey; });
+        if(existing){
+          existing.title = n.title || existing.title;
+          existing.body = n.body || existing.body;
+          existing.createdAt = Date.now();
+          existing.read = false;
+          window.NotifDB.put(existing).catch(function(){});
+          this._sort();
+          this.updateBadge();
+          this._pulseBell();
+          if(this._pageOpen) this.render();
+          return existing;
+        }
+      }
+      var item = {
+        id: 'ntf_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+        category: n.category || 'system',
+        title: n.title || 'Notification',
+        body: n.body || '',
+        actionType: n.actionType || 'none',
+        actionId: n.actionId || null,
+        meta: n.meta || {},
+        dedupeKey: n.dedupeKey || null,
+        createdAt: Date.now(),
+        read: false
+      };
+      this._items.unshift(item);
+      window.NotifDB.put(item).catch(function(){});
+      this.updateBadge();
+      this._pulseBell();
+      this._playAlert();
+      if(this._pageOpen) this.render();
+      return item;
+    },
+
+    // ── Badge / bell animation ───────────────────────────────────
+    updateBadge: function(){
+      var n = this._items.filter(function(i){ return !i.read; }).length;
+      var badge = document.getElementById('notif-badge');
+      if(badge){
+        if(n>0){ badge.textContent = n>99?'99+':n; badge.style.display='flex'; }
+        else { badge.style.display='none'; }
+      }
+      this._updateSubtitle();
+    },
+    _pulseBell: function(){
+      var icon = document.getElementById('notif-bell-icon');
+      var badge = document.getElementById('notif-badge');
+      if(icon){ icon.classList.remove('nc-bell-ring'); void icon.offsetWidth; icon.classList.add('nc-bell-ring'); }
+      if(badge){ badge.classList.remove('nc-bell-pulse'); void badge.offsetWidth; badge.classList.add('nc-bell-pulse'); }
+    },
+    _playAlert: function(){
+      var s = this.getSettings();
+      if(s.quietHours && this._inQuietHours()) return;
+      if(s.vibrate) ncVib([12,40,12]);
+      if(s.sound){
+        try{
+          var ctx = window._ncAudioCtx || (window._ncAudioCtx = new (window.AudioContext||window.webkitAudioContext)());
+          var o = ctx.createOscillator(), g = ctx.createGain();
+          o.type='sine'; o.frequency.value=880;
+          g.gain.setValueAtTime(0.0001, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime+0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.22);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(); o.stop(ctx.currentTime+0.24);
+        }catch(e){}
+      }
+    },
+
+    // ── Filter / search / render ─────────────────────────────────
+    setFilter: function(key){ this._filter = key; this.render(); },
+    toggleSearch: function(){
+      var wrap = document.getElementById('notif-search-wrap');
+      if(!wrap) return;
+      var show = wrap.style.display === 'none' || !wrap.style.display;
+      wrap.style.display = show ? 'block' : 'none';
+      if(show) setTimeout(function(){ var i=document.getElementById('notif-search-input'); if(i) i.focus(); },50);
+      else { var inp=document.getElementById('notif-search-input'); if(inp){ inp.value=''; this.render(); } }
+    },
+    _updateSubtitle: function(){
+      var el = document.getElementById('notif-center-subtitle');
+      if(!el) return;
+      var n = this._items.filter(function(i){ return !i.read; }).length;
+      el.textContent = n>0 ? (n+' unread notification'+(n>1?'s':'')) : 'All caught up';
+    },
+    _renderChips: function(){
+      var wrap = document.getElementById('notif-filter-chips');
+      if(!wrap) return;
+      var self = this;
+      wrap.innerHTML = FILTERS.map(function(f){
+        var active = self._filter===f.key;
+        var hasUnread = f.key==='unread' && self._items.some(function(i){return !i.read;});
+        return '<button class="nc-chip'+(active?' active':'')+'" onclick="window.NotifCenter.setFilter(\''+f.key+'\')">'+f.label+(hasUnread?'<span class="nc-chip-dot"></span>':'')+'</button>';
+      }).join('');
+    },
+    _groupByDate: function(items){
+      var todayStr = new Date().toDateString();
+      var yestStr = new Date(Date.now()-86400000).toDateString();
+      var weekAgo = Date.now()-7*86400000;
+      var groups = { today:[], yesterday:[], week:[], earlier:[] };
+      items.forEach(function(it){
+        var d = new Date(it.createdAt);
+        if(d.toDateString()===todayStr) groups.today.push(it);
+        else if(d.toDateString()===yestStr) groups.yesterday.push(it);
+        else if(it.createdAt >= weekAgo) groups.week.push(it);
+        else groups.earlier.push(it);
+      });
+      var out = [];
+      if(groups.today.length) out.push({label:'Today', items:groups.today});
+      if(groups.yesterday.length) out.push({label:'Yesterday', items:groups.yesterday});
+      if(groups.week.length) out.push({label:'This week', items:groups.week});
+      if(groups.earlier.length) out.push({label:'Earlier', items:groups.earlier});
+      return out;
+    },
+    _timeAgo: function(ts){
+      var diff = Math.max(0, Date.now()-ts);
+      var m = Math.floor(diff/60000);
+      if(m<1) return 'just now';
+      if(m<60) return m+'m ago';
+      var h = Math.floor(m/60);
+      if(h<24) return h+'h ago';
+      var d = Math.floor(h/24);
+      if(d<7) return d+'d ago';
+      return new Date(ts).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    },
+    _emptyState: function(){
+      return '<div class="nc-empty">'+
+        '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'+
+        '<div style="font-weight:700;color:#64748b;font-size:14px;">No notifications here</div>'+
+        '<div style="font-size:12.5px;margin-top:4px;">You\'re all caught up for this filter.</div>'+
+      '</div>';
+    },
+
+    render: function(){
+      var list = document.getElementById('notif-list');
+      if(!list) return;
+      var q = ((document.getElementById('notif-search-input')||{}).value||'').toLowerCase().trim();
+      var f = this._filter;
+      var filt = FILTERS.find(function(x){ return x.key===f; });
+      var items = this._items.filter(function(it){
+        if(f==='unread' && it.read) return false;
+        if(filt && filt.cats && filt.cats.indexOf(it.category)===-1) return false;
+        if(q && (it.title+' '+it.body).toLowerCase().indexOf(q)===-1) return false;
+        return true;
+      });
+      this._updateSubtitle();
+      this._renderChips();
+      if(!items.length){ list.innerHTML = this._emptyState(); return; }
+      var groups = this._groupByDate(items);
+      var html='';
+      groups.forEach(function(g){
+        html += '<div class="nc-date-hdr">'+g.label+'</div>';
+        g.items.forEach(function(it){ html += window.NotifCenter._cardHTML(it); });
+      });
+      list.innerHTML = html;
+      if(typeof lucide !== 'undefined') lucide.createIcons({node:list});
+      this._wireCards();
+    },
+
+    _actionsHTML: function(it){
+      var a = '';
+      var btn = function(label, icon, bg, color, onclick){
+        return '<button class="nc-action-btn" style="background:'+bg+';color:'+color+';" onclick="event.stopPropagation();'+onclick+'">'+label+'</button>';
+      };
+      if(it.category==='invoice' && it.actionId){
+        a += btn('View','','#0f7a80','#fff', "window.NotifCenter.quickInvoiceAction('"+it.actionId+"','view')");
+        a += btn('Download','','#e6f6f6','#0f7a80', "window.NotifCenter.quickInvoiceAction('"+it.actionId+"','download')");
+        a += btn('Share','#25D366','#e7f9ee','#16a34a', "window.NotifCenter.quickInvoiceAction('"+it.actionId+"','share')");
+      } else if(it.category==='report'){
+        a += btn('View','','#4f46e5','#fff', "window.NotifCenter.reopenReport("+(it.meta&&it.meta.period?JSON.stringify(it.meta.period):'undefined')+")");
+        a += btn('Download','','#eef2ff','#4f46e5', "window.NotifCenter.quickReportDownload("+(it.meta&&it.meta.period?JSON.stringify(it.meta.period):'undefined')+")");
+        a += btn('Print','','#eef2ff','#4f46e5', "window.NotifCenter.quickReportPrint("+(it.meta&&it.meta.period?JSON.stringify(it.meta.period):'undefined')+")");
+      } else if(it.category==='inventory'){
+        a += btn('View Inventory','','#fffbeb','#d97706', "window.NotifCenter.goToInventory()");
+      } else if(it.category==='payment'){
+        a += btn('View Overdue','','#fef2f2','#dc2626', "window.NotifCenter.goToOverdue()");
+      } else if(it.category==='client' && it.meta && it.meta.waLink){
+        a += btn('Wish on WhatsApp','','#e7f9ee','#16a34a', "window.open('"+it.meta.waLink+"','_blank')");
+      }
+      return a ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;">'+a+'</div>' : '';
+    },
+
+    _cardHTML: function(it){
+      var cat = CATS[it.category] || CATS.system;
+      var selected = this._selected[it.id];
+      return '<div class="nc-card'+(it.read?'':' unread')+'" data-id="'+it.id+'" onclick="window.NotifCenter.cardTap(event,\''+it.id+'\')">'+
+        '<div class="nc-swipe-bg left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>&nbsp;'+(it.read?'Mark unread':'Mark read')+'</div>'+
+        '<div class="nc-swipe-bg right">Delete&nbsp;🗑️</div>'+
+        '<div class="nc-card-inner">'+
+          '<div class="nc-select-check'+(selected?' checked':'')+'" onclick="event.stopPropagation();window.NotifCenter.toggleSelect(\''+it.id+'\')">'+(selected?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>'+
+          '<div class="nc-icon-circle" style="background:'+cat.bg+';color:'+cat.color+';"><i data-lucide="'+cat.icon+'" style="width:18px;height:18px;"></i></div>'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'+
+              '<div style="font-weight:700;color:#1e293b;font-size:13.5px;line-height:1.35;">'+it.title+(it.read?'':' <span style="display:inline-block;width:7px;height:7px;background:#0f7a80;border-radius:50%;margin-left:4px;vertical-align:middle;"></span>')+'</div>'+
+              '<span style="font-size:10.5px;color:#94a3b8;flex-shrink:0;white-space:nowrap;">'+this._timeAgo(it.createdAt)+'</span>'+
+            '</div>'+
+            '<div style="font-size:12px;color:#64748b;margin-top:3px;line-height:1.5;">'+it.body+'</div>'+
+            this._actionsHTML(it)+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    },
+
+    // ── Card interactions ────────────────────────────────────────
+    cardTap: function(e, id){
+      if(e.target.closest('button')) return;
+      if(this._selectMode){ this.toggleSelect(id); return; }
+      this.toggleRead(id);
+    },
+    toggleRead: function(id){
+      var it = this._items.find(function(i){ return i.id===id; });
+      if(!it) return;
+      it.read = !it.read;
+      window.NotifDB.put(it).catch(function(){});
+      this.updateBadge();
+      this.render();
+    },
+    remove: function(id){
+      this._items = this._items.filter(function(i){ return i.id!==id; });
+      window.NotifDB.remove(id).catch(function(){});
+      this.updateBadge();
+      this.render();
+    },
+    markAllRead: function(){
+      var self = this;
+      this._items.forEach(function(i){ if(!i.read){ i.read=true; window.NotifDB.put(i).catch(function(){}); } });
+      this.updateBadge();
+      this.render();
+    },
+    clearAllConfirm: function(){
+      if(!confirm('Clear all notification history? This cannot be undone.')) return;
+      var self = this;
+      window.NotifDB.clearAll().then(function(){
+        self._items = [];
+        self.updateBadge();
+        self.render();
+        window.showToast && window.showToast('Notification history cleared');
+      });
+    },
+
+    // ── Select mode ──────────────────────────────────────────────
+    enterSelectMode: function(id){
+      this._selectMode = true;
+      this._selected = {};
+      if(id) this._selected[id]=true;
+      var pg = document.getElementById('notif-center-page');
+      if(pg) pg.classList.add('select-mode');
+      this.render();
+      this._updateBulkCount();
+    },
+    exitSelectMode: function(){
+      this._selectMode = false;
+      this._selected = {};
+      var pg = document.getElementById('notif-center-page');
+      if(pg) pg.classList.remove('select-mode');
+      this.render();
+    },
+    toggleSelect: function(id){
+      if(!this._selectMode){ this.enterSelectMode(id); return; }
+      if(this._selected[id]) delete this._selected[id];
+      else this._selected[id] = true;
+      this.render();
+      this._updateBulkCount();
+    },
+    _updateBulkCount: function(){
+      var n = Object.keys(this._selected).length;
+      var el = document.getElementById('notif-bulk-count');
+      if(el) el.textContent = n+' selected';
+    },
+    bulkMarkRead: function(){
+      var self = this;
+      Object.keys(this._selected).forEach(function(id){
+        var it = self._items.find(function(i){ return i.id===id; });
+        if(it){ it.read=true; window.NotifDB.put(it).catch(function(){}); }
+      });
+      this.exitSelectMode();
+      this.updateBadge();
+    },
+    bulkDelete: function(){
+      var self = this;
+      var ids = Object.keys(this._selected);
+      ids.forEach(function(id){ window.NotifDB.remove(id).catch(function(){}); });
+      this._items = this._items.filter(function(i){ return ids.indexOf(i.id)===-1; });
+      this.exitSelectMode();
+      this.updateBadge();
+    },
+
+    // ── Swipe + long-press gestures ──────────────────────────────
+    _wireCards: function(){
+      var self = this;
+      document.querySelectorAll('#notif-list .nc-card').forEach(function(card){
+        var id = card.getAttribute('data-id');
+        var inner = card.querySelector('.nc-card-inner');
+        var startX=0, startY=0, dx=0, dragging=false, longPressTimer=null, wasSwipe=false;
+        card.addEventListener('touchstart', function(e){
+          if(self._selectMode) return;
+          startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx=0; dragging=true; wasSwipe=false;
+          longPressTimer = setTimeout(function(){ dragging=false; ncVib([15]); self.enterSelectMode(id); }, 550);
+        }, {passive:true});
+        card.addEventListener('touchmove', function(e){
+          if(!dragging) return;
+          var x=e.touches[0].clientX, y=e.touches[0].clientY;
+          dx = x-startX; var dy = y-startY;
+          if(Math.abs(dy) > Math.abs(dx)){ clearTimeout(longPressTimer); return; }
+          clearTimeout(longPressTimer);
+          if(Math.abs(dx) > 8){
+            wasSwipe = true;
+            inner.style.transition = 'none';
+            inner.style.transform = 'translateX('+Math.max(-110,Math.min(110,dx))+'px)';
+          }
+        }, {passive:true});
+        card.addEventListener('touchend', function(e){
+          clearTimeout(longPressTimer);
+          if(!dragging){ if(wasSwipe) setTimeout(function(){wasSwipe=false;},50); return; }
+          dragging = false;
+          inner.style.transition = 'transform .22s ease';
+          if(dx < -70){
+            inner.style.transform = 'translateX(-100%)';
+            inner.style.opacity = '0';
+            ncVib([10]);
+            setTimeout(function(){ self.remove(id); }, 200);
+          } else if(dx > 70){
+            inner.style.transform = '';
+            ncVib([10]);
+            self.toggleRead(id);
+          } else {
+            inner.style.transform = '';
+          }
+          setTimeout(function(){ wasSwipe=false; }, 50);
+        }, {passive:true});
+      });
+    },
+
+    // ── Menu ─────────────────────────────────────────────────────
+    toggleMenu: function(e){
+      e && e.stopPropagation();
+      var existing = document.getElementById('notif-menu-el');
+      if(existing){ existing.remove(); return; }
+      var pg = document.getElementById('notif-center-page');
+      var menu = document.createElement('div');
+      menu.id = 'notif-menu-el';
+      menu.className = 'nc-menu';
+      menu.innerHTML =
+        '<button onclick="window.NotifCenter.markAllRead();window.NotifCenter.closeMenuEl();"><i data-lucide="check-check" style="width:15px;height:15px;"></i> Mark all as read</button>'+
+        '<button onclick="window.NotifCenter.closeMenuEl();window.openNotifSettings();"><i data-lucide="settings" style="width:15px;height:15px;"></i> Notification settings</button>'+
+        '<button class="danger" onclick="window.NotifCenter.clearAllConfirm();window.NotifCenter.closeMenuEl();"><i data-lucide="trash-2" style="width:15px;height:15px;"></i> Clear all</button>';
+      pg.appendChild(menu);
+      if(typeof lucide !== 'undefined') lucide.createIcons({node:menu});
+      setTimeout(function(){
+        document.addEventListener('click', function onDocClick(ev){
+          if(!menu.contains(ev.target)){ menu.remove(); document.removeEventListener('click', onDocClick); }
+        });
+      }, 10);
+    },
+    closeMenuEl: function(){ var m=document.getElementById('notif-menu-el'); if(m) m.remove(); },
+
+    // ── Action helpers (reuse existing, proven app functions) ─────
+    quickInvoiceAction: function(id, kind){
+      if(!window.viewInvoice){ window.showToast && window.showToast('Invoice viewer unavailable','error'); return; }
+      window.closeNotifCenter();
+      window.viewInvoice(id);
+      if(kind==='view') return;
+      setTimeout(function(){
+        var modal = document.getElementById('invoice-modal');
+        if(!modal) return;
+        var btn;
+        if(kind==='download') btn = modal.querySelector('button[onclick*="downloadPDF"]');
+        else if(kind==='share') btn = modal.querySelector('button[onclick*="shareInvoiceWA"]');
+        if(btn) btn.click();
+      }, 450);
+    },
+    reopenReport: function(period){
+      window.closeNotifCenter();
+      if(window.exportFinancialPDF) window.exportFinancialPDF(period);
+    },
+    quickReportDownload: function(period){
+      this.reopenReport(period);
+      setTimeout(function(){
+        var modal = document.getElementById('fin-pdf-preview-modal');
+        if(!modal) return;
+        var btns = modal.querySelectorAll('button');
+        for(var i=0;i<btns.length;i++){ if(/download/i.test(btns[i].textContent||'')){ btns[i].click(); break; } }
+      }, 700);
+    },
+    quickReportPrint: function(period){
+      this.reopenReport(period);
+      setTimeout(function(){ try{ window.print(); }catch(e){} }, 700);
+    },
+    goToInventory: function(){ window.closeNotifCenter(); window.switchTab && window.switchTab('inventory'); },
+    goToOverdue: function(){
+      window.closeNotifCenter();
+      window.switchTab && window.switchTab('records');
+      setTimeout(function(){ window.setRecFilter && window.setRecFilter('overdue'); }, 350);
+    }
+  };
+
+  // ── Page open/close (fullscreen-page pattern) ───────────────────
+  window.openNotifCenter = function(){
+    var pg = document.getElementById('notif-center-page');
+    if(!pg) return;
+    pg.style.display = 'flex';
+    window._markFullscreenPageOpen && window._markFullscreenPageOpen('notif-center-page');
+    window.NotifCenter._pageOpen = true;
+    window.NotifCenter.render();
+  };
+  window.closeNotifCenter = function(){
+    var pg = document.getElementById('notif-center-page');
+    if(!pg || pg.style.display==='none') return;
+    pg.style.display = 'none';
+    window.NotifCenter._pageOpen = false;
+    window.NotifCenter.exitSelectMode();
+    window.NotifCenter.closeMenuEl();
+    window._markFullscreenPageClosed && window._markFullscreenPageClosed('notif-center-page');
+  };
+  window.openNotifSettings = function(){
+    var pg = document.getElementById('notif-settings-page');
+    if(!pg) return;
+    var s = window.NotifCenter.getSettings();
+    document.getElementById('nc-toggle-sound').classList.toggle('on', !!s.sound);
+    document.getElementById('nc-toggle-vibrate').classList.toggle('on', !!s.vibrate);
+    document.getElementById('nc-toggle-quiet').classList.toggle('on', !!s.quietHours);
+    var catsWrap = document.getElementById('notif-settings-categories');
+    catsWrap.innerHTML = Object.keys(CATS).map(function(k){
+      var c = CATS[k];
+      return '<div class="nc-settings-row">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div class="nc-icon-circle" style="width:32px;height:32px;background:'+c.bg+';color:'+c.color+';"><i data-lucide="'+c.icon+'" style="width:15px;height:15px;"></i></div>'+
+          '<div style="font-size:13.5px;font-weight:700;color:#334155;">'+c.label+'</div>'+
+        '</div>'+
+        '<div class="nc-toggle'+(s.categories[k]?' on':'')+'" id="nc-cat-toggle-'+k+'" onclick="window.NotifCenter.toggleCategory(\''+k+'\')"><div class="knob"></div></div>'+
+      '</div>';
+    }).join('');
+    if(typeof lucide !== 'undefined') lucide.createIcons({node:catsWrap});
+    pg.style.display = 'flex';
+    window._markFullscreenPageOpen && window._markFullscreenPageOpen('notif-settings-page');
+  };
+  window.closeNotifSettings = function(){
+    var pg = document.getElementById('notif-settings-page');
+    if(!pg || pg.style.display==='none') return;
+    pg.style.display = 'none';
+    window._markFullscreenPageClosed && window._markFullscreenPageClosed('notif-settings-page');
+  };
+
+  window._fsPageCloseFns = window._fsPageCloseFns || {};
+  window._fsPageCloseFns['notif-center-page'] = function(){ window.closeNotifCenter(); };
+  window._fsPageCloseFns['notif-settings-page'] = function(){ window.closeNotifSettings(); };
+
+  // ══════════════════════════════════════════════════════════════
+  // TRIGGER HOOKS — generate real notifications from app events
+  // ══════════════════════════════════════════════════════════════
+
+  // 1. Invoice finalized (hook already called by saveInvoice patch elsewhere)
+  window._showInvoiceFinalizedBanner = function(invId){
+    try{
+      var inv = (window.AppState && window.AppState.invoices || []).find(function(i){ return i.id===invId; });
+      var amt = inv ? '₹'+Number(inv.grandTotal||0).toLocaleString('en-IN') : '';
+      var party = inv && (inv.customerName || inv.partyName) || '';
+      window.NotifCenter.add({
+        category:'invoice',
+        title:'Invoice finalized ✅',
+        body:'Invoice #'+invId+(party?' for '+party:'')+(amt?' — '+amt:'')+' is ready to view, download or share.',
+        actionType:'invoice',
+        actionId: invId
+      });
+    }catch(e){}
+  };
+
+  // 2. Financial report generated
+  (function(){
+    var iv = setInterval(function(){
+      if(window.exportFinancialPDF && !window.exportFinancialPDF._notifPatched){
+        window.exportFinancialPDF._notifPatched = true;
+        clearInterval(iv);
+        var orig = window.exportFinancialPDF;
+        window.exportFinancialPDF = async function(period){
+          var result = await orig.apply(this, arguments);
+          try{
+            var p = period || (window.getGSTPeriod ? window.getGSTPeriod() : null);
+            var label = (p && p.label) || 'Current Period';
+            window.NotifCenter.add({
+              category:'report',
+              title:'Financial report ready 📊',
+              body:'Your financial & GST report for '+label+' has been generated and is ready to view, download or print.',
+              actionType:'report',
+              meta:{ period: period || null }
+            });
+          }catch(e){}
+          return result;
+        };
+      }
+    }, 500);
+  })();
+
+  // 3. Low stock inventory alert (once/day per snapshot)
+  (function(){
+    var iv = setInterval(function(){
+      if(window.updateStockAlertBadge && !window.updateStockAlertBadge._notifPatched){
+        window.updateStockAlertBadge._notifPatched = true;
+        clearInterval(iv);
+        var orig = window.updateStockAlertBadge;
+        window.updateStockAlertBadge = function(){
+          orig.apply(this, arguments);
+          try{
+            var low = (window.AppState.products||[]).filter(function(p){ return Number(p.stock||0)<=10 && !p.isHidden; });
+            if(low.length>0){
+              var today = new Date().toISOString().split('T')[0];
+              var names = low.slice(0,3).map(function(p){ return p.name; }).join(', ');
+              window.NotifCenter.add({
+                category:'inventory',
+                title: low.length+' item'+(low.length>1?'s':'')+' running low on stock 📦',
+                body: names+(low.length>3?' and '+(low.length-3)+' more':'')+' need restocking soon.',
+                actionType:'inventory',
+                dedupeKey:'inventory:low:'+today
+              });
+            }
+          }catch(e){}
+        };
+      }
+    }, 500);
+  })();
+
+  // 4. Birthday / anniversary reminders → also push to Notification Center
+  (function(){
+    var iv = setInterval(function(){
+      if(window.updateBirthdayReminders && !window.updateBirthdayReminders._notifPatched){
+        window.updateBirthdayReminders._notifPatched = true;
+        clearInterval(iv);
+        var orig = window.updateBirthdayReminders;
+        window.updateBirthdayReminders = function(){
+          orig.apply(this, arguments);
+          try{
+            var today = new Date();
+            var todayMMDD = (today.getMonth()+1).toString().padStart(2,'0')+'-'+today.getDate().toString().padStart(2,'0');
+            var todayStr = today.toISOString().split('T')[0];
+            (window.AppState.clients||[]).forEach(function(c){
+              if(!c.birthday || c.birthday.slice(5) !== todayMMDD) return;
+              var num = (c.mobile||'').replace(/\D/g,'');
+              var waNum = num.length===10 ? '91'+num : num;
+              var msg = '🎂 Happy Birthday '+c.name+'! Wishing you great health and happiness. 🌿';
+              window.NotifCenter.add({
+                category:'client',
+                title:'🎂 '+c.name+"'s birthday today!",
+                body:'Send a quick birthday wish to keep the relationship warm.',
+                actionType:'client',
+                meta:{ waLink: waNum ? 'https://wa.me/'+waNum+'?text='+encodeURIComponent(msg) : null },
+                dedupeKey:'client:birthday:'+c.id+':'+todayStr
+              });
+            });
+          }catch(e){}
+        };
+      }
+    }, 500);
+  })();
+
+  // 5. Daily sales target achieved
+  (function(){
+    var iv = setInterval(function(){
+      if(window.updateDailyTarget && !window.updateDailyTarget._notifPatched){
+        window.updateDailyTarget._notifPatched = true;
+        clearInterval(iv);
+        var orig = window.updateDailyTarget;
+        window.updateDailyTarget = function(){
+          orig.apply(this, arguments);
+          try{
+            var target = Number(localStorage.getItem('ayur_daily_target')||0);
+            if(target<=0) return;
+            var today = new Date().toISOString().split('T')[0];
+            var todayRev = (window.AppState.invoices||[])
+              .filter(function(i){ return i.status==='final' && i.date===today; })
+              .reduce(function(s,i){ return s+Number(i.grandTotal||0); },0);
+            if(todayRev >= target){
+              window.NotifCenter.add({
+                category:'system',
+                title:'🎉 Daily target achieved!',
+                body:'You crossed ₹'+target.toLocaleString('en-IN')+' in sales today. Great work!',
+                dedupeKey:'system:target:'+today
+              });
+            }
+          }catch(e){}
+        };
+      }
+    }, 500);
+  })();
+
+  // 6. Overdue payment reminders (checked on load, then hourly — dedupe keeps it to 1/day)
+  function ncCheckOverdue(){
+    try{
+      var today = new Date().toISOString().split('T')[0];
+      var overdue = (window.AppState.invoices||[]).filter(function(i){
+        return i.status==='final' && i.paymentStatus!=='paid' && i.dueDate && i.dueDate < today;
+      });
+      if(overdue.length>0){
+        var total = overdue.reduce(function(s,i){ return s+Number(i.grandTotal||0); },0);
+        window.NotifCenter.add({
+          category:'payment',
+          title: overdue.length+' payment'+(overdue.length>1?'s':'')+' overdue 💰',
+          body:'₹'+total.toLocaleString('en-IN')+' pending across '+overdue.length+' invoice'+(overdue.length>1?'s':'')+'. Send a reminder to get paid faster.',
+          actionType:'payment',
+          dedupeKey:'payment:overdue:'+today
+        });
+      }
+    }catch(e){}
+  }
+  (function(){
+    var iv = setInterval(function(){
+      if(window.AppState && window.AppState.invoices){
+        clearInterval(iv);
+        setTimeout(ncCheckOverdue, 3000);
+        setInterval(ncCheckOverdue, 3600000);
+      }
+    }, 800);
+  })();
+
+  // 7. New-feature announcement (shown once per version)
+  (function(){
+    var FEATURE_VERSION = 'nc-v1';
+    if(localStorage.getItem('notif_feature_seen_'+FEATURE_VERSION)) return;
+    setTimeout(function(){
+      window.NotifCenter.add({
+        category:'feature',
+        title:'✨ New: Notification Center',
+        body:'Every invoice, report, inventory alert and payment reminder now lives in one place. Swipe left to delete, swipe right to mark read, or tap the bell up top anytime.',
+        dedupeKey:'feature:'+FEATURE_VERSION
+      });
+      localStorage.setItem('notif_feature_seen_'+FEATURE_VERSION, '1');
+    }, 2500);
+  })();
+
+  // ── Boot ─────────────────────────────────────────────────────────
+  window.NotifCenter.init();
+
 })();
 </script>
 
