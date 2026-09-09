@@ -145,31 +145,48 @@ function fmt(n, curr){
 }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-// The main ERP app always treats the entered item "rate" as GST-INCLUSIVE
-// (the user enters the MRP / selling price), and extracts the taxable base
-// as rate / (1 + gst%). This portal used to do the opposite — treating rate
-// as GST-exclusive and adding tax on top — which inflated the taxable
-// amount, CGST/SGST and per-line amounts shown here relative to the real
-// invoice. This helper matches the main app's convention exactly so figures
-// here always agree with the ERP app and with inv.grandTotal.
-function lineGST(qty, rate, gstPct){
+// Two supported pricing modes, chosen via the GST-calculation setting:
+//  - 'inclusive' (default, matches the main ERP app): the entered item
+//    "rate" already contains GST, so the taxable base is extracted as
+//    rate / (1 + gst%). Line "Amount" and Net Payable both stay equal to
+//    qty*rate — GST is just a breakdown of what's already in that number.
+//  - 'exclusive': the entered "rate" is the base price with NO tax in it.
+//    GST is calculated on top of qty*rate and ADDED to arrive at Net
+//    Payable, so Net Payable = Taxable Amount + GST.
+// The per-line "Amount" column (qty*rate) is identical in both modes —
+// only how Taxable Amount / GST / Net Payable relate to it changes.
+function lineGST(qty, rate, gstPct, mode){
   var lineTotal = qty*rate;
+  if(mode === 'exclusive'){
+    var tax = gstPct>0 ? lineTotal*gstPct/100 : 0;
+    return { lineTotal:lineTotal, base:lineTotal, tax:tax };
+  }
   var base = gstPct>0 ? lineTotal/(1+gstPct/100) : lineTotal;
   return { lineTotal:lineTotal, base:base, tax:lineTotal-base };
 }
-function invoiceGST(inv){
+function invoiceGST(inv, pricingMode){
+  pricingMode = (pricingMode === 'exclusive') ? 'exclusive' : 'inclusive';
   var items = inv.items || [];
-  var gstMode = inv.gstMode || 'intra';
-  var subtotal=0, taxTotal=0, cgst=0, sgst=0, igst=0;
+  var taxSplitMode = inv.gstMode || 'intra';
+  var itemsTotal=0, taxable=0, taxTotal=0, cgst=0, sgst=0, igst=0;
   items.forEach(function(it){
     var qty=Number(it.qty)||0, rate=Number(it.rate)||0, gstPct=Number(it.gst)||0;
-    var g = lineGST(qty, rate, gstPct);
-    subtotal += g.base; taxTotal += g.tax;
-    if(gstMode==='inter') igst += g.tax; else { cgst += g.tax/2; sgst += g.tax/2; }
+    var g = lineGST(qty, rate, gstPct, pricingMode);
+    itemsTotal += g.lineTotal; taxable += g.base; taxTotal += g.tax;
+    if(taxSplitMode==='inter') igst += g.tax; else { cgst += g.tax/2; sgst += g.tax/2; }
   });
   var discAmt = Number(inv.discountAmountCalculated || inv.discount || 0);
-  var grand = Number(inv.grandTotal!=null ? inv.grandTotal : (subtotal+taxTotal-discAmt));
-  return { subtotal:subtotal, taxTotal:taxTotal, cgst:cgst, sgst:sgst, igst:igst, discAmt:discAmt, grand:grand, gstMode:gstMode };
+  var grand;
+  if(pricingMode === 'exclusive'){
+    // GST is added on top: Net Payable = Taxable Amount (after discount) + GST.
+    grand = itemsTotal - discAmt + taxTotal;
+  } else {
+    // Inclusive: rate already contains GST, so Net Payable is just the
+    // line total minus discount. Prefer the ERP app's stored grandTotal
+    // when available so figures always agree with the source record.
+    grand = Number(inv.grandTotal!=null ? inv.grandTotal : (itemsTotal - discAmt));
+  }
+  return { itemsTotal:itemsTotal, taxable:taxable, taxTotal:taxTotal, cgst:cgst, sgst:sgst, igst:igst, discAmt:discAmt, grand:grand, taxSplitMode:taxSplitMode, pricingMode:pricingMode };
 }
 
 function showState(title, msg, isError){
@@ -218,7 +235,34 @@ if(!OWNER_UID){
   });
 
   var DATA = { invoices: [], purchaseOrders: [], settings: {} };
-  var STATE = { tab: 'invoices', search: '', status: 'all', dateFrom:'', dateTo:'', selected: new Set(), loadedInv:false, loadedPO:false };
+  var PRICING_MODE_KEY = 'caPortalPricingMode_'+OWNER_UID;
+  function loadPricingMode(){
+    try{ return localStorage.getItem(PRICING_MODE_KEY) === 'exclusive' ? 'exclusive' : 'inclusive'; }
+    catch(e){ return 'inclusive'; }
+  }
+  var STATE = { tab: 'invoices', search: '', status: 'all', dateFrom:'', dateTo:'', selected: new Set(), loadedInv:false, loadedPO:false, pricingMode: loadPricingMode() };
+  function setPricingMode(mode){
+    STATE.pricingMode = (mode === 'exclusive') ? 'exclusive' : 'inclusive';
+    try{ localStorage.setItem(PRICING_MODE_KEY, STATE.pricingMode); }catch(e){}
+    render();
+  }
+  // Small settings strip shown above invoice-related tabs so the CA/owner
+  // can pick how GST should be calculated on the generated PDFs/CSV,
+  // without touching the print/PDF rendering pipeline itself.
+  function gstModeBar(){
+    return '<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+      '<span style="font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap;">⚙️ GST Calculation</span>'+
+      '<select class="inp" id="pricing-mode-sel" style="flex:0 0 auto;width:auto;padding:6px 8px;font-size:11.5px;">'+
+        '<option value="inclusive"'+(STATE.pricingMode==='inclusive'?' selected':'')+'>Rate includes GST</option>'+
+        '<option value="exclusive"'+(STATE.pricingMode==='exclusive'?' selected':'')+'>Rate excludes GST (add on top)</option>'+
+      '</select>'+
+      '<span style="font-size:10.5px;color:var(--sub);flex-basis:100%;">Applies to PDFs, print &amp; CSV. Saved on this device only.</span>'+
+    '</div>';
+  }
+  function wireGstModeBar(){
+    var pmSel = document.getElementById('pricing-mode-sel');
+    if(pmSel) pmSel.onchange = function(){ setPricingMode(pmSel.value); };
+  }
 
   function initPortal(){
     // Settings (business info) — one-time read
@@ -304,6 +348,7 @@ if(!OWNER_UID){
 
     var html = '';
     html += tabsHTML();
+    if(STATE.tab === 'invoices') html += gstModeBar();
     html += '<div class="toolbar">'+
       '<input class="inp" id="search-inp" placeholder="Search by name / ID…" value="'+esc(STATE.search)+'">'+
       '<select class="inp" id="status-sel">'+statusOptions+'</select>'+
@@ -343,7 +388,7 @@ if(!OWNER_UID){
       return '<div class="doc-card" data-id="'+esc(it.id)+'" data-tab="invoices">'+
         '<input type="checkbox" '+checked+' data-check="'+esc(it.id)+'">'+
         '<div class="doc-main">'+
-          '<div class="doc-top"><span class="doc-id">'+esc(it.docType||'Invoice')+' · '+esc(it.id)+'</span><span class="doc-amt">'+fmt(it.grandTotal, it.currency)+'</span></div>'+
+          '<div class="doc-top"><span class="doc-id">'+esc(it.docType||'Invoice')+' · '+esc(it.id)+'</span><span class="doc-amt">'+fmt(invoiceGST(it, STATE.pricingMode).grand, it.currency)+'</span></div>'+
           '<div class="doc-sub"><span>'+esc(it.client && it.client.name || 'Unknown client')+'</span><span>'+esc(it.date||'')+'</span><span class="pill pill-'+status+'">'+label+'</span></div>'+
         '</div>'+
       '</div>';
@@ -363,6 +408,7 @@ if(!OWNER_UID){
     document.querySelectorAll('.tab-btn').forEach(function(b){
       b.onclick = function(){ STATE.tab = b.dataset.tab; STATE.status = 'all'; STATE.selected.clear(); render(); };
     });
+    wireGstModeBar();
     var s = document.getElementById('search-inp');
     if(s){ s.oninput = function(){ STATE.search = s.value; render(); }; setTimeout(function(){ s.focus(); s.selectionStart = s.selectionEnd = s.value.length; }, 0); }
     var st = document.getElementById('status-sel');
@@ -404,12 +450,12 @@ if(!OWNER_UID){
     if(!list.length) return;
     var rows, filename;
     if(tab === 'invoices'){
-      rows = [['Invoice ID','Doc Type','Date','Client','GSTIN','Taxable Amount','CGST','SGST','IGST','Discount','Net Payable','Status','Payment Status']];
+      rows = [['Invoice ID','Doc Type','Date','Client','GSTIN','Subtotal','Taxable Amount','CGST','SGST','IGST','Discount','Net Payable','Status','Payment Status']];
       list.forEach(function(inv){
-        var g = invoiceGST(inv);
+        var g = invoiceGST(inv, STATE.pricingMode);
         rows.push([
           inv.id, inv.docType||'Invoice', inv.date||'', (inv.client&&inv.client.name)||'',
-          (inv.client&&inv.client.gstin)||'', g.subtotal.toFixed(2), g.cgst.toFixed(2), g.sgst.toFixed(2),
+          (inv.client&&inv.client.gstin)||'', g.itemsTotal.toFixed(2), g.taxable.toFixed(2), g.cgst.toFixed(2), g.sgst.toFixed(2),
           g.igst.toFixed(2), g.discAmt.toFixed(2), g.grand.toFixed(2), inv.status||'final',
           inv.paymentStatus||'unpaid'
         ]);
@@ -436,18 +482,19 @@ if(!OWNER_UID){
     var totalTaxable=0, totalCgst=0, totalSgst=0, totalIgst=0, totalGrand=0, totalOutstanding=0;
     var monthly = {}; // 'YYYY-MM' -> {taxable,cgst,sgst,igst,grand,count}
     inRange.forEach(function(inv){
-      var g = invoiceGST(inv);
-      totalTaxable += g.subtotal; totalCgst += g.cgst; totalSgst += g.sgst; totalIgst += g.igst; totalGrand += g.grand;
+      var g = invoiceGST(inv, STATE.pricingMode);
+      totalTaxable += g.taxable; totalCgst += g.cgst; totalSgst += g.sgst; totalIgst += g.igst; totalGrand += g.grand;
       if((inv.paymentStatus||'unpaid') !== 'paid') totalOutstanding += g.grand;
       var mKey = (inv.date||'').slice(0,7) || 'Unknown';
       if(!monthly[mKey]) monthly[mKey] = { taxable:0, cgst:0, sgst:0, igst:0, grand:0, count:0 };
-      monthly[mKey].taxable += g.subtotal; monthly[mKey].cgst += g.cgst; monthly[mKey].sgst += g.sgst;
+      monthly[mKey].taxable += g.taxable; monthly[mKey].cgst += g.cgst; monthly[mKey].sgst += g.sgst;
       monthly[mKey].igst += g.igst; monthly[mKey].grand += g.grand; monthly[mKey].count++;
     });
     var months = Object.keys(monthly).sort().reverse();
 
     var html = '';
     html += tabsHTML();
+    html += gstModeBar();
     html += '<div class="toolbar">'+
       '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">From<input type="date" class="inp" id="date-from" value="'+esc(STATE.dateFrom)+'" style="flex:1;"></label>'+
       '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">To<input type="date" class="inp" id="date-to" value="'+esc(STATE.dateTo)+'" style="flex:1;"></label>'+
@@ -484,6 +531,7 @@ if(!OWNER_UID){
     document.querySelectorAll('.tab-btn').forEach(function(b){
       b.onclick = function(){ STATE.tab = b.dataset.tab; STATE.status = 'all'; STATE.selected.clear(); render(); };
     });
+    wireGstModeBar();
     var df = document.getElementById('date-from');
     if(df) df.onchange = function(){ STATE.dateFrom = df.value; render(); };
     var dt = document.getElementById('date-to');
@@ -520,19 +568,26 @@ if(!OWNER_UID){
   function renderInvoiceDoc(inv){
     var s = DATA.settings || {};
     var items = inv.items || [];
-    var g = invoiceGST(inv);
+    var mode = STATE.pricingMode || 'inclusive';
+    var g = invoiceGST(inv, mode);
     var rows = items.map(function(it){
       var qty = Number(it.qty)||0, rate = Number(it.rate)||0, gstPct = Number(it.gst)||0;
-      var line = lineGST(qty, rate, gstPct);
+      var line = lineGST(qty, rate, gstPct, mode);
       return '<tr><td>'+esc(it.name)+(it.hsn?'<div style="font-size:9.5px;color:#94a3b8;">HSN '+esc(it.hsn)+'</div>':'')+'</td>'+
         '<td style="text-align:center;">'+qty+'</td><td style="text-align:right;">'+fmt(rate, inv.currency)+'</td>'+
         '<td style="text-align:center;">'+gstPct+'%</td><td style="text-align:right;">'+fmt(line.lineTotal, inv.currency)+'</td></tr>';
     }).join('');
 
-    var totalsRows = '<div class="row"><span>Taxable Amount</span><span>'+fmt(g.subtotal, inv.currency)+'</span></div>';
-    if(g.gstMode === 'inter'){ totalsRows += '<div class="row"><span>IGST</span><span>'+fmt(g.igst, inv.currency)+'</span></div>'; }
-    else { totalsRows += '<div class="row"><span>CGST</span><span>'+fmt(g.cgst, inv.currency)+'</span></div><div class="row"><span>SGST</span><span>'+fmt(g.sgst, inv.currency)+'</span></div>'; }
+    // Order: Subtotal (sum of item amounts) → Discount (if any) → Taxable
+    // Amount → GST → Net Payable. In 'exclusive' mode GST is genuinely
+    // added on top here, so Net Payable > Taxable Amount. In 'inclusive'
+    // mode GST is a breakdown of what Subtotal already contains, so Net
+    // Payable still equals Subtotal minus discount.
+    var totalsRows = '<div class="row"><span>Subtotal</span><span>'+fmt(g.itemsTotal, inv.currency)+'</span></div>';
     if(g.discAmt) totalsRows += '<div class="row"><span>Discount</span><span>-'+fmt(g.discAmt, inv.currency)+'</span></div>';
+    totalsRows += '<div class="row"><span>Taxable Amount</span><span>'+fmt(g.taxable, inv.currency)+'</span></div>';
+    if(g.taxSplitMode === 'inter'){ totalsRows += '<div class="row"><span>IGST</span><span>'+fmt(g.igst, inv.currency)+'</span></div>'; }
+    else { totalsRows += '<div class="row"><span>CGST</span><span>'+fmt(g.cgst, inv.currency)+'</span></div><div class="row"><span>SGST</span><span>'+fmt(g.sgst, inv.currency)+'</span></div>'; }
     totalsRows += '<div class="row grand"><span>Net Payable</span><span>'+fmt(g.grand, inv.currency)+'</span></div>';
 
     return '<div class="doc-render">'+
