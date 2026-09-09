@@ -113,7 +113,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Same public Firebase config used by the main ERP app.
@@ -144,6 +144,33 @@ function fmt(n, curr){
 }
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
+// The main ERP app always treats the entered item "rate" as GST-INCLUSIVE
+// (the user enters the MRP / selling price), and extracts the taxable base
+// as rate / (1 + gst%). This portal used to do the opposite — treating rate
+// as GST-exclusive and adding tax on top — which inflated the taxable
+// amount, CGST/SGST and per-line amounts shown here relative to the real
+// invoice. This helper matches the main app's convention exactly so figures
+// here always agree with the ERP app and with inv.grandTotal.
+function lineGST(qty, rate, gstPct){
+  var lineTotal = qty*rate;
+  var base = gstPct>0 ? lineTotal/(1+gstPct/100) : lineTotal;
+  return { lineTotal:lineTotal, base:base, tax:lineTotal-base };
+}
+function invoiceGST(inv){
+  var items = inv.items || [];
+  var gstMode = inv.gstMode || 'intra';
+  var subtotal=0, taxTotal=0, cgst=0, sgst=0, igst=0;
+  items.forEach(function(it){
+    var qty=Number(it.qty)||0, rate=Number(it.rate)||0, gstPct=Number(it.gst)||0;
+    var g = lineGST(qty, rate, gstPct);
+    subtotal += g.base; taxTotal += g.tax;
+    if(gstMode==='inter') igst += g.tax; else { cgst += g.tax/2; sgst += g.tax/2; }
+  });
+  var discAmt = Number(inv.discountAmountCalculated || inv.discount || 0);
+  var grand = Number(inv.grandTotal!=null ? inv.grandTotal : (subtotal+taxTotal-discAmt));
+  return { subtotal:subtotal, taxTotal:taxTotal, cgst:cgst, sgst:sgst, igst:igst, discAmt:discAmt, grand:grand, gstMode:gstMode };
+}
+
 function showState(title, msg, isError){
   root.innerHTML =
     '<div class="state-card">'+
@@ -165,7 +192,17 @@ if(!OWNER_UID){
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  signInAnonymously(auth).catch(function(e){
+  // IMPORTANT: this portal shares the same origin (and therefore the same
+  // browser storage) as the main ERP app. If this anonymous sign-in were
+  // persisted to local storage/IndexedDB like a normal login, it would
+  // silently overwrite the owner's real signed-in session there — so
+  // coming back to the ERP app afterwards would show it logged out, or
+  // signed in as an anonymous "demo" user instead of the real account.
+  // Using in-memory persistence keeps this session scoped to this single
+  // page load only, so it never touches — or clobbers — the ERP app's login.
+  setPersistence(auth, inMemoryPersistence).then(function(){
+    return signInAnonymously(auth);
+  }).catch(function(e){
     console.error('Anonymous sign-in failed:', e);
     document.getElementById('biz-sub').textContent = 'Connection error';
     showState(
@@ -180,7 +217,7 @@ if(!OWNER_UID){
   });
 
   var DATA = { invoices: [], purchaseOrders: [], settings: {} };
-  var STATE = { tab: 'invoices', search: '', status: 'all', selected: new Set(), loadedInv:false, loadedPO:false };
+  var STATE = { tab: 'invoices', search: '', status: 'all', dateFrom:'', dateTo:'', selected: new Set(), loadedInv:false, loadedPO:false };
 
   function initPortal(){
     // Settings (business info) — one-time read
@@ -220,13 +257,30 @@ if(!OWNER_UID){
     );
   }
 
+  function tabsHTML(){
+    return '<div class="tabs">'+
+      '<button class="tab-btn'+(STATE.tab==='invoices'?' active':'')+'" data-tab="invoices">🧾 Invoices ('+DATA.invoices.length+')</button>'+
+      '<button class="tab-btn'+(STATE.tab==='purchaseOrders'?' active':'')+'" data-tab="purchaseOrders">📦 Purchase Orders ('+DATA.purchaseOrders.length+')</button>'+
+      '<button class="tab-btn'+(STATE.tab==='summary'?' active':'')+'" data-tab="summary">📊 GST Summary</button>'+
+    '</div>';
+  }
+
+  function inDateRange(dateStr){
+    if(STATE.dateFrom && (!dateStr || dateStr < STATE.dateFrom)) return false;
+    if(STATE.dateTo && (!dateStr || dateStr > STATE.dateTo)) return false;
+    return true;
+  }
+
   function render(){
     if(!STATE.loadedInv || !STATE.loadedPO) return; // still loading first snapshot
+
+    if(STATE.tab === 'summary'){ renderSummary(); return; }
 
     var items = STATE.tab === 'invoices' ? DATA.invoices : DATA.purchaseOrders;
     var q = STATE.search.trim().toLowerCase();
 
     var filtered = items.filter(function(it){
+      if(!inDateRange(it.date)) return false;
       if(STATE.tab === 'invoices'){
         if(STATE.status !== 'all' && (it.paymentStatus||'unpaid') !== STATE.status) return false;
         if(q){
@@ -248,18 +302,21 @@ if(!OWNER_UID){
       : '<option value="all">All status</option><option value="pending">Pending</option><option value="partial">Partial</option><option value="received">Received</option>';
 
     var html = '';
-    html += '<div class="tabs">'+
-      '<button class="tab-btn'+(STATE.tab==='invoices'?' active':'')+'" data-tab="invoices">🧾 Invoices ('+DATA.invoices.length+')</button>'+
-      '<button class="tab-btn'+(STATE.tab==='purchaseOrders'?' active':'')+'" data-tab="purchaseOrders">📦 Purchase Orders ('+DATA.purchaseOrders.length+')</button>'+
-    '</div>';
+    html += tabsHTML();
     html += '<div class="toolbar">'+
       '<input class="inp" id="search-inp" placeholder="Search by name / ID…" value="'+esc(STATE.search)+'">'+
       '<select class="inp" id="status-sel">'+statusOptions+'</select>'+
+    '</div>';
+    html += '<div class="toolbar">'+
+      '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">From<input type="date" class="inp" id="date-from" value="'+esc(STATE.dateFrom)+'" style="flex:1;"></label>'+
+      '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">To<input type="date" class="inp" id="date-to" value="'+esc(STATE.dateTo)+'" style="flex:1;"></label>'+
+      (STATE.dateFrom||STATE.dateTo?'<button class="sel-btn" id="btn-clear-dates">✕ Clear</button>':'')+
     '</div>';
     html += '<div class="list-meta">'+
       '<span>'+filtered.length+' record'+(filtered.length===1?'':'s')+(STATE.selected.size?' · '+STATE.selected.size+' selected':'')+'</span>'+
       '<span class="sel-actions">'+
         '<button class="sel-btn" id="btn-selectall">'+((filtered.length && filtered.every(function(it){return STATE.selected.has(it.id);})) ? 'Clear' : 'Select all')+'</button>'+
+        '<button class="sel-btn" id="btn-csv" '+(filtered.length?'':'disabled')+'>📄 CSV</button>'+
         '<button class="sel-btn" id="btn-print" '+(STATE.selected.size?'':'disabled')+'>🖨️ Print</button>'+
         '<button class="sel-btn primary" id="btn-pdf" '+(STATE.selected.size?'':'disabled')+'>⬇️ PDF</button>'+
       '</span>'+
@@ -309,6 +366,14 @@ if(!OWNER_UID){
     if(s){ s.oninput = function(){ STATE.search = s.value; render(); }; setTimeout(function(){ s.focus(); s.selectionStart = s.selectionEnd = s.value.length; }, 0); }
     var st = document.getElementById('status-sel');
     if(st){ st.value = STATE.status; st.onchange = function(){ STATE.status = st.value; render(); }; }
+    var df = document.getElementById('date-from');
+    if(df) df.onchange = function(){ STATE.dateFrom = df.value; render(); };
+    var dt = document.getElementById('date-to');
+    if(dt) dt.onchange = function(){ STATE.dateTo = dt.value; render(); };
+    var clearDates = document.getElementById('btn-clear-dates');
+    if(clearDates) clearDates.onclick = function(){ STATE.dateFrom=''; STATE.dateTo=''; render(); };
+    var btnCsv = document.getElementById('btn-csv');
+    if(btnCsv) btnCsv.onclick = function(){ exportCSV(filtered, STATE.tab); };
 
     document.querySelectorAll('[data-check]').forEach(function(cb){
       cb.onclick = function(e){ e.stopPropagation(); var id = cb.dataset.check; if(STATE.selected.has(id)) STATE.selected.delete(id); else STATE.selected.add(id); render(); };
@@ -329,29 +394,145 @@ if(!OWNER_UID){
     if(btnPrint) btnPrint.onclick = function(){ bulkExport('print'); };
   }
 
+  // ── CSV export (ledger-style, for the CA's own records / GST filing) ──
+  function csvCell(v){
+    v = (v==null?'':String(v));
+    return '"'+v.replace(/"/g,'""')+'"';
+  }
+  function exportCSV(list, tab){
+    if(!list.length) return;
+    var rows, filename;
+    if(tab === 'invoices'){
+      rows = [['Invoice ID','Doc Type','Date','Client','GSTIN','Taxable Amount','CGST','SGST','IGST','Discount','Net Payable','Status','Payment Status']];
+      list.forEach(function(inv){
+        var g = invoiceGST(inv);
+        rows.push([
+          inv.id, inv.docType||'Invoice', inv.date||'', (inv.client&&inv.client.name)||'',
+          (inv.client&&inv.client.gstin)||'', g.subtotal.toFixed(2), g.cgst.toFixed(2), g.sgst.toFixed(2),
+          g.igst.toFixed(2), g.discAmt.toFixed(2), g.grand.toFixed(2), inv.status||'final',
+          inv.paymentStatus||'unpaid'
+        ]);
+      });
+      filename = 'CA-Portal-Invoices-'+Date.now()+'.csv';
+    } else {
+      rows = [['PO ID','Date','Vendor','Status','Delivery Date','Total Amount']];
+      list.forEach(function(po){
+        rows.push([po.id, po.date||'', po.vendor||'', po.status||'pending', po.deliveryDate||'', (po.totalAmount!=null?po.totalAmount:'').toString()]);
+      });
+      filename = 'CA-Portal-PurchaseOrders-'+Date.now()+'.csv';
+    }
+    var csv = rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob(['\ufeff'+csv], { type:'text/csv;charset=utf-8;' });
+    downloadBlob(blob, filename);
+  }
+
+  // ── GST Summary tab: overview stat cards + month-wise breakdown, useful
+  // for the CA to reconcile totals and prep GSTR-1 / GSTR-3B style figures ──
+  function renderSummary(){
+    var finalInvs = DATA.invoices.filter(function(i){ return i.status !== 'void'; });
+    var inRange = finalInvs.filter(function(i){ return inDateRange(i.date); });
+
+    var totalTaxable=0, totalCgst=0, totalSgst=0, totalIgst=0, totalGrand=0, totalOutstanding=0;
+    var monthly = {}; // 'YYYY-MM' -> {taxable,cgst,sgst,igst,grand,count}
+    inRange.forEach(function(inv){
+      var g = invoiceGST(inv);
+      totalTaxable += g.subtotal; totalCgst += g.cgst; totalSgst += g.sgst; totalIgst += g.igst; totalGrand += g.grand;
+      if((inv.paymentStatus||'unpaid') !== 'paid') totalOutstanding += g.grand;
+      var mKey = (inv.date||'').slice(0,7) || 'Unknown';
+      if(!monthly[mKey]) monthly[mKey] = { taxable:0, cgst:0, sgst:0, igst:0, grand:0, count:0 };
+      monthly[mKey].taxable += g.subtotal; monthly[mKey].cgst += g.cgst; monthly[mKey].sgst += g.sgst;
+      monthly[mKey].igst += g.igst; monthly[mKey].grand += g.grand; monthly[mKey].count++;
+    });
+    var months = Object.keys(monthly).sort().reverse();
+
+    var html = '';
+    html += tabsHTML();
+    html += '<div class="toolbar">'+
+      '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">From<input type="date" class="inp" id="date-from" value="'+esc(STATE.dateFrom)+'" style="flex:1;"></label>'+
+      '<label style="flex:1;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sub);">To<input type="date" class="inp" id="date-to" value="'+esc(STATE.dateTo)+'" style="flex:1;"></label>'+
+      (STATE.dateFrom||STATE.dateTo?'<button class="sel-btn" id="btn-clear-dates">✕ Clear</button>':'')+
+    '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
+      statCard('Taxable Value', fmt(totalTaxable,'INR'))+
+      statCard('Total GST (CGST+SGST+IGST)', fmt(totalCgst+totalSgst+totalIgst,'INR'))+
+      statCard('Net Invoiced', fmt(totalGrand,'INR'))+
+      statCard('Outstanding (Unpaid)', fmt(totalOutstanding,'INR'))+
+    '</div>';
+
+    if(!months.length){
+      html += '<div class="empty">No invoices in this range.</div>';
+    } else {
+      html += '<div class="list-meta"><span>Month-wise breakdown ('+months.length+' month'+(months.length===1?'':'s')+')</span>'+
+        '<span class="sel-actions"><button class="sel-btn primary" id="btn-summary-csv">📄 Export CSV</button></span></div>';
+      html += '<div style="overflow-x:auto;"><table class="dr-table" style="min-width:600px;">'+
+        '<thead><tr><th>Month</th><th style="text-align:center;">Invoices</th><th style="text-align:right;">Taxable</th><th style="text-align:right;">CGST</th><th style="text-align:right;">SGST</th><th style="text-align:right;">IGST</th><th style="text-align:right;">Net Total</th></tr></thead><tbody>'+
+        months.map(function(m){
+          var r = monthly[m];
+          return '<tr><td>'+esc(monthLabel(m))+'</td><td style="text-align:center;">'+r.count+'</td>'+
+            '<td style="text-align:right;">'+fmt(r.taxable,'INR')+'</td><td style="text-align:right;">'+fmt(r.cgst,'INR')+'</td>'+
+            '<td style="text-align:right;">'+fmt(r.sgst,'INR')+'</td><td style="text-align:right;">'+fmt(r.igst,'INR')+'</td>'+
+            '<td style="text-align:right;font-weight:800;">'+fmt(r.grand,'INR')+'</td></tr>';
+        }).join('')+
+        '</tbody></table></div>';
+    }
+
+    html += '<div class="footnote">Read-only view · Powered by the '+esc((DATA.settings.businessName)||BIZ_NAME)+' ERP<br>Figures exclude voided invoices. Recompute from source data; always cross-check before filing.</div>';
+
+    root.innerHTML = html;
+    document.querySelectorAll('.tab-btn').forEach(function(b){
+      b.onclick = function(){ STATE.tab = b.dataset.tab; STATE.status = 'all'; STATE.selected.clear(); render(); };
+    });
+    var df = document.getElementById('date-from');
+    if(df) df.onchange = function(){ STATE.dateFrom = df.value; render(); };
+    var dt = document.getElementById('date-to');
+    if(dt) dt.onchange = function(){ STATE.dateTo = dt.value; render(); };
+    var clearDates = document.getElementById('btn-clear-dates');
+    if(clearDates) clearDates.onclick = function(){ STATE.dateFrom=''; STATE.dateTo=''; render(); };
+    var btnSumCsv = document.getElementById('btn-summary-csv');
+    if(btnSumCsv) btnSumCsv.onclick = function(){
+      var rows = [['Month','Invoices','Taxable','CGST','SGST','IGST','Net Total']];
+      months.forEach(function(m){
+        var r = monthly[m];
+        rows.push([monthLabel(m), r.count, r.taxable.toFixed(2), r.cgst.toFixed(2), r.sgst.toFixed(2), r.igst.toFixed(2), r.grand.toFixed(2)]);
+      });
+      var csv = rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n');
+      var blob = new Blob(['\ufeff'+csv], { type:'text/csv;charset=utf-8;' });
+      downloadBlob(blob, 'CA-Portal-GST-Summary-'+Date.now()+'.csv');
+    };
+  }
+  function statCard(label, value){
+    return '<div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;">'+
+      '<div style="font-size:10.5px;color:var(--sub);text-transform:uppercase;font-weight:700;letter-spacing:.3px;">'+esc(label)+'</div>'+
+      '<div style="font-size:17px;font-weight:800;color:var(--op-dark);margin-top:3px;">'+value+'</div>'+
+    '</div>';
+  }
+  function monthLabel(mKey){
+    if(mKey === 'Unknown') return 'Unknown';
+    var parts = mKey.split('-');
+    var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var mi = parseInt(parts[1],10)-1;
+    return (names[mi]||parts[1])+' '+parts[0];
+  }
+
   // ── Detail rendering ──────────────────────────────────────────────
   function renderInvoiceDoc(inv){
     var s = DATA.settings || {};
     var items = inv.items || [];
-    var gstMode = inv.gstMode || 'intra';
-    var subtotal = 0, taxTotal = 0, cgst = 0, sgst = 0, igst = 0;
+    var g = invoiceGST(inv);
     var rows = items.map(function(it){
       var qty = Number(it.qty)||0, rate = Number(it.rate)||0, gstPct = Number(it.gst)||0;
-      var base = qty*rate, tax = base*gstPct/100;
-      subtotal += base; taxTotal += tax;
-      if(gstMode === 'inter') igst += tax; else { cgst += tax/2; sgst += tax/2; }
+      var line = lineGST(qty, rate, gstPct);
       return '<tr><td>'+esc(it.name)+(it.hsn?'<div style="font-size:9.5px;color:#94a3b8;">HSN '+esc(it.hsn)+'</div>':'')+'</td>'+
         '<td style="text-align:center;">'+qty+'</td><td style="text-align:right;">'+fmt(rate, inv.currency)+'</td>'+
-        '<td style="text-align:center;">'+gstPct+'%</td><td style="text-align:right;">'+fmt(base+tax, inv.currency)+'</td></tr>';
+        '<td style="text-align:center;">'+gstPct+'%</td><td style="text-align:right;">'+fmt(line.lineTotal, inv.currency)+'</td></tr>';
     }).join('');
-    var discAmt = Number(inv.discountAmountCalculated || inv.discount || 0);
-    var grand = Number(inv.grandTotal || (subtotal + taxTotal - discAmt));
 
-    var totalsRows = '<div class="row"><span>Subtotal</span><span>'+fmt(subtotal, inv.currency)+'</span></div>';
-    if(gstMode === 'inter'){ totalsRows += '<div class="row"><span>IGST</span><span>'+fmt(igst, inv.currency)+'</span></div>'; }
-    else { totalsRows += '<div class="row"><span>CGST</span><span>'+fmt(cgst, inv.currency)+'</span></div><div class="row"><span>SGST</span><span>'+fmt(sgst, inv.currency)+'</span></div>'; }
-    if(discAmt) totalsRows += '<div class="row"><span>Discount</span><span>-'+fmt(discAmt, inv.currency)+'</span></div>';
-    totalsRows += '<div class="row grand"><span>Total</span><span>'+fmt(grand, inv.currency)+'</span></div>';
+    var totalsRows = '<div class="row"><span>Taxable Amount</span><span>'+fmt(g.subtotal, inv.currency)+'</span></div>';
+    if(g.gstMode === 'inter'){ totalsRows += '<div class="row"><span>IGST</span><span>'+fmt(g.igst, inv.currency)+'</span></div>'; }
+    else { totalsRows += '<div class="row"><span>CGST</span><span>'+fmt(g.cgst, inv.currency)+'</span></div><div class="row"><span>SGST</span><span>'+fmt(g.sgst, inv.currency)+'</span></div>'; }
+    if(g.discAmt) totalsRows += '<div class="row"><span>Discount</span><span>-'+fmt(g.discAmt, inv.currency)+'</span></div>';
+    totalsRows += '<div class="row grand"><span>Net Payable</span><span>'+fmt(g.grand, inv.currency)+'</span></div>';
 
     return '<div class="doc-render">'+
       '<div class="dr-head"><div><div class="dr-biz">'+esc(s.businessName||BIZ_NAME)+'</div>'+
