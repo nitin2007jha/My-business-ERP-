@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>CA Portal</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --op:#0f7a80; --op-dark:#0b6377; --op-light:#e7f4f6;
+    --ink:#1e293b; --sub:#64748b; --line:#e2e8f0; --bg:#f4f7f8;
+    --green:#16a34a; --amber:#d97706; --red:#dc2626;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink);}
+  header.topbar{position:sticky; top:0; z-index:50; background:linear-gradient(135deg,var(--op),var(--op-dark)); color:#fff; padding:14px 16px calc(14px + env(safe-area-inset-top,0px)); padding-top:calc(14px + env(safe-area-inset-top,0px));}
+  .topbar-row{display:flex; align-items:center; gap:10px;}
+  .topbar-title{font-weight:800; font-size:16px; line-height:1.25;}
+  .topbar-sub{font-size:11.5px; opacity:.85; margin-top:1px;}
+  .badge-ro{margin-left:auto; font-size:10.5px; font-weight:700; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); padding:4px 9px; border-radius:999px; white-space:nowrap;}
+  main{max-width:720px; margin:0 auto; padding:14px 12px 90px;}
+  .state-card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:26px 20px; text-align:center; margin-top:30px;}
+  .state-card h2{font-size:15px; margin:10px 0 6px;}
+  .state-card p{font-size:13px; color:var(--sub); line-height:1.6; margin:0;}
+  .spin{width:30px; height:30px; border:3px solid var(--op-light); border-top-color:var(--op); border-radius:50%; margin:0 auto; animation:sp 0.8s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .tabs{display:flex; gap:6px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:4px; margin-bottom:12px;}
+  .tab-btn{flex:1; border:none; background:none; padding:10px 6px; font-size:13px; font-weight:700; color:var(--sub); border-radius:11px; cursor:pointer; font-family:inherit;}
+  .tab-btn.active{background:var(--op-light); color:var(--op-dark);}
+  .toolbar{display:flex; gap:8px; margin-bottom:10px;}
+  .inp{flex:1; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-size:13px; font-family:inherit; background:#fff; outline:none;}
+  .inp:focus{border-color:var(--op);}
+  select.inp{flex:0 0 auto; width:120px;}
+  .list-meta{display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--sub); margin:6px 2px 10px;}
+  .sel-actions{display:flex; gap:8px;}
+  .sel-btn{border:1.5px solid var(--line); background:#fff; color:var(--op-dark); font-size:11.5px; font-weight:700; padding:6px 10px; border-radius:9px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:5px;}
+  .sel-btn:disabled{opacity:.4; cursor:not-allowed;}
+  .sel-btn.primary{background:var(--op); color:#fff; border-color:var(--op);}
+  .doc-card{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 13px; margin-bottom:9px; display:flex; align-items:flex-start; gap:11px; cursor:pointer;}
+  .doc-card input[type=checkbox]{width:18px; height:18px; margin-top:2px; accent-color:var(--op); flex-shrink:0;}
+  .doc-main{flex:1; min-width:0;}
+  .doc-top{display:flex; justify-content:space-between; gap:8px;}
+  .doc-id{font-weight:800; font-size:13.5px; color:var(--ink);}
+  .doc-amt{font-weight:800; font-size:13.5px; color:var(--op-dark); white-space:nowrap;}
+  .doc-sub{font-size:12px; color:var(--sub); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap;}
+  .pill{font-size:10px; font-weight:800; text-transform:uppercase; padding:2px 8px; border-radius:999px; letter-spacing:.3px;}
+  .pill-paid,.pill-received{background:#dcfce7; color:var(--green);}
+  .pill-unpaid,.pill-pending{background:#fef3c7; color:var(--amber);}
+  .pill-void{background:#f1f5f9; color:#94a3b8;}
+  .pill-draft{background:#e0f2fe; color:#0369a1;}
+  .empty{text-align:center; padding:40px 20px; color:var(--sub); font-size:13px;}
+
+  /* Detail modal */
+  .modal-bg{position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:200; display:flex; align-items:flex-end; justify-content:center;}
+  .modal-box{background:#fff; width:100%; max-width:520px; max-height:88vh; overflow:auto; border-radius:18px 18px 0 0; padding:0;}
+  @media (min-width:640px){ .modal-bg{align-items:center;} .modal-box{border-radius:18px; max-height:85vh;} }
+  .modal-head{position:sticky; top:0; background:#fff; border-bottom:1px solid var(--line); padding:14px 16px; display:flex; align-items:center; gap:10px; z-index:2;}
+  .modal-head .x{margin-left:auto; border:none; background:#f1f5f9; width:30px; height:30px; border-radius:9px; font-size:16px; cursor:pointer; color:var(--sub);}
+  .modal-actions{display:flex; gap:8px; padding:10px 16px 14px; border-top:1px solid var(--line);}
+
+  /* Printable document layout */
+  .doc-render{background:#fff; padding:20px; font-size:12px; color:#1e293b; line-height:1.5;}
+  .dr-head{display:flex; justify-content:space-between; gap:12px; border-bottom:2px solid var(--op); padding-bottom:12px; margin-bottom:14px;}
+  .dr-biz{font-weight:800; font-size:16px;}
+  .dr-biz-line{font-size:11px; color:var(--sub); margin-top:1px;}
+  .dr-doctype{text-align:right; font-weight:800; font-size:13px; color:var(--op-dark); text-transform:uppercase;}
+  .dr-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .dr-box{background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:8px 10px;}
+  .dr-box .lbl{font-size:9.5px; text-transform:uppercase; color:var(--sub); font-weight:700; letter-spacing:.4px;}
+  .dr-box .val{font-size:12.5px; font-weight:600; margin-top:2px;}
+  table.dr-table{width:100%; border-collapse:collapse; margin-bottom:12px;}
+  table.dr-table th{background:var(--op-light); color:var(--op-dark); font-size:10px; text-transform:uppercase; padding:7px 6px; text-align:left; border-bottom:1px solid var(--line);}
+  table.dr-table td{padding:7px 6px; border-bottom:1px solid #f1f5f9; font-size:11.5px;}
+  .dr-totals{margin-left:auto; width:220px;}
+  .dr-totals .row{display:flex; justify-content:space-between; padding:4px 0; font-size:12px;}
+  .dr-totals .row.grand{border-top:2px solid var(--op); margin-top:4px; padding-top:8px; font-weight:800; font-size:14px; color:var(--op-dark);}
+  .dr-page-break{page-break-after:always; break-after:page; height:0;}
+
+  .footnote{text-align:center; font-size:11px; color:var(--sub); margin-top:24px; padding:0 20px;}
+  #bulk-render-container{position:fixed; top:0; left:0; width:794px; background:#fff; pointer-events:none; z-index:-1; opacity:0.001; overflow:visible;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #bulk-render-container, #bulk-render-container *{visibility:visible;}
+    #bulk-render-container{position:absolute; left:0; top:0; opacity:1; z-index:99999; width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-row">
+    <div>
+      <div class="topbar-title" id="biz-name">CA Portal</div>
+      <div class="topbar-sub" id="biz-sub">Loading business records…</div>
+    </div>
+    <div class="badge-ro">🔒 Read-only</div>
+  </div>
+</header>
+
+<main id="app-root">
+  <div class="state-card" id="loading-state">
+    <div class="spin"></div>
+    <h2>Connecting…</h2>
+    <p>Fetching invoices &amp; purchase orders. This is a read-only view — nothing can be edited or deleted here.</p>
+  </div>
+</main>
+
+<div id="modal-root"></div>
+<div id="bulk-render-container"><div id="bulk-render-area"></div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Same public Firebase config used by the main ERP app.
+const firebaseConfig = {
+  apiKey: "AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",
+  authDomain: "dev-ayurveda.firebaseapp.com",
+  databaseURL: "https://dev-ayurveda-default-rtdb.firebaseio.com",
+  projectId: "dev-ayurveda",
+  storageBucket: "dev-ayurveda.firebasestorage.app",
+  messagingSenderId: "40760282698",
+  appId: "1:40760282698:web:20e31100eed712631ca0b3",
+  measurementId: "G-THLCJRV6MZ"
+};
+// This must match the same __app_id path segment the main app writes under.
+const APP_ID = "dev-ayurveda-pro-auth";
+
+const params = new URLSearchParams(window.location.search);
+const OWNER_UID = params.get('uid');
+const BIZ_NAME  = params.get('biz') || 'My Business';
+
+const root = document.getElementById('app-root');
+document.getElementById('biz-name').textContent = BIZ_NAME;
+
+function fmt(n, curr){
+  n = Number(n) || 0;
+  var symbol = (curr === 'USD') ? '$' : (curr === 'EUR') ? '€' : '₹';
+  return symbol + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function showState(title, msg, isError){
+  root.innerHTML =
+    '<div class="state-card">'+
+      (isError ? '<div style="font-size:30px;">⚠️</div>' : '<div class="spin"></div>')+
+      '<h2>'+esc(title)+'</h2>'+
+      '<p>'+msg+'</p>'+
+    '</div>';
+}
+
+if(!OWNER_UID){
+  document.getElementById('biz-sub').textContent = 'Invalid link';
+  showState(
+    'Link looks incomplete',
+    'This portal needs a business ID in the link. Please ask your client to open <b>More → CA Portal</b> in their ERP app and re-share the link with you.',
+    true
+  );
+} else {
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  signInAnonymously(auth).catch(function(e){
+    console.error('Anonymous sign-in failed:', e);
+    document.getElementById('biz-sub').textContent = 'Connection error';
+    showState(
+      'Could not connect',
+      'Anonymous access could not be verified. If you are the app owner: open Firebase Console → Authentication → Sign-in method → enable <b>Anonymous</b>. (Error: '+esc(e.code||e.message||'unknown')+')',
+      true
+    );
+  });
+
+  onAuthStateChanged(auth, function(user){
+    if(user) initPortal();
+  });
+
+  var DATA = { invoices: [], purchaseOrders: [], settings: {} };
+  var STATE = { tab: 'invoices', search: '', status: 'all', selected: new Set(), loadedInv:false, loadedPO:false };
+
+  function initPortal(){
+    // Settings (business info) — one-time read
+    getDoc(doc(db,'artifacts',APP_ID,'users',OWNER_UID,'config','settings')).then(function(snap){
+      if(snap.exists()){
+        DATA.settings = snap.data() || {};
+        var s = DATA.settings;
+        document.getElementById('biz-name').textContent = s.businessName || BIZ_NAME;
+        var subBits = [s.gstin ? ('GSTIN: '+s.gstin) : null, s.phone || s.mobile || null].filter(Boolean);
+        document.getElementById('biz-sub').textContent = subBits.length ? subBits.join(' · ') : 'CA / Accountant access';
+      }
+    }).catch(function(){});
+
+    // Invoices — live
+    onSnapshot(collection(db,'artifacts',APP_ID,'users',OWNER_UID,'invoices'), function(snap){
+      DATA.invoices = [];
+      snap.forEach(function(d){ DATA.invoices.push(Object.assign({ id: d.id }, d.data())); });
+      DATA.invoices.sort(function(a,b){ return (b.date||'').localeCompare(a.date||'') || (b.createdAt && b.createdAt.seconds || 0) - (a.createdAt && a.createdAt.seconds || 0); });
+      STATE.loadedInv = true;
+      render();
+    }, function(err){ handleFirestoreError(err); });
+
+    // Purchase orders — single doc holding an array — live
+    onSnapshot(doc(db,'artifacts',APP_ID,'users',OWNER_UID,'config','purchaseOrders'), function(snap){
+      DATA.purchaseOrders = snap.exists() ? (snap.data().purchaseOrders || []) : [];
+      STATE.loadedPO = true;
+      render();
+    }, function(err){ handleFirestoreError(err); });
+  }
+
+  function handleFirestoreError(err){
+    console.error(err);
+    showState(
+      'Access denied',
+      'This link is not authorized to read these business records. Please ask your client for a fresh link from <b>More → CA Portal</b>. (Error: '+esc(err.code||'permission-denied')+')',
+      true
+    );
+  }
+
+  function render(){
+    if(!STATE.loadedInv || !STATE.loadedPO) return; // still loading first snapshot
+
+    var items = STATE.tab === 'invoices' ? DATA.invoices : DATA.purchaseOrders;
+    var q = STATE.search.trim().toLowerCase();
+
+    var filtered = items.filter(function(it){
+      if(STATE.tab === 'invoices'){
+        if(STATE.status !== 'all' && (it.paymentStatus||'unpaid') !== STATE.status) return false;
+        if(q){
+          var hay = (it.id+' '+(it.client&&it.client.name||'')+' '+(it.docType||'')).toLowerCase();
+          if(hay.indexOf(q) === -1) return false;
+        }
+      } else {
+        if(STATE.status !== 'all' && (it.status||'pending') !== STATE.status) return false;
+        if(q){
+          var hay2 = (it.id+' '+(it.vendor||'')).toLowerCase();
+          if(hay2.indexOf(q) === -1) return false;
+        }
+      }
+      return true;
+    });
+
+    var statusOptions = STATE.tab === 'invoices'
+      ? '<option value="all">All status</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option>'
+      : '<option value="all">All status</option><option value="pending">Pending</option><option value="partial">Partial</option><option value="received">Received</option>';
+
+    var html = '';
+    html += '<div class="tabs">'+
+      '<button class="tab-btn'+(STATE.tab==='invoices'?' active':'')+'" data-tab="invoices">🧾 Invoices ('+DATA.invoices.length+')</button>'+
+      '<button class="tab-btn'+(STATE.tab==='purchaseOrders'?' active':'')+'" data-tab="purchaseOrders">📦 Purchase Orders ('+DATA.purchaseOrders.length+')</button>'+
+    '</div>';
+    html += '<div class="toolbar">'+
+      '<input class="inp" id="search-inp" placeholder="Search by name / ID…" value="'+esc(STATE.search)+'">'+
+      '<select class="inp" id="status-sel">'+statusOptions+'</select>'+
+    '</div>';
+    html += '<div class="list-meta">'+
+      '<span>'+filtered.length+' record'+(filtered.length===1?'':'s')+(STATE.selected.size?' · '+STATE.selected.size+' selected':'')+'</span>'+
+      '<span class="sel-actions">'+
+        '<button class="sel-btn" id="btn-selectall">'+((filtered.length && filtered.every(function(it){return STATE.selected.has(it.id);})) ? 'Clear' : 'Select all')+'</button>'+
+        '<button class="sel-btn" id="btn-print" '+(STATE.selected.size?'':'disabled')+'>🖨️ Print</button>'+
+        '<button class="sel-btn primary" id="btn-pdf" '+(STATE.selected.size?'':'disabled')+'>⬇️ PDF</button>'+
+      '</span>'+
+    '</div>';
+
+    if(!filtered.length){
+      html += '<div class="empty">No records found.</div>';
+    } else {
+      html += filtered.map(function(it){ return renderCard(it, STATE.tab); }).join('');
+    }
+
+    html += '<div class="footnote">Read-only view · Powered by the '+esc((DATA.settings.businessName)||BIZ_NAME)+' ERP<br>You cannot edit, void, or delete any record from here.</div>';
+
+    root.innerHTML = html;
+    wireEvents(filtered);
+  }
+
+  function renderCard(it, tab){
+    var checked = STATE.selected.has(it.id) ? 'checked' : '';
+    if(tab === 'invoices'){
+      var status = it.status === 'void' ? 'void' : (it.paymentStatus === 'paid' ? 'paid' : 'unpaid');
+      var label = status === 'void' ? 'Void' : (status === 'paid' ? 'Paid' : 'Unpaid');
+      return '<div class="doc-card" data-id="'+esc(it.id)+'" data-tab="invoices">'+
+        '<input type="checkbox" '+checked+' data-check="'+esc(it.id)+'">'+
+        '<div class="doc-main">'+
+          '<div class="doc-top"><span class="doc-id">'+esc(it.docType||'Invoice')+' · '+esc(it.id)+'</span><span class="doc-amt">'+fmt(it.grandTotal, it.currency)+'</span></div>'+
+          '<div class="doc-sub"><span>'+esc(it.client && it.client.name || 'Unknown client')+'</span><span>'+esc(it.date||'')+'</span><span class="pill pill-'+status+'">'+label+'</span></div>'+
+        '</div>'+
+      '</div>';
+    } else {
+      var st = it.status || 'pending';
+      return '<div class="doc-card" data-id="'+esc(it.id)+'" data-tab="purchaseOrders">'+
+        '<input type="checkbox" '+checked+' data-check="'+esc(it.id)+'">'+
+        '<div class="doc-main">'+
+          '<div class="doc-top"><span class="doc-id">PO · '+esc(it.id)+'</span><span class="doc-amt">'+(it.totalAmount!=null?fmt(it.totalAmount,'INR'):'—')+'</span></div>'+
+          '<div class="doc-sub"><span>'+esc(it.vendor||'Unknown vendor')+'</span><span>'+esc(it.date||'')+'</span><span class="pill pill-'+st+'">'+esc(st.charAt(0).toUpperCase()+st.slice(1))+'</span></div>'+
+        '</div>'+
+      '</div>';
+    }
+  }
+
+  function wireEvents(filtered){
+    document.querySelectorAll('.tab-btn').forEach(function(b){
+      b.onclick = function(){ STATE.tab = b.dataset.tab; STATE.status = 'all'; STATE.selected.clear(); render(); };
+    });
+    var s = document.getElementById('search-inp');
+    if(s){ s.oninput = function(){ STATE.search = s.value; render(); }; setTimeout(function(){ s.focus(); s.selectionStart = s.selectionEnd = s.value.length; }, 0); }
+    var st = document.getElementById('status-sel');
+    if(st){ st.value = STATE.status; st.onchange = function(){ STATE.status = st.value; render(); }; }
+
+    document.querySelectorAll('[data-check]').forEach(function(cb){
+      cb.onclick = function(e){ e.stopPropagation(); var id = cb.dataset.check; if(STATE.selected.has(id)) STATE.selected.delete(id); else STATE.selected.add(id); render(); };
+    });
+    document.querySelectorAll('.doc-card').forEach(function(card){
+      card.onclick = function(){ openDetail(card.dataset.id, card.dataset.tab); };
+    });
+    var selAll = document.getElementById('btn-selectall');
+    if(selAll) selAll.onclick = function(){
+      var allSelected = filtered.length && filtered.every(function(it){ return STATE.selected.has(it.id); });
+      if(allSelected) STATE.selected.clear();
+      else filtered.forEach(function(it){ STATE.selected.add(it.id); });
+      render();
+    };
+    var btnPdf = document.getElementById('btn-pdf');
+    if(btnPdf) btnPdf.onclick = function(){ bulkExport('pdf'); };
+    var btnPrint = document.getElementById('btn-print');
+    if(btnPrint) btnPrint.onclick = function(){ bulkExport('print'); };
+  }
+
+  // ── Detail rendering ──────────────────────────────────────────────
+  function renderInvoiceDoc(inv){
+    var s = DATA.settings || {};
+    var items = inv.items || [];
+    var gstMode = inv.gstMode || 'intra';
+    var subtotal = 0, taxTotal = 0, cgst = 0, sgst = 0, igst = 0;
+    var rows = items.map(function(it){
+      var qty = Number(it.qty)||0, rate = Number(it.rate)||0, gstPct = Number(it.gst)||0;
+      var base = qty*rate, tax = base*gstPct/100;
+      subtotal += base; taxTotal += tax;
+      if(gstMode === 'inter') igst += tax; else { cgst += tax/2; sgst += tax/2; }
+      return '<tr><td>'+esc(it.name)+(it.hsn?'<div style="font-size:9.5px;color:#94a3b8;">HSN '+esc(it.hsn)+'</div>':'')+'</td>'+
+        '<td style="text-align:center;">'+qty+'</td><td style="text-align:right;">'+fmt(rate, inv.currency)+'</td>'+
+        '<td style="text-align:center;">'+gstPct+'%</td><td style="text-align:right;">'+fmt(base+tax, inv.currency)+'</td></tr>';
+    }).join('');
+    var discAmt = Number(inv.discountAmountCalculated || inv.discount || 0);
+    var grand = Number(inv.grandTotal || (subtotal + taxTotal - discAmt));
+
+    var totalsRows = '<div class="row"><span>Subtotal</span><span>'+fmt(subtotal, inv.currency)+'</span></div>';
+    if(gstMode === 'inter'){ totalsRows += '<div class="row"><span>IGST</span><span>'+fmt(igst, inv.currency)+'</span></div>'; }
+    else { totalsRows += '<div class="row"><span>CGST</span><span>'+fmt(cgst, inv.currency)+'</span></div><div class="row"><span>SGST</span><span>'+fmt(sgst, inv.currency)+'</span></div>'; }
+    if(discAmt) totalsRows += '<div class="row"><span>Discount</span><span>-'+fmt(discAmt, inv.currency)+'</span></div>';
+    totalsRows += '<div class="row grand"><span>Total</span><span>'+fmt(grand, inv.currency)+'</span></div>';
+
+    return '<div class="doc-render">'+
+      '<div class="dr-head"><div><div class="dr-biz">'+esc(s.businessName||BIZ_NAME)+'</div>'+
+        (s.address?'<div class="dr-biz-line">'+esc(s.address)+'</div>':'')+
+        (s.gstin?'<div class="dr-biz-line">GSTIN: '+esc(s.gstin)+'</div>':'')+
+      '</div><div class="dr-doctype">'+esc(inv.docType||'Tax Invoice')+'<br><span style="font-weight:600;font-size:11px;color:#64748b;text-transform:none;">'+esc(inv.id)+'</span></div></div>'+
+      '<div class="dr-grid">'+
+        '<div class="dr-box"><div class="lbl">Billed To</div><div class="val">'+esc(inv.client&&inv.client.name||'—')+'</div>'+
+          (inv.client&&inv.client.gstin?'<div style="font-size:10.5px;color:#64748b;">GSTIN: '+esc(inv.client.gstin)+'</div>':'')+
+          (inv.client&&inv.client.address?'<div style="font-size:10.5px;color:#64748b;">'+esc(inv.client.address)+'</div>':'')+
+        '</div>'+
+        '<div class="dr-box"><div class="lbl">Details</div><div class="val">Date: '+esc(inv.date||'—')+'</div>'+
+          '<div style="font-size:10.5px;color:#64748b;">Status: '+esc(inv.status||'final')+' · '+((inv.paymentStatus==='paid')?'Paid':'Unpaid')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<table class="dr-table"><thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:center;">GST</th><th style="text-align:right;">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="dr-totals">'+totalsRows+'</div>'+
+      (inv.notes?'<div style="margin-top:14px;font-size:11px;color:#64748b;"><b>Notes:</b> '+esc(inv.notes)+'</div>':'')+
+    '</div>';
+  }
+
+  function renderPODoc(po){
+    var items = po.items || [];
+    var total = 0;
+    var rows = items.map(function(it){
+      var qty = Number(it.qty)||0, cost = it.cost!=null ? Number(it.cost) : null;
+      var amt = cost!=null ? qty*cost : null;
+      if(amt) total += amt;
+      return '<tr><td>'+esc(it.name)+'</td><td style="text-align:center;">'+qty+' '+esc(it.unit||'')+'</td><td style="text-align:right;">'+(cost!=null?fmt(cost,'INR'):'—')+'</td><td style="text-align:right;">'+(amt!=null?fmt(amt,'INR'):'—')+'</td></tr>';
+    }).join('');
+    return '<div class="doc-render">'+
+      '<div class="dr-head"><div><div class="dr-biz">'+esc((DATA.settings.businessName)||BIZ_NAME)+'</div><div class="dr-biz-line">Purchase Order</div></div>'+
+      '<div class="dr-doctype">PO<br><span style="font-weight:600;font-size:11px;color:#64748b;text-transform:none;">'+esc(po.id)+'</span></div></div>'+
+      '<div class="dr-grid">'+
+        '<div class="dr-box"><div class="lbl">Vendor</div><div class="val">'+esc(po.vendor||'—')+'</div></div>'+
+        '<div class="dr-box"><div class="lbl">Details</div><div class="val">Date: '+esc(po.date||'—')+'</div>'+
+          '<div style="font-size:10.5px;color:#64748b;">Status: '+esc(po.status||'pending')+(po.deliveryDate?' · Delivery: '+esc(po.deliveryDate):'')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<table class="dr-table"><thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Cost</th><th style="text-align:right;">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="dr-totals"><div class="row grand"><span>Total</span><span>'+fmt(po.totalAmount!=null?po.totalAmount:total,'INR')+'</span></div></div>'+
+      (po.notes?'<div style="margin-top:14px;font-size:11px;color:#64748b;"><b>Notes:</b> '+esc(po.notes)+'</div>':'')+
+    '</div>';
+  }
+
+  function docHTML(id, tab){
+    if(tab === 'invoices'){ var inv = DATA.invoices.find(function(i){ return i.id===id; }); return inv ? renderInvoiceDoc(inv) : ''; }
+    var po = DATA.purchaseOrders.find(function(p){ return p.id===id; }); return po ? renderPODoc(po) : '';
+  }
+
+  function openDetail(id, tab){
+    var html = docHTML(id, tab);
+    if(!html) return;
+    var mroot = document.getElementById('modal-root');
+    mroot.innerHTML =
+      '<div class="modal-bg" id="detail-bg">'+
+        '<div class="modal-box" onclick="event.stopPropagation()">'+
+          '<div class="modal-head"><b>'+ (tab==='invoices'?'Invoice':'Purchase Order') +'</b><button class="x" id="detail-close">✕</button></div>'+
+          html+
+          '<div class="modal-actions">'+
+            '<button class="sel-btn" style="flex:1;justify-content:center;" id="detail-print">🖨️ Print</button>'+
+            '<button class="sel-btn primary" style="flex:1;justify-content:center;" id="detail-pdf">⬇️ Download PDF</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    document.getElementById('detail-bg').onclick = function(){ mroot.innerHTML = ''; };
+    document.getElementById('detail-close').onclick = function(){ mroot.innerHTML = ''; };
+    document.getElementById('detail-pdf').onclick = function(){ exportDocs([{id:id,tab:tab}], 'pdf'); };
+    document.getElementById('detail-print').onclick = function(){ exportDocs([{id:id,tab:tab}], 'print'); };
+  }
+
+  function bulkExport(mode){
+    var ids = Array.from(STATE.selected);
+    if(!ids.length) return;
+    var list = ids.map(function(id){ return { id:id, tab: STATE.tab }; });
+    exportDocs(list, mode);
+  }
+
+  // Off-screen render (opacity:0.001, not left:-9999px — Android WebView
+  // needs the element in-viewport-but-invisible to actually paint it).
+  function exportDocs(list, mode){
+    var area = document.getElementById('bulk-render-area');
+    area.innerHTML = list.map(function(entry, idx){
+      var html = docHTML(entry.id, entry.tab);
+      return html + (idx < list.length-1 ? '<div class="dr-page-break"></div>' : '');
+    }).join('');
+
+    if(mode === 'print'){
+      setTimeout(function(){ window.print(); }, 60);
+      return;
+    }
+
+    // PDF mode
+    var filename = (list.length===1 ? list[0].id : 'CA-Portal-Export-'+Date.now()) + '.pdf';
+    if(typeof html2pdf === 'undefined'){ alert('PDF library did not load — check your connection.'); return; }
+    html2pdf().set({
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, allowTaint: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css'] }
+    }).from(area).output('blob').then(function(blob){
+      downloadBlob(blob, filename);
+    }).catch(function(e){
+      console.error(e);
+      alert('Could not generate PDF. Try the Print button instead.');
+    });
+  }
+
+  // Blob → object URL download (Android DownloadManager rejects data: URIs
+  // but accepts blob: URLs) — same pattern as the main ERP app.
+  function downloadBlob(blob, filename){
+    try{
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename; a.style.display = 'none';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 3000);
+    } catch(e){
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        var w = window.open('', '_blank');
+        if(w) w.location = ev.target.result;
+      };
+      reader.readAsDataURL(blob);
+    }
+  }
+}
+</script>
+</body>
+</html>
