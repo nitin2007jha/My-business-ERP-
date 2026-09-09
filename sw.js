@@ -3,8 +3,8 @@
    Features: Periodic Sync, Push Notifications, PWA Widgets, Offline Cache
    ═══════════════════════════════════════════════════════════════════ */
 
-const SW_VERSION = 'erp-sw-v3.1';
-const CACHE_NAME  = 'erp-cache-v3.1';
+const SW_VERSION = 'erp-sw-v3.2';
+const CACHE_NAME  = 'erp-cache-v3.2';
 
 // Files to pre-cache for offline use
 const PRE_CACHE = [
@@ -56,6 +56,39 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  // ── THE FIX ─────────────────────────────────────────────────────────
+  // "Network first" here used to mean `fetch(event.request)` — but a plain
+  // fetch() still obeys the BROWSER's own HTTP cache (and GitHub Pages'
+  // CDN cache) unless told not to. So even though the SW was correctly
+  // hitting "the network", the network call itself could be silently
+  // answered from disk cache with the OLD index.html — that's why a push
+  // showed as deployed but the app kept showing old content.
+  // Fix: for the app-shell files (index.html / this sw.js / any page
+  // navigation), force `cache:'no-store'` so it's a genuine, uncached
+  // round-trip to the server every time.
+  const isAppShell =
+    event.request.mode === 'navigate' ||
+    url.pathname.endsWith('/index.html') ||
+    url.pathname.endsWith('/sw.js') ||
+    url.pathname.endsWith('/');
+
+  if (isAppShell) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Everything else (JS/JSON/images/widgets): normal network-first,
+  // cache fallback for offline use.
   event.respondWith(
     fetch(event.request)
       .then(response => {
