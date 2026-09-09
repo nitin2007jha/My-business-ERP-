@@ -8493,7 +8493,7 @@ try {
                 modal.id = 'ca-share-modal';
                 modal.className = 'modal';
                 modal.onclick = function(e){ if(e.target===modal) modal.classList.remove('open'); };
-                var caPortalUrl = 'https://nitin2007jha.github.io/My-Business/';
+                var caPortalUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tools/ca-portal/';
                 var shareLink = caPortalUrl + '?uid=' + encodeURIComponent(uid) + '&biz=' + encodeURIComponent((window.AppState.settings||{}).businessName||'My Business');
                 modal.innerHTML = `
                 <div class="modal-box max-w-md w-full">
@@ -25256,7 +25256,8 @@ document.addEventListener('DOMContentLoaded',function(){
     var uid = (window.AppState && window.AppState.user && window.AppState.user.uid) || '';
     var biz = (window.AppState && window.AppState.settings && window.AppState.settings.businessName) || 'My Business';
     if(!uid){ window.showToast && window.showToast('Please sign in first'); return; }
-    var link = 'https://nj1637.github.io/my-invoice/?uid=' + encodeURIComponent(uid) + '&biz=' + encodeURIComponent(biz);
+    var caPortalBase = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tools/ca-portal/';
+    var link = caPortalBase + '?uid=' + encodeURIComponent(uid) + '&biz=' + encodeURIComponent(biz);
     var existing = document.getElementById('ca-portal-overlay');
     if(existing) existing.remove();
     var ov = document.createElement('div');
