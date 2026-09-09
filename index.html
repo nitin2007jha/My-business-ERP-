@@ -7994,7 +7994,11 @@ window.updateDashboard = function() {
             const displayAmt = showExcl ? Math.max(0, baseSum-discAmt-tdsAmt) : grandTotal;
             // Taxable Amount display: toggle in settings
             const showTaxableExcl = (window.AppState.settings.taxableExclGST === true);
-            const taxableDisplay = showTaxableExcl ? baseSum : (baseSum + taxSum); // excl = base only, incl = full amount
+            // Taxable Amount is, by definition, the pre-GST base value it was ever calculated
+            // on — it must never equal Net Payable. Previously the default (toggle OFF) showed
+            // (base + tax), i.e. the full GST-inclusive amount, which made it identical to
+            // Net Payable. Always show the base amount here; the toggle only controls the label.
+            const taxableDisplay = baseSum;
             setText('summary-subtotal', window.formatCurrency(taxableDisplay, curr));
             setText('summary-tax', window.formatCurrency(taxSum, curr));
             setText('summary-grand', window.formatCurrency(displayAmt, curr));
@@ -10484,7 +10488,7 @@ try {
                 <table class="w-full text-left mb-6"><thead class="${tableHeadStyles}"><tr><th class="py-2 px-2 text-center w-12 rounded-tl-lg">#</th><th class="py-2 px-2">Description</th>${thHsn}<th class="py-2 px-2 text-center w-16">Qty</th><th class="py-2 px-2 text-right w-24">Rate</th><th class="py-2 px-2 text-center w-16">GST</th><th class="py-2 px-2 text-right w-32 rounded-tr-lg">Amount</th></tr></thead><tbody class="text-slate-700">${itemsHtml}</tbody></table>
                 <div class="flex justify-end mb-8"><div class="w-80 text-[12px]">
                     <table class="w-full">
-                        <tr class="border-b border-slate-100"><td class="py-1.5 text-slate-500">Taxable Amount${window.AppState.settings.taxableExclGST ? ' (excl. GST)' : ''}:</td><td class="py-1.5 text-right font-bold text-slate-800">${window.formatCurrency(window.AppState.settings.taxableExclGST ? taxableAmt : (taxableAmt + taxAmt), curr)}</td></tr>
+                        <tr class="border-b border-slate-100"><td class="py-1.5 text-slate-500">Taxable Amount:</td><td class="py-1.5 text-right font-bold text-slate-800">${window.formatCurrency(taxableAmt, curr)}</td></tr>
                         ${gstSummaryRowsHtml}
                         ${inv.discount > 0 ? `<tr class="border-b border-slate-100"><td class="py-1.5 text-emerald-600 font-medium">Discount (${inv.discountType==='percent'?inv.discount+'%':'Flat'}):</td><td class="py-1.5 text-right text-emerald-600 font-medium">- ${window.formatCurrency((Number(inv.subtotal)+Number(inv.totalTax)+Number(inv.tdsAmount||0)-Number(inv.grandTotal)),curr)}</td></tr>` : ''}
                         ${(window.isFeatureEnabled('tds') && inv.tdsAmount > 0) ? `<tr class="border-b border-slate-100"><td class="py-1.5 text-red-600 font-medium">TDS Deducted:</td><td class="py-1.5 text-right text-red-600 font-medium">- ${window.formatCurrency(inv.tdsAmount, curr)}</td></tr>` : ''}
@@ -12624,7 +12628,7 @@ var _settingsModals = {
       var taxChecked = document.getElementById('set-taxable-excl-gst') ? document.getElementById('set-taxable-excl-gst').checked : false;
       return `<div class="space-y-3">
         <label class="toggle-row"><label class="toggle"><input type="checkbox" id="smod-net-excl-gst" ${netChecked?'checked':''}><span class="toggle-track"></span></label><div><div class="text-sm font-semibold text-slate-700">Net Payable without GST</div><div class="text-xs text-slate-400">Grand total shows base amount only</div></div></label>
-        <label class="toggle-row"><label class="toggle"><input type="checkbox" id="smod-taxable-excl-gst" ${taxChecked?'checked':''}><span class="toggle-track"></span></label><div><div class="text-sm font-semibold text-slate-700">Show Taxable Amount (GST excluded)</div><div class="text-xs text-slate-400">Taxable = Net Payable − GST (e.g. 85.71 + 4.29 = 90)</div></div></label>
+        <label class="toggle-row" style="opacity:.55;pointer-events:none"><label class="toggle"><input type="checkbox" id="smod-taxable-excl-gst" ${taxChecked?'checked':''} disabled><span class="toggle-track"></span></label><div><div class="text-sm font-semibold text-slate-700">Show Taxable Amount (GST excluded)</div><div class="text-xs text-slate-400">Fixed: Taxable Amount is always the pre-GST base (e.g. 85.71), separate from Net Payable (90)</div></div></label>
       </div>`;
     },
     save: function() {
@@ -22909,11 +22913,19 @@ function continueInvoiceFlow(text){
     if(/wahi|same|wahi wala|wo hi/.test(tl)&&VC.ctx.lastProduct){return addItemToInvoice(VC.ctx.lastProduct,extractNumber(text)||1);}
     var multi=parseMultiProducts(text);
     if(multi.length>1){var msgs=[];multi.forEach(function(mp){msgs.push(addItemToInvoice(mp.product,mp.qty));});return msgs[msgs.length-1];}
-    var qty=1;var nm=text.match(/(\d+)/);if(nm)qty=parseInt(nm[1]);else{var hn=extractNumber(text);if(hn&&hn<10000)qty=hn;}
     var cleanQ=text.replace(/\d+/g,'').replace(/\b(packet|pcs|piece|unit|units|tablet|strip|box|bottle|dozen|ek|do|teen|char|paanch|chhe|saat|aath|nau|das|aur|or|bhi|ka|ki|ke)\b/gi,'').replace(/[,،]/g,' ').replace(/\s+/g,' ').trim();
     var pm=bestMatch(cleanQ,AS().products||[],function(p){return p.name;})||bestMatch(text,AS().products||[],function(p){return p.name;});
     if(pm){
-      if(qty===1&&!nm&&!extractNumber(text)){
+      // Only look for a spoken quantity in whatever text is left AFTER removing the
+      // matched product's own name — otherwise a digit that's part of the product
+      // name itself (e.g. "Medicine 1") gets mistaken for a quantity and the
+      // assistant silently assumes qty=1 instead of asking.
+      var nameEsc=pm.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      var leftover=text.replace(new RegExp(nameEsc,'i'),'').trim();
+      var qty=1,nm=leftover.match(/(\d+)/),hn=null;
+      if(nm)qty=parseInt(nm[1]);
+      else{hn=extractNumber(leftover);if(hn&&hn<10000)qty=hn;}
+      if(qty===1&&!nm&&!hn){
         VC.ctx.step=21;VC.ctx.data.pendingProduct=pm;
         return t(pm.name+' — kitni quantity chahiye?',pm.name+' — how many units?');
       }
@@ -23477,6 +23489,17 @@ function attachQuickReplies(bubbleEl,text){
   } else if(/kaunsa client\??\s*$|which client\??\s*$|kaunse client|kaun sa client/i.test(text)){
     var cls=(AS().clients||[]).slice(-8).reverse();
     if(cls.length)setTimeout(function(){renderPickerChips(cls,function(c){return c.name;},function(c){processText(c.name);});},250);
+  } else if(/payment\?/i.test(text)&&/upi/i.test(text)&&/credit/i.test(text)){
+    var payRow=document.createElement('div');payRow.className='vc-action-row';
+    var mkPayBtn=function(label,value,cls){
+      var b=document.createElement('button');b.className='vc-action-btn'+(cls?(' '+cls):'');b.textContent=label;
+      b.onclick=function(){payRow.remove();processText(value);};
+      return b;
+    };
+    payRow.appendChild(mkPayBtn('📱 UPI','upi','green'));
+    payRow.appendChild(mkPayBtn('💵 '+t('Cash','Cash'),'cash'));
+    payRow.appendChild(mkPayBtn('📝 '+t('Udhar','Credit'),'credit'));
+    bubbleEl.appendChild(payRow);
   }
 }
 function addTyping(){
