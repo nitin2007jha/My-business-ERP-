@@ -181,8 +181,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:#f9f9f9;color:#212529;-
   animation:slideUp .18s ease-out}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .modal-head{padding:14px 20px;border-bottom:1px solid var(--ob);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-shrink:0;
   background:var(--op);border-radius:6px 6px 0 0}
+/* Space-between with 2 children spreads title/actions apart nicely, but once desktop
+   injects extra minimize/maximize buttons as siblings here, space-between would scatter
+   ALL of them evenly across the header (big ugly gaps). Keep the title hugging the left
+   and let every trailing element (minimize, maximize, action group, close) hug the right
+   as one tight cluster instead. */
+.modal-head > *:first-child{margin-right:auto;min-width:0;}
 .modal-head .font-bold,.modal-head .text-slate-800{color:#fff!important}
 .modal-head .text-slate-400,.modal-head .text-xs.text-slate-400{color:rgba(255,255,255,.65)!important}
 .modal-head [class*="text-"][class*="600"]{color:#fff!important}
@@ -635,13 +641,25 @@ body.fullscreen-page-open #dash-fab-row{
 // Only a device with a fine pointer (mouse), hover capability, no touch,
 // and a reasonably large window counts as "desktop".
 (function(){
+  function isChromeDesktopSiteRequested(){
+    // Chrome/Android's "Desktop site" toggle strips the "Mobile" token from the UA
+    // string (and widens the layout viewport) while the device itself is still a
+    // touchscreen phone/tablet — so the noTouch check below would otherwise miss it.
+    try{
+      var ua = navigator.userAgent || '';
+      var isMobilePlatform = /Android|iPhone|iPad|iPod/i.test(ua);
+      var uaSaysMobile = /Mobi/i.test(ua);
+      return isMobilePlatform && !uaSaysMobile && window.innerWidth >= 850;
+    }catch(e){ return false; }
+  }
   function isRealDesktop(){
     try{
       var fine = window.matchMedia && window.matchMedia('(pointer:fine)').matches;
       var hover = window.matchMedia && window.matchMedia('(hover:hover)').matches;
       var noTouch = !('ontouchstart' in window) && (navigator.maxTouchPoints||0) === 0;
       var wide = window.innerWidth >= 900;
-      return !!(fine && hover && noTouch && wide);
+      var realDesktopPC = !!(fine && hover && noTouch && wide);
+      return realDesktopPC || isChromeDesktopSiteRequested();
     }catch(e){ return false; }
   }
   function applyDesktopClass(){
@@ -7018,6 +7036,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.showToast = function(message, type = 'success') {
             const container = document.getElementById('toast-container');
             if (!container) return;
+            window._playUiSound && window._playUiSound(type);
 
             // Limit to 3 visible toasts — remove oldest if exceeded
             const existing = container.querySelectorAll('div');
@@ -8897,6 +8916,10 @@ try {
 
             // Card view (mobile primary)
             const cardsEl = document.getElementById('records-list-cards');
+            const tableWrapEl = document.getElementById('records-table-wrap');
+            const _recDesktopUI = !!(window._isDesktopUI && window._isDesktopUI());
+            if(tableWrapEl){ tableWrapEl.style.display = _recDesktopUI ? 'block' : 'none'; tableWrapEl.classList.toggle('hidden', !_recDesktopUI); }
+            if(cardsEl) cardsEl.style.display = _recDesktopUI ? 'none' : 'block';
             if(cardsEl) {
                 if(filtered.length === 0) {
                     cardsEl.innerHTML = `<div style="text-align:center;padding:48px 16px;">
@@ -9558,12 +9581,21 @@ try {
                 return;
             }
 
-            setHTML('clients-list', filteredClients.map(c => {
+            const _clRows = filteredClients.map(c => {
                 const cInvoices = invoices.filter(i => i.client.name === c.name && i.status === 'final' && i.status !== 'void');
                 const clv = cInvoices.reduce((sum, i) => sum + Number(i.grandTotal||0), 0);
                 const unpaid = cInvoices.filter(i => i.paymentStatus !== 'paid').reduce((s, i) => s + Number(i.grandTotal||0), 0);
                 const isBday = c.birthday && c.birthday.slice(5) === todayMMDD;
                 const paidCount = cInvoices.filter(i => i.paymentStatus === 'paid').length;
+                return {c, cInvoices, clv, unpaid, isBday, paidCount};
+            });
+
+            if(window._isDesktopUI && window._isDesktopUI()){
+                setHTML('clients-list', window._renderClientsDesktopTable(_clRows));
+                return;
+            }
+
+            setHTML('clients-list', _clRows.map(({c, cInvoices, clv, unpaid, isBday, paidCount}) => {
                 const avatarColors = ['#0b6377','#8a5d80','#017e84','#084a5c','#a17c4f','#3d6e6a','#6d5a9e'];
                 const color = avatarColors[c.name.charCodeAt(0) % avatarColors.length];
 
@@ -9606,6 +9638,40 @@ try {
                   </div>
                 </div>`;
             }).join(''));
+        };
+
+        // ── Desktop data-table renderer for Clients (used only when body.is-desktop-device) ──
+        window._renderClientsDesktopTable = function(rows){
+            if(!rows.length) return '';
+            const avatarColors = ['#0b6377','#8a5d80','#017e84','#084a5c','#a17c4f','#3d6e6a','#6d5a9e'];
+            const trs = rows.map(({c, cInvoices, clv, unpaid, isBday, paidCount}) => {
+                const color = avatarColors[c.name.charCodeAt(0) % avatarColors.length];
+                const photoHtml = c.clientImage ? `<img src="${c.clientImage}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;">` : `<div style="width:34px;height:34px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0;">${c.name.charAt(0).toUpperCase()}</div>`;
+                return `
+                <tr class="dt-row" onclick="openClientDetailPage('${c.id}')">
+                  <td><div style="display:flex;align-items:center;gap:10px;">${photoHtml}<div><div style="font-weight:700;color:#212529;">${c.name}${isBday?' 🎂':''}</div>${c.address ? `<div style="font-size:11px;color:#8a94a6;">${c.address.split(',')[0]}</div>` : ''}</div></div></td>
+                  <td>${c.mobile || '—'}</td>
+                  <td style="text-align:center;">${cInvoices.length}</td>
+                  <td style="text-align:right;font-weight:700;">${formatINR(clv)}</td>
+                  <td style="text-align:right;font-weight:700;color:${unpaid>0?'#dc3545':'#28a745'};">${unpaid>0?formatINR(unpaid):'✓ Clear'}</td>
+                  <td style="text-align:center;">${paidCount}</td>
+                  <td style="text-align:right;">
+                    <button class="dt-action-btn" title="Edit" onclick="event.stopPropagation();openClientDrawer('${c.id}',false)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ced4da" stroke-width="2" style="vertical-align:middle;margin-left:4px;"><polyline points="9 18 15 12 9 6"/></svg>
+                  </td>
+                </tr>`;
+            }).join('');
+            return `
+            <div class="dt-table-wrap">
+              <table class="dt-table">
+                <thead><tr>
+                  <th>Client</th><th>Mobile</th><th style="text-align:center;">Invoices</th>
+                  <th style="text-align:right;">Billed</th><th style="text-align:right;">Outstanding</th>
+                  <th style="text-align:center;">Paid</th><th></th>
+                </tr></thead>
+                <tbody>${trs}</tbody>
+              </table>
+            </div>`;
         };
 
         // ── CLIENT DETAIL PAGE ───────────────────────────────────────
@@ -27515,6 +27581,721 @@ document.addEventListener('DOMContentLoaded',function(){
   // ── Boot ─────────────────────────────────────────────────────────
   window.NotifCenter.init();
 
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ADAPTIVE UX LAYER — device-aware animation, gestures & shortcuts.
+     Desktop (mouse+keyboard): Ctrl/Cmd+K search, Esc to close panels,
+       styled hover tooltips, focus-ring only for keyboard users.
+     Mobile/touch: edge-swipe between bottom-nav tabs, tap ripple,
+       light haptic feedback, larger touch targets.
+     Universal: smooth tab-entrance animation, reduced-motion respect.
+     Pure additive — wraps/observes only, never edits existing functions.
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+  @keyframes uxTabInUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes uxTabInFade{ from{opacity:0;} to{opacity:1;} }
+  .tab.ux-enter{ animation: uxTabInUp .32s cubic-bezier(.16,1,.3,1); }
+  body.is-desktop-device .tab.ux-enter{ animation: uxTabInFade .22s ease-out; }
+
+  body.ux-kbd-nav :focus{ outline:2px solid var(--op,#0b6377); outline-offset:2px; border-radius:4px; }
+  body:not(.ux-kbd-nav) :focus{ outline:none; }
+
+  .ux-ripple{ position:absolute; border-radius:50%; background:rgba(0,0,0,.12); transform:scale(0); pointer-events:none; animation:uxRipple .5s ease-out forwards; }
+  body.is-desktop-device .ux-ripple{ display:none; }
+  @keyframes uxRipple{ to{ transform:scale(2.6); opacity:0; } }
+
+  .ux-tooltip{ position:fixed; z-index:99999; background:#1a1a1a; color:#fff; font-size:11px; font-weight:600; padding:5px 9px; border-radius:6px; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .12s ease, transform .12s ease; white-space:nowrap; }
+  .ux-tooltip.show{ opacity:1; transform:translateY(0); }
+
+  .ux-swipe-hint{ position:fixed; top:50%; transform:translateY(-50%); font-size:26px; color:rgba(0,0,0,.16); z-index:9998; pointer-events:none; opacity:0; transition:opacity .15s; }
+  .ux-swipe-hint.left{ left:6px; } .ux-swipe-hint.right{ right:6px; }
+  .ux-swipe-hint.show{ opacity:1; }
+
+  body:not(.is-desktop-device) .bnav-item, body:not(.is-desktop-device) .btn-icon{ min-height:40px; min-width:40px; }
+</style>
+<script>
+(function(){
+  'use strict';
+  function isDesktop(){ return document.body.classList.contains('is-desktop-device'); }
+
+  /* 1. Tab-switch entrance animation */
+  function patchSwitchTabForAnimation(){
+    if(!window.switchTab || window.switchTab._uxAnimPatched) return;
+    var orig = window.switchTab;
+    window.switchTab = function(tabId){
+      var r = orig.apply(this, arguments);
+      try{
+        var el = document.getElementById('view-'+tabId);
+        if(el){ el.classList.remove('ux-enter'); void el.offsetWidth; el.classList.add('ux-enter'); }
+      }catch(e){}
+      return r;
+    };
+    for(var k in orig) window.switchTab[k] = orig[k];
+    window.switchTab._uxAnimPatched = true;
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(patchSwitchTabForAnimation, 1200); setTimeout(patchSwitchTabForAnimation, 3200); });
+  setTimeout(patchSwitchTabForAnimation, 1700);
+
+  /* 2. Keyboard-vs-mouse focus ring (a11y) */
+  window.addEventListener('keydown', function(e){ if(e.key === 'Tab') document.body.classList.add('ux-kbd-nav'); });
+  window.addEventListener('mousedown', function(){ document.body.classList.remove('ux-kbd-nav'); });
+
+  /* 3. Desktop keyboard shortcuts: Ctrl/Cmd+K search, Esc to close topmost panel */
+  window.addEventListener('keydown', function(e){
+    if(!isDesktop()) return;
+    var activeTag = (document.activeElement && document.activeElement.tagName) || '';
+    var typing = /INPUT|TEXTAREA|SELECT/.test(activeTag) || (document.activeElement && document.activeElement.isContentEditable);
+
+    if((e.ctrlKey||e.metaKey) && (e.key==='k'||e.key==='K')){
+      e.preventDefault();
+      window.openGlobalSearch && window.openGlobalSearch();
+      return;
+    }
+    if(e.key === 'Escape' && !typing){
+      var openKeys = Object.keys(window._openFullscreenPages||{});
+      if(openKeys.length && window._fsPageCloseFns){
+        var fn = window._fsPageCloseFns[openKeys[openKeys.length-1]];
+        if(fn){ fn(); return; }
+      }
+      var openDrawerOrModal = document.querySelector('.drawer.open, .modal.open');
+      if(openDrawerOrModal){
+        var bg = document.querySelector('.drawer-bg[onclick], .modal-bg[onclick]');
+        if(openDrawerOrModal.classList.contains('modal') && openDrawerOrModal.onclick){
+          openDrawerOrModal.click(); // modal itself closes on outside-click via its own onclick
+        } else if(bg){ bg.click(); }
+        else openDrawerOrModal.classList.remove('open');
+      }
+    }
+  });
+
+  /* 4. Desktop styled tooltips (replaces native browser title tooltip) */
+  var tipEl = null;
+  function showTip(target){
+    if(!isDesktop()) return;
+    var text = target.getAttribute('title');
+    if(!text) return;
+    target.setAttribute('data-ux-title', text);
+    target.removeAttribute('title');
+    if(!tipEl){ tipEl = document.createElement('div'); tipEl.className='ux-tooltip'; document.body.appendChild(tipEl); }
+    tipEl.textContent = text;
+    var r = target.getBoundingClientRect();
+    tipEl.style.left = Math.max(6, r.left + r.width/2 - 40) + 'px';
+    tipEl.style.top = (r.bottom + 8) + 'px';
+    requestAnimationFrame(function(){
+      tipEl.classList.add('show');
+      var tr = tipEl.getBoundingClientRect();
+      tipEl.style.left = Math.max(6, Math.min(window.innerWidth-tr.width-6, r.left + r.width/2 - tr.width/2)) + 'px';
+    });
+  }
+  function hideTip(target){
+    if(tipEl) tipEl.classList.remove('show');
+    if(target && target.getAttribute('data-ux-title')){ target.setAttribute('title', target.getAttribute('data-ux-title')); }
+  }
+  document.addEventListener('mouseover', function(e){ var t = e.target.closest && e.target.closest('[title]'); if(t) showTip(t); });
+  document.addEventListener('mouseout', function(e){ var t = e.target.closest && e.target.closest('[data-ux-title]'); if(t) hideTip(t); });
+
+  /* 5. Touch ripple feedback (mobile/touch only) */
+  document.addEventListener('touchstart', function(e){
+    if(isDesktop()) return;
+    var t = e.target.closest && e.target.closest('button, .btn, .card, .bnav-item, .btn-icon');
+    if(!t) return;
+    var cs = getComputedStyle(t);
+    if(cs.position === 'static') t.style.position = 'relative';
+    if(cs.overflow === 'visible') t.style.overflow = 'hidden';
+    var rect = t.getBoundingClientRect();
+    var touch = e.touches[0];
+    var size = Math.max(rect.width, rect.height);
+    var ripple = document.createElement('span');
+    ripple.className = 'ux-ripple';
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (touch.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (touch.clientY - rect.top - size/2) + 'px';
+    t.appendChild(ripple);
+    setTimeout(function(){ ripple.remove(); }, 520);
+  }, {passive:true});
+
+  /* 6. Mobile edge-swipe between adjacent bottom-nav tabs, + iOS-style
+        edge-from-left swipe-right = Back (distinct gesture zone) */
+  (function(){
+    var startX=0, startY=0, tracking=false, hintL, hintR, edgeStart=false;
+    function bnavOrder(){
+      var items = document.querySelectorAll('.bnav-item[id^="bnav-"]');
+      var order = [];
+      items.forEach(function(i){ if(i.id !== 'bnav-more') order.push(i.id.replace('bnav-','')); });
+      return order;
+    }
+    function ensureHints(){
+      if(!hintL){ hintL=document.createElement('div'); hintL.className='ux-swipe-hint left'; hintL.textContent='‹'; document.body.appendChild(hintL); }
+      if(!hintR){ hintR=document.createElement('div'); hintR.className='ux-swipe-hint right'; hintR.textContent='›'; document.body.appendChild(hintR); }
+    }
+    document.addEventListener('touchstart', function(e){
+      if(isDesktop()) return;
+      if(window._openFullscreenPages && Object.keys(window._openFullscreenPages).length){ tracking=false; return; }
+      if(document.querySelector('.drawer.open, .modal.open')){ tracking=false; return; }
+      var blocked = e.target.closest && e.target.closest('input, textarea, select, canvas, svg, [data-ux-no-swipe], .overflow-x-auto, .overflow-x-scroll');
+      if(blocked){ tracking=false; return; }
+      var t = e.touches[0];
+      startX = t.clientX; startY = t.clientY; tracking = true;
+      edgeStart = t.clientX <= 24; // touch began at the very left edge
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if(!tracking) return;
+      var t = e.touches[0];
+      var dx = t.clientX - startX, dy = t.clientY - startY;
+      if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)*2){
+        ensureHints();
+        if(dx > 0){ hintL.classList.add('show'); hintR.classList.remove('show'); }
+        else { hintR.classList.add('show'); hintL.classList.remove('show'); }
+      }
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      if(!tracking) return;
+      tracking = false;
+      if(hintL) hintL.classList.remove('show');
+      if(hintR) hintR.classList.remove('show');
+      var t = e.changedTouches[0];
+      var dx = t.clientX - startX, dy = t.clientY - startY;
+
+      // Edge-zone swipe-right → Back (iOS convention), takes priority over tab-switch
+      if(edgeStart && dx > 60 && Math.abs(dx) > Math.abs(dy)*2){
+        var backBtn = document.getElementById('topbar-back-btn');
+        if(backBtn && getComputedStyle(backBtn).display !== 'none' && window._goBack){ window._goBack(); }
+        else { history.back(); }
+        if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(e2){} }
+        return;
+      }
+
+      if(Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy)*2) return;
+      var order = bnavOrder();
+      var cur = (window.AppState && window.AppState.activeTab) || window._currentTab;
+      var idx = order.indexOf(cur);
+      if(idx === -1) return;
+      var nextIdx = dx < 0 ? idx+1 : idx-1; // swipe left → next tab, swipe right → previous tab
+      if(nextIdx < 0 || nextIdx >= order.length) return;
+      window.switchTab && window.switchTab(order[nextIdx]);
+      window.updateBnav && window.updateBnav(order[nextIdx]);
+      if(navigator.vibrate){ try{ navigator.vibrate(8); }catch(e2){} }
+    }, {passive:true});
+  })();
+
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ADAPTIVE UX LAYER — BATCH 2
+     1. Manual device-mode override pill (Auto / Mobile / Tablet / Desktop)
+     2. PWA standalone safe-area handling
+     3. Pull-to-refresh on the main scroll area (mobile)
+     4. Desktop card hover elevation
+     5. Device-aware toast position (top-center mobile, bottom-right desktop)
+     Pure additive — wraps/observes only, never edits existing functions.
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+  /* PWA standalone: push content below the notch/status bar and above the home indicator */
+  body.is-pwa-standalone #topbar{ padding-top:env(safe-area-inset-top,0px); height:calc(46px + env(safe-area-inset-top,0px)); }
+  body.is-pwa-standalone #bottom-nav-bar{ padding-bottom:env(safe-area-inset-bottom,0px); }
+
+  /* Desktop: lift cards on hover for a tactile, clickable feel */
+  body.is-desktop-device .card.cursor-pointer:hover,
+  body.is-desktop-device .card-hover:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+
+  /* Device-aware toast position */
+  body:not(.is-desktop-device) #toast-container{ top:max(12px, env(safe-area-inset-top,0px)); left:50%; right:auto; transform:translateX(-50%); align-items:center; }
+  body.is-desktop-device #toast-container{ top:auto; bottom:16px; right:16px; }
+
+  /* Device-mode switcher pill (topbar) */
+  #ux-device-pill{ position:relative; }
+  #ux-device-menu{ position:fixed; top:52px; right:8px; background:#fff; border:1px solid var(--ob,#dee2e6); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.18); padding:6px; z-index:9999; min-width:170px; display:none; }
+  #ux-device-menu.show{ display:block; animation:uxTabInFade .15s ease-out; }
+  #ux-device-menu button{ width:100%; display:flex; align-items:center; gap:8px; padding:8px 10px; border:none; background:none; border-radius:8px; font-size:13px; font-weight:600; color:#495057; cursor:pointer; text-align:left; }
+  #ux-device-menu button:hover{ background:var(--op-light,#eef7f8); }
+  #ux-device-menu button.active{ color:var(--op,#0b6377); background:var(--op-light,#eef7f8); }
+
+  /* Pull-to-refresh visual */
+  #ux-ptr{ position:fixed; left:50%; top:calc(env(safe-area-inset-top,0px) + 8px); transform:translate(-50%,-60px); width:34px; height:34px; border-radius:50%; background:#fff; box-shadow:0 4px 14px rgba(0,0,0,.18); display:flex; align-items:center; justify-content:center; z-index:9997; transition:transform .15s ease, opacity .15s ease; opacity:0; }
+  #ux-ptr.show{ opacity:1; }
+  #ux-ptr svg{ width:18px; height:18px; transition:transform .1s linear; }
+  #ux-ptr.spin svg{ animation:uxSpin .6s linear infinite; }
+  @keyframes uxSpin{ to{ transform:rotate(360deg); } }
+</style>
+<script>
+(function(){
+  'use strict';
+  function isDesktop(){ return document.body.classList.contains('is-desktop-device'); }
+
+  /* ── 1. Manual device-mode override: Auto / Mobile / Tablet / Desktop ── */
+  var MODE_KEY = 'ux_device_mode';
+  var MODES = [
+    {id:'auto', label:'Auto-Detect', icon:'wand-2'},
+    {id:'mobile', label:'Mobile View', icon:'smartphone'},
+    {id:'tablet', label:'Tablet View', icon:'tablet'},
+    {id:'desktop', label:'Desktop View', icon:'monitor'}
+  ];
+  function getMode(){ try{ return localStorage.getItem(MODE_KEY) || 'auto'; }catch(e){ return 'auto'; } }
+  function setMode(m){ try{ localStorage.setItem(MODE_KEY, m); }catch(e){} applyOverride(); renderMenu(); }
+  function applyOverride(){
+    var m = getMode();
+    if(m === 'auto'){ document.body.classList.remove('is-tablet-device'); return; }
+    if(m === 'desktop'){ document.body.classList.add('is-desktop-device'); document.body.classList.remove('is-tablet-device'); }
+    else if(m === 'tablet'){ document.body.classList.remove('is-desktop-device'); document.body.classList.add('is-tablet-device'); }
+    else if(m === 'mobile'){ document.body.classList.remove('is-desktop-device'); document.body.classList.remove('is-tablet-device'); }
+  }
+  // Re-apply after the original real-device detector runs (registered earlier, so it fires first on the same event)
+  window.addEventListener('resize', applyOverride);
+  document.addEventListener('DOMContentLoaded', applyOverride);
+
+  var menuEl, pillEl;
+  function renderMenu(){
+    if(!menuEl) return;
+    var m = getMode();
+    menuEl.innerHTML = MODES.map(function(mode){
+      return '<button data-mode="'+mode.id+'" class="'+(mode.id===m?'active':'')+'"><i data-lucide="'+mode.icon+'" style="width:15px;height:15px;flex-shrink:0;"></i>'+mode.label+'</button>';
+    }).join('');
+    if(typeof lucide !== 'undefined') lucide.createIcons({node:menuEl});
+    menuEl.querySelectorAll('button').forEach(function(b){
+      b.onclick = function(){ setMode(b.getAttribute('data-mode')); menuEl.classList.remove('show'); };
+    });
+  }
+  function buildPill(){
+    var topbar = document.getElementById('topbar');
+    if(!topbar || document.getElementById('ux-device-pill')) return;
+    pillEl = document.createElement('button');
+    pillEl.id = 'ux-device-pill';
+    pillEl.className = 'btn-icon';
+    pillEl.title = 'Switch device view (Auto/Mobile/Tablet/Desktop)';
+    pillEl.innerHTML = '<i data-lucide="monitor-smartphone" style="width:18px;height:18px;"></i>';
+    pillEl.onclick = function(e){
+      e.stopPropagation();
+      menuEl.classList.toggle('show');
+    };
+    topbar.appendChild(pillEl);
+    menuEl = document.createElement('div');
+    menuEl.id = 'ux-device-menu';
+    document.body.appendChild(menuEl);
+    renderMenu();
+    if(typeof lucide !== 'undefined') lucide.createIcons({node:pillEl});
+    document.addEventListener('click', function(e){
+      if(menuEl && !menuEl.contains(e.target) && e.target !== pillEl) menuEl.classList.remove('show');
+    });
+  }
+  setTimeout(buildPill, 1500);
+  setTimeout(buildPill, 3000);
+  setTimeout(applyOverride, 1600); // apply any saved override once the real detector has run at least once
+
+  /* ── 2. PWA standalone detection ── */
+  function checkStandalone(){
+    var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    document.body.classList.toggle('is-pwa-standalone', !!standalone);
+  }
+  checkStandalone();
+  document.addEventListener('DOMContentLoaded', checkStandalone);
+
+  /* ── 3. Pull-to-refresh (mobile only) ── */
+  (function(){
+    var startY=0, pulling=false, ptr;
+    var THRESHOLD = 70;
+    function ensurePtr(){
+      if(!ptr){
+        ptr = document.createElement('div');
+        ptr.id = 'ux-ptr';
+        ptr.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#0b6377" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>';
+        document.body.appendChild(ptr);
+      }
+    }
+    function scrollTop(){
+      var activeTab = document.querySelector('.tab.active');
+      var main = document.getElementById('main-area');
+      return Math.max(activeTab ? activeTab.scrollTop : 0, main ? main.scrollTop : 0);
+    }
+    document.addEventListener('touchstart', function(e){
+      if(isDesktop()) return;
+      if(window._openFullscreenPages && Object.keys(window._openFullscreenPages).length) return;
+      if(document.querySelector('.drawer.open, .modal.open')) return;
+      if(scrollTop() > 2) return;
+      startY = e.touches[0].clientY; pulling = true;
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if(!pulling) return;
+      var dy = e.touches[0].clientY - startY;
+      if(dy <= 0) return;
+      if(scrollTop() > 2){ pulling=false; return; }
+      ensurePtr();
+      var dist = Math.min(dy*0.5, 90);
+      ptr.style.opacity = Math.min(dist/40, 1);
+      ptr.style.transform = 'translate(-50%,' + (dist-60) + 'px) rotate(' + (dist*3) + 'deg)';
+      ptr.classList.add('show');
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      if(!pulling) return;
+      pulling = false;
+      var dy = (e.changedTouches[0].clientY - startY) * 0.5;
+      if(!ptr) return;
+      if(dy >= THRESHOLD){
+        ptr.style.transform = 'translate(-50%,8px)';
+        ptr.classList.add('spin');
+        if(navigator.vibrate){ try{ navigator.vibrate(10); }catch(e2){} }
+        setTimeout(function(){ location.reload(); }, 450);
+      } else {
+        ptr.style.transform = 'translate(-50%,-60px)';
+        ptr.classList.remove('show');
+      }
+    }, {passive:true});
+  })();
+
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ADAPTIVE UX LAYER — BATCH 3: Desktop "real software" shell.
+     This is the visible, always-on part of the desktop transformation:
+     1. A Tally/Odoo-style status bar pinned to the bottom of the screen
+        (business name, live clock, sync status, keyboard-shortcut hints)
+        — visible immediately on load, no drawer needs to be opened.
+     2. A Maximize button next to Minimize on every floating panel
+        (drawer/modal/account/settings), so panels can expand into a
+        large workspace window like a real desktop app, not just a popup.
+     Desktop-only throughout; mobile is untouched.
+     Pure additive — wraps/observes only, never edits existing functions.
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+  #ux-status-bar{ display:none; }
+  body.is-desktop-device #ux-status-bar{
+    display:flex; align-items:center; gap:14px;
+    position:fixed; left:220px; right:0; bottom:0; height:26px;
+    background:#16262c; color:rgba(255,255,255,.72);
+    font-size:11px; font-weight:600; font-family:inherit;
+    padding:0 14px; z-index:85; border-top:1px solid rgba(255,255,255,.08);
+    user-select:none;
+  }
+  body.is-desktop-device #main-area{ padding-bottom:26px; }
+  #ux-status-bar .ux-sb-sep{ width:1px; height:13px; background:rgba(255,255,255,.15); flex-shrink:0; }
+  #ux-status-bar .ux-sb-dot{ width:6px; height:6px; border-radius:50%; background:#2ecc71; box-shadow:0 0 5px #2ecc71; flex-shrink:0; }
+  #ux-status-bar .ux-sb-dot.off{ background:#e74c3c; box-shadow:0 0 5px #e74c3c; }
+  #ux-status-bar .ux-sb-key{ background:rgba(255,255,255,.12); padding:1px 5px; border-radius:4px; font-size:9.5px; font-weight:700; margin-right:3px; }
+  #ux-status-bar .ux-sb-item{ display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  #ux-status-bar .ux-sb-spacer{ flex:1; }
+
+  .drawer-maximize-btn{ display:none; }
+  body.is-desktop-device .drawer-maximize-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:6px; border:none; cursor:pointer;
+    color:rgba(255,255,255,.75)!important; background:rgba(255,255,255,.1)!important;
+    margin-right:2px;
+  }
+  .drawer-maximize-btn:hover{ color:#fff!important; background:rgba(255,255,255,.2)!important; }
+  .drawer-maximize-btn.light{ color:#64748b!important; background:rgba(11,99,119,.1)!important; }
+  .drawer-maximize-btn.light:hover{ color:#0b6377!important; background:rgba(11,99,119,.2)!important; }
+
+  body.is-desktop-device .drawer.ux-maximized,
+  body.is-desktop-device .modal.ux-maximized{
+    width:94vw !important; max-width:1400px !important;
+    height:88vh !important; max-height:88vh !important;
+    transition:width .22s cubic-bezier(.16,1,.3,1), height .22s cubic-bezier(.16,1,.3,1) !important;
+  }
+</style>
+<script>
+(function(){
+  'use strict';
+
+  /* ── 1. Desktop status bar ── */
+  function buildStatusBar(){
+    if(document.getElementById('ux-status-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'ux-status-bar';
+    bar.innerHTML =
+      '<span class="ux-sb-item"><span class="ux-sb-dot" id="ux-sb-dot"></span><span id="ux-sb-biz">My Business</span></span>' +
+      '<span class="ux-sb-sep"></span>' +
+      '<span class="ux-sb-item" id="ux-sb-clock">--:--:--</span>' +
+      '<span class="ux-sb-spacer"></span>' +
+      '<span class="ux-sb-item"><span class="ux-sb-key">Ctrl+K</span>Search</span>' +
+      '<span class="ux-sb-item"><span class="ux-sb-key">Esc</span>Close panel</span>' +
+      '<span class="ux-sb-item"><span class="ux-sb-key">Ctrl+M</span>Minimize panel</span>';
+    document.body.appendChild(bar);
+    tickClock();
+    setInterval(tickClock, 1000);
+    syncBizName();
+    syncConnectivity();
+    setInterval(syncBizName, 4000);
+    setInterval(syncConnectivity, 2000);
+  }
+  function tickClock(){
+    var el = document.getElementById('ux-sb-clock');
+    if(!el) return;
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mm = String(d.getMinutes()).padStart(2,'0');
+    var ss = String(d.getSeconds()).padStart(2,'0');
+    var dd = d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    el.textContent = dd + '  ' + hh + ':' + mm + ':' + ss;
+  }
+  function syncBizName(){
+    var src = document.getElementById('sidebar-biz-name');
+    var dst = document.getElementById('ux-sb-biz');
+    if(src && dst && src.textContent.trim()) dst.textContent = src.textContent.trim();
+  }
+  function syncConnectivity(){
+    var src = document.getElementById('topbar-live-label');
+    var dot = document.getElementById('ux-sb-dot');
+    if(!src || !dot) return;
+    var offline = /offline/i.test(src.textContent||'');
+    dot.classList.toggle('off', offline);
+  }
+  setTimeout(buildStatusBar, 1500);
+  setTimeout(buildStatusBar, 3200);
+
+  /* ── 2. Maximize button on floating panels (alongside existing Minimize) ── */
+  var HEADER_SELECTORS = ['.modal-head', '.drawer-head', '#acct-hero', '#sp-header'];
+  var LIGHT_HEADERS = {'acct-hero':1, 'sp-header':1};
+  var EXPAND_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m11-5v3a2 2 0 0 1-2 2h-3"/></svg>';
+  var SHRINK_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m11-5h-3a2 2 0 0 0-2 2v3"/></svg>';
+  function findPanelForHeader(header){
+    var p = header.closest('.modal, .drawer');
+    if(p) return p;
+    if(header.id === 'acct-hero') return document.getElementById('acct-panel');
+    if(header.id === 'sp-header') return document.getElementById('settings-panel');
+    return null;
+  }
+  function injectMaximizeButtons(){
+    if(!document.body || !document.body.classList.contains('is-desktop-device')) return;
+    HEADER_SELECTORS.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(header){
+        if(header.querySelector('.drawer-maximize-btn')) return;
+        var panel = findPanelForHeader(header);
+        if(!panel || !panel.id) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'drawer-maximize-btn' + (LIGHT_HEADERS[header.id] ? ' light' : '');
+        btn.title = 'Maximize';
+        btn.setAttribute('aria-label', 'Maximize');
+        btn.innerHTML = EXPAND_ICON;
+        btn.onclick = function(e){
+          e.stopPropagation();
+          var max = panel.classList.toggle('ux-maximized');
+          btn.innerHTML = max ? SHRINK_ICON : EXPAND_ICON;
+          btn.title = max ? 'Restore' : 'Maximize';
+        };
+        // Place it just before the existing minimize button if present, else before the last child (usually Close)
+        var minBtn = header.querySelector('.drawer-minimize-btn');
+        if(minBtn) header.insertBefore(btn, minBtn);
+        else if(header.lastElementChild) header.insertBefore(btn, header.lastElementChild);
+        else header.appendChild(btn);
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    injectMaximizeButtons();
+    var mo = new MutationObserver(function(){ injectMaximizeButtons(); });
+    mo.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+  });
+  setTimeout(injectMaximizeButtons, 1500);
+  window.addEventListener('resize', injectMaximizeButtons);
+
+  /* Ctrl/Cmd+M → minimize the topmost open floating panel (desktop shortcut per spec #12) */
+  window.addEventListener('keydown', function(e){
+    if(!document.body.classList.contains('is-desktop-device')) return;
+    if((e.ctrlKey||e.metaKey) && (e.key==='m'||e.key==='M')){
+      var openPanel = document.querySelector('.drawer.open, .modal.open');
+      if(openPanel){
+        e.preventDefault();
+        var header = openPanel.querySelector('.modal-head, .drawer-head');
+        if(window._minimizeDesktopPanel && header) window._minimizeDesktopPanel(openPanel, header);
+      }
+    }
+  });
+
+})();
+</script>
+
+<!-- ── Desktop: floating-window treatment for fullscreen sub-pages (client/invoice/product
+     detail, drafts, search, notification center/settings) + desktop data-table styling ── -->
+<style>
+#fs-desktop-backdrop{
+  position:fixed;inset:0;z-index:198;
+  background:rgba(15,23,42,.4);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  display:none;opacity:0;transition:opacity .18s ease-out;
+}
+body.is-desktop-device #fs-desktop-backdrop.show{display:block;}
+body.is-desktop-device #fs-desktop-backdrop.show.in{opacity:1;}
+
+body.is-desktop-device .dt-floating-page{
+  position:fixed!important;inset:auto!important;height:auto!important;
+  top:50%!important;left:50%!important;
+  transform:translate(-50%,-50%) scale(.96)!important;
+  width:min(900px,94vw)!important;
+  max-height:88vh!important;
+  border-radius:18px!important;
+  box-shadow:0 24px 64px rgba(0,0,0,.32)!important;
+  opacity:0;
+  transition:transform .22s cubic-bezier(.16,1,.3,1),opacity .2s ease-out;
+  overflow:hidden!important;
+}
+body.is-desktop-device .dt-floating-page.dt-in{
+  transform:translate(-50%,-50%) scale(1)!important;opacity:1;
+}
+body.is-desktop-device .dt-floating-page > div:not([style*="display:none"]):first-child{flex-shrink:0;}
+body.is-desktop-device #invoice-detail-page.dt-floating-page{ width:min(640px,92vw)!important; }
+body.is-desktop-device #global-search-page.dt-floating-page{ max-height:min(560px,80vh)!important; }
+body.is-desktop-device #notif-center-page.dt-floating-page,
+body.is-desktop-device #notif-settings-page.dt-floating-page{ width:min(480px,92vw)!important; }
+
+/* Desktop data-table (Clients, and shared pattern for other list tabs) */
+.dt-table-wrap{ background:#fff;border-radius:16px;border:1px solid #eef0f2;overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.dt-table{ width:100%;border-collapse:collapse;font-size:13px; }
+.dt-table thead th{
+  position:sticky;top:0;background:#f8fafb;color:#64748b;font-weight:700;font-size:11px;
+  text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:12px 14px;
+  border-bottom:1px solid #eef0f2;z-index:1;
+}
+.dt-table tbody td{ padding:11px 14px;border-bottom:1px solid #f4f5f7;color:#212529;vertical-align:middle; }
+.dt-table tbody tr.dt-row{ cursor:pointer;transition:background .12s; }
+.dt-table tbody tr.dt-row:hover{ background:#f7fafb; }
+.dt-table tbody tr.dt-row:last-child td{ border-bottom:none; }
+.dt-action-btn{
+  background:rgba(11,99,119,.08);border:none;border-radius:8px;padding:6px;cursor:pointer;
+  color:#0b6377;display:inline-flex;align-items:center;justify-content:center;
+}
+.dt-action-btn:hover{ background:rgba(11,99,119,.16); }
+</style>
+<script>
+(function(){
+  'use strict';
+  function isDesktop(){ return document.body.classList.contains('is-desktop-device'); }
+  window._isDesktopUI = window._isDesktopUI || isDesktop;
+
+  // Same registry used by _fsPageCloseFns — pages that are plain position:fixed;inset:0
+  // full screens on mobile and should become centered floating windows on desktop.
+  var FLOAT_KEYS = ['client-detail-page','invoice-detail-page','product-detail-page','drafts-page','global-search-page','notif-center-page','notif-settings-page'];
+  var backdrop = null;
+
+  function ensureBackdrop(){
+    if(backdrop && document.body.contains(backdrop)) return backdrop;
+    backdrop = document.createElement('div');
+    backdrop.id = 'fs-desktop-backdrop';
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', function(){
+      window._closeTopFullscreenPage && window._closeTopFullscreenPage();
+    });
+    return backdrop;
+  }
+
+  function anyFloatingOpen(){
+    return FLOAT_KEYS.some(function(k){ return window._openFullscreenPages && window._openFullscreenPages[k]; });
+  }
+
+  function showFloating(key){
+    var el = document.getElementById(key);
+    if(!el) return;
+    var bd = ensureBackdrop();
+    el.classList.add('dt-floating-page');
+    bd.classList.add('show');
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ bd.classList.add('in'); el.classList.add('dt-in'); });
+    });
+  }
+  function hideFloating(key){
+    var el = document.getElementById(key);
+    if(el) el.classList.remove('dt-in');
+    if(backdrop && !anyFloatingOpen()) backdrop.classList.remove('in');
+    setTimeout(function(){
+      if(el) el.classList.remove('dt-floating-page');
+      if(backdrop && !anyFloatingOpen()) backdrop.classList.remove('show');
+    }, 200);
+  }
+  // If desktop mode is toggled ON while one of these pages is already open (e.g. via the
+  // topbar device switcher), retroactively apply the floating treatment — and reverse it
+  // if switched back to mobile while open.
+  function syncOpenPagesToCurrentMode(){
+    FLOAT_KEYS.forEach(function(key){
+      var isOpen = window._openFullscreenPages && window._openFullscreenPages[key];
+      var el = document.getElementById(key);
+      if(!el) return;
+      if(isOpen && isDesktop() && !el.classList.contains('dt-floating-page')) showFloating(key);
+      else if((!isOpen || !isDesktop()) && el.classList.contains('dt-floating-page')) hideFloating(key);
+    });
+  }
+  new MutationObserver(syncOpenPagesToCurrentMode).observe(document.body, {attributes:true, attributeFilter:['class']});
+
+  var _origOpen = window._markFullscreenPageOpen;
+  window._markFullscreenPageOpen = function(key){
+    var r = _origOpen ? _origOpen.apply(this, arguments) : undefined;
+    if(isDesktop() && FLOAT_KEYS.indexOf(key) !== -1) showFloating(key);
+    return r;
+  };
+  var _origClosed = window._markFullscreenPageClosed;
+  window._markFullscreenPageClosed = function(key){
+    var r = _origClosed ? _origClosed.apply(this, arguments) : undefined;
+    if(FLOAT_KEYS.indexOf(key) !== -1) hideFloating(key);
+    return r;
+  };
+
+  // Re-render the active tab's list when device mode flips, so card-stack ↔ data-table
+  // swaps immediately instead of waiting for the next data change.
+  var lastDesktopState = isDesktop();
+  var TABLE_AWARE_TABS = {clients: 'renderClients', records: 'renderRecords'};
+  function reRenderActiveTabIfModeChanged(){
+    var now = isDesktop();
+    if(now === lastDesktopState) return;
+    lastDesktopState = now;
+    var tab = window.AppState && window.AppState.activeTab;
+    var fnName = TABLE_AWARE_TABS[tab];
+    if(fnName && typeof window[fnName] === 'function') window[fnName]();
+  }
+  new MutationObserver(function(){ syncOpenPagesToCurrentMode(); reRenderActiveTabIfModeChanged(); }).observe(document.body, {attributes:true, attributeFilter:['class']});
+
+  // ── Best-effort mitigation for Chrome's "Request Desktop Site" zoom-blur ──
+  // When a touchscreen phone has Chrome's real Desktop-site toggle on, Chrome
+  // widens the layout viewport (so our desktop CSS activates) but then has to
+  // shrink the whole rendered canvas back down to fit the physical screen —
+  // that shrink is what makes everything look soft/blurry, not our CSS. We
+  // can't fully control Chrome's own zoom behaviour from page code, but
+  // re-asserting a device-width viewport once we're in desktop mode nudges
+  // Chrome to keep text/icon rendering at native resolution instead of
+  // scaling a wider canvas down. If you still see softness after this, use
+  // the app's own "Desktop View" switch in the topbar instead of Chrome's
+  // Desktop-site toggle — that one never touches the browser's zoom level.
+  function nudgeViewportForCrispRendering(){
+    var vp = document.querySelector('meta[name="viewport"]');
+    if(!vp) return;
+    if(isDesktop()){
+      vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover');
+    }
+  }
+  nudgeViewportForCrispRendering();
+  new MutationObserver(nudgeViewportForCrispRendering).observe(document.body, {attributes:true, attributeFilter:['class']});
+
+  // ── Lightweight synthesized UI sounds (done/success, error, warning) ──
+  // Reuses the same shared AudioContext and settings toggle as the existing
+  // notification sound, so it's one consistent "sound on/off" switch for the
+  // whole app (Notifications → Settings → Sound).
+  window._playUiSound = function(kind){
+    try{
+      var settings = (window.NotifCenter && typeof window.NotifCenter.getSettings === 'function') ? window.NotifCenter.getSettings() : {sound:true};
+      if(settings && settings.sound === false) return;
+      var ctx = window._ncAudioCtx || (window._ncAudioCtx = new (window.AudioContext||window.webkitAudioContext)());
+      function tone(freq, start, dur, peak){
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime+start);
+        g.gain.exponentialRampToValueAtTime(peak||0.1, ctx.currentTime+start+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+start+dur);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ctx.currentTime+start); o.stop(ctx.currentTime+start+dur+0.02);
+      }
+      if(kind === 'error'){ tone(320,0,0.16,0.09); tone(220,0.09,0.2,0.09); }
+      else if(kind === 'warning'){ tone(500,0,0.14,0.08); }
+      else { tone(660,0,0.1,0.08); tone(990,0.08,0.16,0.09); } // success / "done"
+    }catch(e){}
+  };
 })();
 </script>
 
