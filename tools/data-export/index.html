@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Data Export — My Business ERP</title>
+<link rel="stylesheet" href="../shared/shell.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  .dx-section{display:none;} .dx-section.active{display:block;animation:shellFadeUp .2s cubic-bezier(.22,1,.36,1);}
+  .dx-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;}
+  .dx-module-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid #f1f3f5;}
+  .dx-module-row:last-child{border-bottom:none;}
+  .dx-module-icon{width:36px;height:36px;border-radius:10px;background:var(--op-light);color:var(--op);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .dx-module-text{flex:1;min-width:0;}
+  .dx-module-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+  .dx-module-sub{font-size:11.5px;color:var(--sub);margin-top:1px;}
+  .dx-switch{width:40px;height:23px;border-radius:12px;background:var(--line);position:relative;cursor:pointer;flex-shrink:0;transition:background .18s;}
+  .dx-switch.on{background:var(--op);}
+  .dx-switch::after{content:'';position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s cubic-bezier(.34,1.56,.64,1);}
+  .dx-switch.on::after{transform:translateX(17px);}
+  .dx-fmt-row{display:flex;gap:8px;margin-top:10px;}
+  .dx-fmt-chip{flex:1;text-align:center;padding:10px 6px;border-radius:10px;border:1.5px solid var(--line);font-size:12px;font-weight:700;color:var(--sub);cursor:pointer;transition:all .15s;}
+  .dx-fmt-chip.active{border-color:var(--op);background:var(--op-light);color:var(--op);}
+  .dx-run-btn{width:100%;padding:14px;border:none;border-radius:14px;background:var(--op);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .08s;}
+  .dx-run-btn:active{transform:scale(.98);background:var(--op-dark);}
+  .dx-hist-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f3f5;}
+  .dx-hist-icon{width:34px;height:34px;border-radius:9px;background:var(--bg);color:var(--sub);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .dx-empty{text-align:center;padding:40px 20px;color:var(--sub);}
+  .dx-empty svg{margin-bottom:10px;opacity:.4;}
+</style>
+</head>
+<body>
+
+<div id="shell-root">
+  <main id="shell-main">
+    <div id="shell-content">
+      <div id="shell-content-inner">
+
+        <!-- ===== EXPORT ===== -->
+        <section id="dx-run" class="dx-section active">
+          <div class="dx-card">
+            <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">What to export</div>
+            <div style="font-size:11.5px;color:var(--sub);margin-bottom:8px;">Toggle the modules you need</div>
+            <div id="dx-module-list"></div>
+          </div>
+          <div class="dx-card">
+            <div style="font-size:13px;font-weight:700;color:var(--ink);">Format</div>
+            <div class="dx-fmt-row" id="dx-fmt-row"></div>
+          </div>
+          <button class="dx-run-btn" id="dx-run-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Now
+          </button>
+        </section>
+
+        <!-- ===== SCHEDULE ===== -->
+        <section id="dx-schedule" class="dx-section">
+          <div class="dx-card">
+            <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">Auto-backup</div>
+            <div style="font-size:11.5px;color:var(--sub);">Coming soon — set a daily/weekly schedule and Claude will wire it to Google Drive/email.</div>
+          </div>
+        </section>
+
+        <!-- ===== HISTORY ===== -->
+        <section id="dx-history" class="dx-section">
+          <div class="dx-card">
+            <div class="dx-empty">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+              <div style="font-size:13px;font-weight:600;">No exports yet</div>
+              <div style="font-size:11.5px;margin-top:2px;">Your last 20 exports will show up here.</div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../shared/shell.js"></script>
+<script>
+  var MODULES = [
+    {id:'invoices',   label:'Invoices',   sub:'All sales records',      icon:'file',     on:true},
+    {id:'inventory',  label:'Inventory',  sub:'Products & stock',       icon:'box',      on:true},
+    {id:'clients',    label:'Clients',    sub:'Customer directory',     icon:'users',    on:true},
+    {id:'expenses',   label:'Expenses',   sub:'Purchase & cost records',icon:'download', on:false}
+  ];
+  var FORMATS = ['CSV','XLSX','PDF'];
+  var activeFmt = 'XLSX';
+
+  function renderModules(){
+    var wrap = document.getElementById('dx-module-list');
+    wrap.innerHTML = '';
+    MODULES.forEach(function(m){
+      var row = document.createElement('div');
+      row.className = 'dx-module-row';
+      row.innerHTML =
+        '<div class="dx-module-icon">'+AppShellIcon(m.icon)+'</div>'+
+        '<div class="dx-module-text"><div class="dx-module-title">'+m.label+'</div><div class="dx-module-sub">'+m.sub+'</div></div>'+
+        '<div class="dx-switch '+(m.on?'on':'')+'" data-id="'+m.id+'"></div>';
+      row.querySelector('.dx-switch').onclick = function(){
+        m.on = !m.on; this.classList.toggle('on', m.on);
+      };
+      wrap.appendChild(row);
+    });
+  }
+  function AppShellIcon(id){ return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(AppShell.ICONS[id]||AppShell.ICONS.help)+'</svg>'; }
+
+  function renderFormats(){
+    var wrap = document.getElementById('dx-fmt-row');
+    wrap.innerHTML = '';
+    FORMATS.forEach(function(f){
+      var chip = document.createElement('div');
+      chip.className = 'dx-fmt-chip'+(f===activeFmt?' active':'');
+      chip.textContent = f;
+      chip.onclick = function(){ activeFmt = f; renderFormats(); };
+      wrap.appendChild(chip);
+    });
+  }
+
+  function showSection(id){
+    document.querySelectorAll('.dx-section').forEach(function(s){ s.classList.toggle('active', s.id==='dx-'+id); });
+  }
+
+  renderModules();
+  renderFormats();
+  showSection('run');
+
+  document.getElementById('dx-run-btn').onclick = function(){
+    var btn = this;
+    btn.disabled = true; btn.style.opacity = '.7';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="9" stroke-dasharray="46" stroke-dashoffset="14"/></svg> Exporting...';
+    setTimeout(function(){
+      btn.disabled=false; btn.style.opacity='1';
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Now';
+    }, 1200);
+  };
+
+  var styleTag = document.createElement('style');
+  styleTag.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(styleTag);
+
+  AppShell.init({
+    toolId: 'export',
+    title: 'Data Export',
+    backTo: '../../index.html',
+    navItems: [
+      { id:'run',      label:'Export',   icon:'download', onClick:function(){ showSection('run'); } },
+      { id:'schedule', label:'Schedule', icon:'clock',    onClick:function(){ showSection('schedule'); } },
+      { id:'history',  label:'History',  icon:'history',  onClick:function(){ showSection('history'); } }
+    ]
+  });
+</script>
+</body>
+</html>
