@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tool Name — My Business ERP</title>
+<link rel="stylesheet" href="../shared/shell.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  /* page-specific styles go here */
+</style>
+</head>
+<body>
+
+<div id="shell-root">
+  <!-- #shell-sidebar is injected here by shell.js (desktop only) -->
+  <main id="shell-main">
+    <!-- #shell-topbar is injected here by shell.js -->
+    <div id="shell-content">
+      <div id="shell-content-inner">
+
+        <!-- ============ PAGE CONTENT STARTS ============ -->
+        <h1>Replace this with the tool's UI</h1>
+        <!-- ============ PAGE CONTENT ENDS ============== -->
+
+      </div>
+    </div>
+  </main>
+  <!-- #shell-bottomnav + #shell-more-overlay are appended to <body> by shell.js -->
+</div>
+
+<script src="../shared/shell.js"></script>
+<script>
+  AppShell.init({
+    toolId: 'REPLACE_WITH_TOOL_ID',   // must match an id in AppShell.TOOLS
+    title: 'Tool Name',
+    backTo: '../../index.html',
+    navItems: [
+      // 2–4 sections for this tool. First one is shown active on load.
+      // { id:'section-id', label:'Label', icon:'download', onClick:()=>renderSection('section-id') }
+    ],
+    actions: [
+      // top-right icon buttons, e.g.
+      // { icon:'help', title:'Help', onClick:()=>{} }
+    ]
+  });
+</script>
+</body>
+</html>
