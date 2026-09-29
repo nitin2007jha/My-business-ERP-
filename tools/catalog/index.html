@@ -229,7 +229,17 @@ const{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true}),e
 for(let i=0;i<els.length;i++){toast(`PDF ban rahi hai… ${i+1}/${els.length}`);await new Promise(r=>setTimeout(r,40));
 const cv=await html2canvas(els[i],{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,height:1123,windowWidth:794,windowHeight:1123,logging:false});
 if(i)doc.addPage('a4');doc.addImage(cv.toDataURL('image/jpeg',.88),'JPEG',0,0,210,297,undefined,'FAST');cv.width=cv.height=0}
-doc.save((c.title||'Catalog').replace(/[^a-z0-9\-_]+/gi,'_')+'.pdf');toast('PDF ready ✓ ('+els.length+' pages)')}
+const fn=(c.title||'Catalog').replace(/[^a-z0-9\-_]+/gi,'_')+'.pdf',blob=doc.output('blob');
+try{const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=fn;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),1000)}catch(e){}
+toast('PDF ready ✓ ('+els.length+' pages)');
+/* Always follow up with an explicit Share button — some in-app browsers silently ignore the download link above */
+const ov=document.createElement('div');ov.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#1c2526;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;font:600 13px Figtree,Arial;box-shadow:0 -6px 24px rgba(0,0,0,.3)';
+ov.innerHTML=`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ${fn}</span><button id=_shB style="background:${c.color||'#0f7a80'};color:#fff;border:none;border-radius:10px;padding:9px 14px;font:700 13px Figtree;cursor:pointer">↗ Share</button><button id=_dlB style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:10px;padding:9px 12px;font:700 13px Figtree;cursor:pointer">⬇</button><button id=_clB style="background:transparent;color:#fff;border:none;font-size:20px;cursor:pointer;padding:0 4px">×</button>`;
+document.body.appendChild(ov);
+ov.querySelector('#_shB').onclick=async()=>{try{const f=new File([blob],fn,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:fn})}else if(navigator.share){await navigator.share({title:fn,url:URL.createObjectURL(blob)})}else{toast('Is browser me direct share nahi chalta — Download karke WhatsApp me attach karein')}}catch(e){if(e.name!=='AbortError')toast('Share fail: '+e.message)}};
+ov.querySelector('#_dlB').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click()};
+ov.querySelector('#_clB').onclick=()=>ov.remove();
+setTimeout(()=>ov.remove(),20000)}
 catch(e){console.error(e);toast('PDF fail: '+e.message)}
 if(host)host.remove();pdf.busy=0};
 
