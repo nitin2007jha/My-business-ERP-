@@ -3,8 +3,8 @@
    Features: Periodic Sync, Push Notifications, PWA Widgets, Offline Cache
    ═══════════════════════════════════════════════════════════════════ */
 
-const SW_VERSION = 'erp-sw-v3.2';
-const CACHE_NAME  = 'erp-cache-v3.2';
+const SW_VERSION = 'erp-sw-v3.3';
+const CACHE_NAME  = 'erp-cache-v3.3';
 
 // Files to pre-cache for offline use
 const PRE_CACHE = [
@@ -130,29 +130,80 @@ self.addEventListener('periodicsync', event => {
 // ──────────────────────────────────────────────
 // PUSH NOTIFICATIONS
 // ──────────────────────────────────────────────
+// FCM data-only message ka payload aisa aata hai: { data:{...}, fcmMessageId, from }
+// Purana format ({type,title,body,tag,url}) bhi chalta hai.
+function saveNotifToDB(item) {
+  return new Promise(resolve => {
+    try {
+      const r = indexedDB.open('erp_notifications', 1);
+      r.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('items')) {
+          const s = db.createObjectStore('items', { keyPath: 'id' });
+          s.createIndex('category', 'category', { unique: false });
+          s.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+      };
+      r.onsuccess = () => {
+        const tx = r.result.transaction('items', 'readwrite');
+        tx.objectStore('items').put(item);
+        tx.oncomplete = tx.onerror = () => resolve();
+      };
+      r.onerror = () => resolve();
+    } catch (e) { resolve(); }
+  });
+}
+
 self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : {};
-  const { type = 'general', title, body, tag, url } = data;
+  let raw = {};
+  try { raw = event.data ? event.data.json() : {}; } catch (e) {}
+  const d = Object.assign({}, raw, raw.data || {});
+  const { type = 'general', title, body, tag, url } = d;
+
+  const item = {
+    id: 'ntf_push_' + (d.dedupeKey || raw.fcmMessageId || Date.now()),
+    category: d.category || 'system',
+    title: title || 'My Business ERP',
+    body: body || 'ERP Update',
+    actionType: d.actionType || 'none',
+    actionId: d.actionId || null,
+    meta: {},
+    dedupeKey: d.dedupeKey || null,
+    createdAt: Date.now(),
+    read: false
+  };
 
   const options = {
-    body: body || 'ERP Update',
+    body: item.body,
     icon: './icons/icon-192.png',
     badge: './icons/icon-96.png',
-    tag: tag || type,
+    tag: tag || d.dedupeKey || type,
     renotify: true,
-    requireInteraction: type === 'low-stock',
+    requireInteraction: type === 'low-stock' || type === 'order',
     vibrate: [200, 100, 200],
     data: { url: url || './index.html', type },
     actions: getActionsForType(type),
   };
 
-  event.waitUntil(
-    self.registration.showNotification(title || 'My Business ERP', options)
-  );
+  event.waitUntil((async () => {
+    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const visible = list.find(c => c.visibilityState === 'visible');
+    if (visible) {
+      // App khula hai -> OS notification nahi, seedha in-app Notification Center
+      visible.postMessage({ type: 'PUSH_IN_APP', item });
+      return;
+    }
+    await saveNotifToDB(item);   // app khulte hi bell/list mein dikhega
+    await self.registration.showNotification(item.title, options);
+  })());
 });
 
 function getActionsForType(type) {
   switch (type) {
+    case 'order':
+      return [
+        { action: 'view-orders', title: '🛒 View Orders' },
+      ];
     case 'low-stock':
       return [
         { action: 'view-stock',   title: '📦 View Inventory' },
@@ -190,12 +241,13 @@ self.addEventListener('notificationclick', event => {
   if (action === 'view-gst'    || data.type === 'gst')         targetUrl = './index.html?action=gst-report';
   if (action === 'new-invoice')                                 targetUrl = './index.html?action=new-invoice';
   if (action === 'create-po')                                   targetUrl = './index.html?action=purchase-order';
+  if (action === 'view-orders' || data.type === 'order')        targetUrl = './index.html?action=orders';
   if (data.url && action === 'open')                            targetUrl = data.url;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url.includes('index.html') && 'focus' in client) {
+        if ('focus' in client) {
           client.postMessage({ type: 'SW_NAVIGATE', url: targetUrl });
           return client.focus();
         }
