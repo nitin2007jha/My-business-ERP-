@@ -171,9 +171,8 @@ const body=`<div class=gal id=gal onscroll="gdot()">${(im.length?im:['']).map(u=
 ${i.desc?`<h3 style="margin-top:12px">About this product</h3><p style="margin:4px 0 10px;white-space:pre-line">${esc(i.desc)}</p>`:''}
 <div class="row sp rn" style="margin-top:14px"><h3>Reviews</h3><button class=g style="padding:6px 12px" onclick="wr('${id}')">${ic('edit',14)} Write a review</button></div><div id=rv><small>Loading reviews…</small></div>
 ${rel.length?`<div class=sec style="padding:16px 0 8px"><h2 style="font-size:16px">You may also like</h2></div><div class=hs style="padding:0">${rel.map(x=>`<div style="width:132px" onclick="pd('${x.id}')">${thumb(x,'im').replace('class="im"','class="im" style="border-radius:12px"')}<small>${esc(x.name)}</small><br><b>${inr(x.price)}</b></div>`).join('')}</div>`:''}</div>`;
-if(keep&&PG.length&&PG[PG.length-1].dataset.pd==id){const el=PG[PG.length-1];el.querySelector('.fb').innerHTML=foot;const sc=el.scrollTop;el.querySelector('.ph2+*').outerHTML;el.innerHTML=el.innerHTML;}
-if(keep&&PG.length&&PG[PG.length-1].dataset.pd==id){popPage(1);history.back&&0}
-const el=page(esc(i.name),body,foot);el.dataset.pd=id;
+let el=PG[PG.length-1];const full=`<div class=ph2><button onclick="history.back()">${ic('back',20)}</button><h2>${esc(i.name)}</h2></div>${body}<div class=fb>${foot}</div>`;
+if(keep&&el&&el.dataset.pd==id){const sc=el.scrollTop;el.innerHTML=full;el.scrollTop=sc}else{el=page(esc(i.name),body,foot);el.dataset.pd=id}
 const rv=await loadRev(id),box=el.querySelector('#rv');if(!box)return;
 if(rv===null){box.innerHTML='<small>Reviews are unavailable right now</small>';return}
 const n=rv.length,a=n?rv.reduce((s,x)=>s+x.r,0)/n:0;if(n){RATE[id]={a,n};const p=el.querySelector('#prt');if(p)p.innerHTML=rtg(i)}
@@ -223,7 +222,7 @@ const okS=(oid,tt,pm,bn)=>{const u=G.c.upi,ph=((G.c.biz||{}).phone||G.c.wa||'').
 const OB_add=j=>{const q=ls('ob',[]);q.push(j);sv('ob',q);OB_flush()};
 const OB_flush=async()=>{if(OB_flush.b)return;OB_flush.b=1;try{const q=ls('ob',[]),rest=[];for(const j of q){let ok=false;try{const r=await fetch(PUSH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:j.uid,orderId:j.id,type:j.type||'new'}),keepalive:true});ok=r.ok}catch{}if(!ok&&(j.tries||0)<30){j.tries=(j.tries||0)+1;rest.push(j)}}sv('ob',rest)}finally{OB_flush.b=0}};
 addEventListener('online',()=>{OB_flush();syncOrd();off()});addEventListener('offline',off);document.addEventListener('visibilitychange',()=>{if(!document.hidden){OB_flush();syncOrd()}});
-const off=()=>{const e=$('#offl');e.style.display=navigator.onLine?'none':'block';e.textContent='You are offline — showing saved data. Orders will sync when you are back online.'};
+function off(){const e=$('#offl');e.style.display=navigator.onLine?'none':'block';e.textContent='You are offline — showing saved data. Orders will sync when you are back online.'}
 /* ---------- orders: live tracking, detail, cancel ---------- */
 const fromDoc=(id,d)=>{const h=Array.isArray(d.history)?d.history.slice():[{s:'pending',t:ts(d.createdAt)}];FLOW.concat(['confirmed']).forEach(()=>{});const add=(s,v)=>{const t=ts(v);if(t&&!h.some(x=>x.s==s))h.push({s,t})};add('confirmed',d.acceptedAt||d.confirmedAt);['packed','shipped','delivered','rejected','cancelled'].forEach(s=>add(s,d[s+'At']));h.sort((a,b)=>a.t-b.t);
 return{id,t:ts(d.createdAt),items:(d.items||[]).map(x=>({productId:x.productId,name:x.name,qty:x.qty,rate:x.rate,gst:x.gst,img:x.img||''})),subtotal:d.subtotal,discount:d.discount||d.couponDiscount||0,couponCode:d.couponCode||'',delivery:d.deliveryCharge||0,gst:d.gst,total:d.total,status:d.status||'pending',history:h,paymentMethod:d.paymentMethod,address:d.customerAddress,name:d.customerName,phone:d.customerPhone,note:d.note||'',invoiceId:d.invoiceId||'',cancelReason:d.cancelReason||d.rejectReason||''}};
