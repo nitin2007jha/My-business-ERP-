@@ -136,7 +136,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Same public Firebase config used by the main ERP app.
 const firebaseConfig = {
@@ -155,6 +155,7 @@ const APP_ID = "dev-ayurveda-pro-auth";
 const params = new URLSearchParams(window.location.search);
 const OWNER_UID = params.get('uid');
 const BIZ_NAME  = params.get('biz') || 'My Business';
+const CA_TOKEN  = params.get('t') || '';
 
 const root = document.getElementById('app-root');
 document.getElementById('biz-name').textContent = BIZ_NAME;
@@ -251,8 +252,15 @@ if(!OWNER_UID){
     );
   });
 
+  var _started = false;
   onAuthStateChanged(auth, function(user){
-    if(user) initPortal();
+    if(!user || _started) return;
+    _started = true;
+    // Prove to Firestore rules that this visitor holds the secret CA link token, then load data
+    var go = CA_TOKEN
+      ? setDoc(doc(db,'artifacts',APP_ID,'users',OWNER_UID,'caSessions',user.uid), { t: CA_TOKEN, at: Date.now() })
+      : Promise.resolve();
+    go.then(initPortal).catch(function(err){ handleFirestoreError(err); });
   });
 
   var DATA = { invoices: [], purchaseOrders: [], settings: {} };
