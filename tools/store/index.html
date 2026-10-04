@@ -63,14 +63,14 @@ nav em{position:absolute;top:2px;left:55%;min-width:18px;height:18px;border-radi
 <nav id="nav"></nav>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import{getAuth,signInAnonymously}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import{getAuth,signInAnonymously,onAuthStateChanged,GoogleAuthProvider,linkWithPopup,signInWithCredential}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import{getFirestore,doc,getDoc,getDocs,setDoc,updateDoc,onSnapshot,collection,query,where,limit,getDocsFromServer,increment}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-const BUILD='2026.10.04-2';
+const BUILD='2026.10.04-3';
 const CFG={apiKey:"AIzaSyCV3G-BMVf2QRpibaS5MnwQybKixC4h9og",authDomain:"dev-ayurveda.firebaseapp.com",projectId:"dev-ayurveda",storageBucket:"dev-ayurveda.firebasestorage.app",messagingSenderId:"40760282698",appId:"1:40760282698:web:20e31100eed712631ca0b3"};
 const APP=typeof __app_id!=='undefined'?__app_id:'dev-ayurveda-pro-auth';
 const PUSH_URL='https://erp-push-server.vercel.app/api/send-push';
 const fb=initializeApp(CFG),db=getFirestore(fb);
-let _sa=null;const storeFb=async()=>{if(!_sa){const a=initializeApp(CFG,'store');_sa={auth:getAuth(a),db:getFirestore(a)}}if(!_sa.auth.currentUser)await signInAnonymously(_sa.auth);return _sa};
+let _sa=null,AUTHU=null;const storeFb=async()=>{if(!_sa){const a=initializeApp(CFG,'store');_sa={auth:getAuth(a),db:getFirestore(a)};onAuthStateChanged(_sa.auth,u=>{AUTHU=u;try{if(T=='me'&&!PG.length)render()}catch{}})}if(!_sa.auth.currentUser)await signInAnonymously(_sa.auth);return _sa};
 /* ---------- stale-cache guard: purge old cached copies of this page and reload once if a newer build exists ---------- */
 (async()=>{try{if('caches'in window){for(const k of await caches.keys()){const c=await caches.open(k);for(const r of await c.keys())if(/\/tools\/store\//.test(r.url)||/[?&]s=/.test(r.url))await c.delete(r)}}}catch{}
 try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/BUILD='([^']+)'/);if(m&&m[1]!==BUILD&&!sessionStorage.rl){sessionStorage.rl=1;location.reload()}}catch{}})();
@@ -138,6 +138,7 @@ return`<div class=row style="padding:calc(14px + env(safe-area-inset-top)) 14px 
 ${L.map(o=>`<div class=box onclick="od('${o.id}')" style="cursor:pointer"><div class="row sp"><b>#${esc(o.id)}</b>${chipSt(o.status)}</div><small>${fdt(o.t)} · ${o.items.reduce((a,x)=>a+x.qty,0)} items</small><div class="row rn" style="margin:8px 0">${o.items.slice(0,4).map(x=>thumb(gi(x.productId)||{name:x.name,img:x.img})).join('')}${o.items.length>4?`<small>+${o.items.length-4}</small>`:''}<b class=pr style="margin-left:auto">${inr(o.total)}</b></div>${['rejected','cancelled'].includes(o.status)?'':`<div class=stp>${FLOW.map((s,k)=>`<span class="${k<=FLOW.indexOf(o.status)?'on':''}">${s=='shipped'?'on way':s}</span>`).join('')}</div>`}</div>`).join('')||`<div class=em>${ic('box',54)}<p>No orders here yet</p></div>`}`};
 const meV=()=>{const b=G.c.biz||{},u=ls('cust',{});return`<div style="padding:calc(14px + env(safe-area-inset-top)) 14px 8px"><h2>Account</h2></div>
 <div class=box><div class="row rn"><div class=th style="width:50px;height:50px;border-radius:50%">${ic('user',24)}</div><div style="flex:1"><b>${esc(u.n||'Guest')}</b><br><small>${esc(u.p||'Add your details at checkout')}</small></div><button class=k onclick="prof()">${ic('edit',16)}</button></div></div>
+${AUTHU&&AUTHU.isAnonymous?`<div class=box><b>Keep your orders safe</b><br><small>Sign in with Google once, so your orders and details are never lost, even if you change phone or clear browser data.</small><button class=k style="width:100%;margin-top:10px;padding:12px" onclick="bk()">Save with Google</button></div>`:AUTHU&&AUTHU.email?`<div class=box><small>Your orders are saved to ${esc(AUTHU.email)}</small></div>`:''}
 <div class=box style="padding:4px 12px">${[['pin','Saved addresses','addrs()',ADDR.length],['heart','Saved items',"CAT='__w';go('shop')",W.size],['box','My orders',"go('ord')",ORD.length],['moon',document.documentElement.hasAttribute('data-d')?'Light mode':'Dark mode','dk()','']].map(r=>`<div class="row rn" style="padding:12px 0;border-bottom:1px solid var(--ln);cursor:pointer" onclick="${r[2]}"><span style="color:var(--c)">${ic(r[0],20)}</span><b style="flex:1;font-weight:600">${r[1]}</b>${r[3]!==''?`<small>${r[3]}</small>`:''}${ic('chev',16)}</div>`).join('')}</div>
 <div class=box><b>${esc(b.name||'')}</b><br><small>${esc(b.addr||'')}</small>${G.c.minOrder?`<br><small>Minimum order ${inr(G.c.minOrder)}</small>`:''}${+G.c.dc?`<br><small>Delivery ${inr(G.c.dc)}${+G.c.fda?' · free above '+inr(G.c.fda):''}</small>`:''}${(b.phone||G.c.wa)?`<div class=row style="margin-top:10px"><button class=g onclick="open('tel:${esc(String(b.phone||G.c.wa).replace(/\D/g,''))}')">${ic('phone',16)} Call us</button><button class=g onclick="shs()">${ic('share',16)} Share store</button></div>`:''}</div><p class=em style="padding:10px"><small>v${BUILD}</small></p>`};
 const render=()=>{$('#app').innerHTML={home,shop,cart:cartV,ord:ordV,me:meV}[T]();if(T=='shop')gl();nav()};
@@ -257,6 +258,11 @@ const base=()=>({name:nm(),phone:ph(),lastSeen:Date.now()});
 return{visit(){if(sessionStorage.tv)return;sessionStorage.tv=1;w({...base(),firstSeen:fs,visits:increment(1),device:/Mobi|Android/i.test(navigator.userAgent)?'mobile':'desktop'})},
 name(){w(base())},
 cart(now){clearTimeout(tm);const f=()=>{const it=Object.entries(cart).map(([id,q])=>{const i=gi(id);return i&&{id:String(id).slice(0,40),name:String(i.name).slice(0,80),qty:q,price:+i.price}}).filter(Boolean).slice(0,40);w({...base(),cartItems:it,cartCount:it.reduce((a,x)=>a+x.qty,0),cartTotal:Math.round(it.reduce((a,x)=>a+x.qty*x.price,0)*100)/100,cartAt:Date.now()})};now?f():tm=setTimeout(f,1500)}}})();
+const bk=async()=>{try{const s=await storeFb(),u=s.auth.currentUser;if(!u||!u.isAnonymous)return toast('Already saved');
+try{await linkWithPopup(u,new GoogleAuthProvider())}catch(e){if(e.code=='auth/credential-already-in-use'){const c=GoogleAuthProvider.credentialFromError(e);if(!c)throw e;await signInWithCredential(s.auth,c)}else throw e}
+const cu=s.auth.currentUser,c0=ls('cust',{});if(cu&&cu.displayName&&!c0.n)sv('cust',{...c0,n:cu.displayName});
+toast('Done! Your orders are saved to your Google account');await syncOrd();TRK.name();render()}
+catch(e){if(!/popup-closed|cancelled-popup/.test(e&&e.code||''))toast('Could not sign in right now. Please try again.')}};
 /* ---------- boot ---------- */
 I.file='<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>';
 I.download='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
@@ -283,7 +289,7 @@ const bl=pdf.output('blob'),fn='Invoice_'+o.invoiceId+'.pdf',f=new File([bl],fn,
 if(share&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:fn}).catch(()=>{});return}
 const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=fn;document.body.append(a);a.click();a.remove();toast('Invoice PDF ready ✓')}
 catch(e){console.warn(e);toast('PDF could not be created. Check your connection.')}};
-Object.assign(window,{TRK,invView,invPdf,$,sv,ls,go,qt,wl,cpy,ap,pd,shr,shs,sw,co,cop,pick,order,rf,ro,dk,closeS,gl,shopR,render,list,flt,rs,wr,rstar,sr_,gdot,addrs,aform,asave,adel,prof,od,cx,cx2,closePg,syncOrd});
+Object.assign(window,{bk,TRK,invView,invPdf,$,sv,ls,go,qt,wl,cpy,ap,pd,shr,shs,sw,co,cop,pick,order,rf,ro,dk,closeS,gl,shopR,render,list,flt,rs,wr,rstar,sr_,gdot,addrs,aform,asave,adel,prof,od,cx,cx2,closePg,syncOrd});
 for(const k of['Q','CAT','SORT','VIEW','FL','RV_R','OF','SELA','PAYM'])Object.defineProperty(window,k,{get:()=>eval(k),set:v=>{eval(k+'=v')},configurable:true});
 if(localStorage.dk)document.documentElement.setAttribute('data-d','');
 const setIcon=()=>{try{const b=G.c.biz||{},nmx=(b.name||G.c.title||'S')[0].toUpperCase(),col=G.c.color||'#0f7a80',svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${col}"/><text x="32" y="44" font-size="34" font-family="Arial" font-weight="700" text-anchor="middle" fill="#fff">${nmx}</text></svg>`;let l=document.querySelector('link[rel~=icon]');if(!l){l=document.createElement('link');l.rel='icon';document.head.append(l)}l.href=b.logo&&/^https?:/.test(b.logo)?b.logo:'data:image/svg+xml,'+encodeURIComponent(svg);document.querySelectorAll('link[rel=apple-touch-icon]').forEach(x=>x.remove())}catch{}};
