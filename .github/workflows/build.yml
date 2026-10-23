@@ -24,3 +24,16 @@ jobs:
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      -  name: Add permissions
+        run: |
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><uses-permission android:name="android.permission.POST_NOTIFICATIONS" /></manifest>#' android/app/src/main/AndroidManifest.xml
+      - run: npx capacitor-assets generate --android
+      
+
+          - name: Make app icon
+        run: |
+          sudo apt-get install -y imagemagick
+          mkdir -p assets
+          convert LS20260511122645.png -background white -gravity center -resize 680x680 -extent 1024x1024 assets/icon-only.png
+      - run: npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff'
