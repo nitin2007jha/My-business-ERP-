@@ -33,3 +33,10 @@ jobs:
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Make app icon
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p assets
+          convert LS20260511122645.png -background white -gravity center -resize 680x680 -extent 1024x1024 assets/icon-only.png
