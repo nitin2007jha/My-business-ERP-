@@ -21,13 +21,18 @@ jobs:
       - name: Add permissions
         run: |
           sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><uses-permission android:name="android.permission.POST_NOTIFICATIONS" /><queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml
-      - name: Make app icon
+      - name: Set app icon
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick
-          mkdir -p assets
-          convert LS20260511122645.png -background white -gravity center -resize 680x680 -extent 1024x1024 assets/icon-only.png
-      - run: npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff'
+          R=android/app/src/main/res
+          SRC=LS20260511122645.png
+          for d in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432; do
+            IFS=: read n s f <<< "$d"
+            convert $SRC -background white -alpha remove -alpha off -gravity center -resize $((s*85/100))x$((s*85/100)) -extent ${s}x${s} $R/mipmap-$n/ic_launcher.png
+            cp $R/mipmap-$n/ic_launcher.png $R/mipmap-$n/ic_launcher_round.png
+            convert $SRC -background none -gravity center -resize $((f*55/100))x$((f*55/100)) -extent ${f}x${f} $R/mipmap-$n/ic_launcher_foreground.png
+          done
       - run: npx cap sync
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
