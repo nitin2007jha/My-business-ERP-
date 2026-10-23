@@ -2,7 +2,7 @@ name: Build APK
 on: workflow_dispatch
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,25 +15,21 @@ jobs:
       - name: Prepare web files
         run: |
           mkdir www
-          rsync -a --exclude=www --exclude=node_modules --exclude=android --exclude=.git --exclude=.github --exclude=package.json --exclude=capacitor.config.json ./ www/
+          rsync -a --exclude=www --exclude=node_modules --exclude=android --exclude=.git --exclude=.github --exclude=package.json --exclude=capacitor.config.json --exclude=assets ./ www/
       - run: npm install
       - run: npx cap add android
+      - name: Add permissions
+        run: |
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><uses-permission android:name="android.permission.POST_NOTIFICATIONS" /><queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml
+      - name: Make app icon
+        run: |
+          sudo apt-get install -y imagemagick
+          mkdir -p assets
+          convert LS20260511122645.png -background white -gravity center -resize 680x680 -extent 1024x1024 assets/icon-only.png
+      - run: npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff'
       - run: npx cap sync
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      -  name: Add permissions
-        run: |
-          sed -i 's#</manifest>#<uses-permission android:name="android.permission.CAMERA" /><uses-permission android:name="android.permission.RECORD_AUDIO" /><uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /><uses-permission android:name="android.permission.POST_NOTIFICATIONS" /></manifest>#' android/app/src/main/AndroidManifest.xml
-      - run: npx capacitor-assets generate --android
-      
-
-          - name: Make app icon
-        run: |
-          sudo apt-get install -y imagemagick
-          mkdir -p assets
-          convert LS20260511122645.png -background white -gravity center -resize 680x680 -extent 1024x1024 assets/icon-only.png
-      - run: npx capacitor-assets generate --android --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff'
